@@ -1,0 +1,459 @@
+---
+title: "Clustering real data with two customers"
+output:
+  bookdown::pdf_book:
+    MonashEBSTemplates::workingpaper:
+    #base_format: rticles::asa_article
+    fig_height: 8
+    fig_width: 12
+    fig_caption: yes
+    dev: "pdf"
+    keep_tex: yes
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(knitr)
+read_chunk("R/simdata01.R")
+```
+
+```{r load-lib}
+
+```
+
+# What you are doing?
+
+Taking real customers from the smart meter data set and cluster them and see if their distributions are different
+
+-  just one cyclic granularity (hod)
+-  two cyclic granularities (hod and dow)
+
+_Compute quantiles of conditional distributions_
+Conditional quantiles are obtained for each combination of categories.  
+
+## entire data
+```{r}
+sm <- gravitas::smart_meter10 %>%
+  filter(customer_id %in% c("10006704", "10017936"))
+
+sm
+```
+
+## how do they look
+
+```{r}
+sm %>% 
+  ggplot(aes(x = reading_datetime, y = general_supply_kwh)) +
+  geom_line() +
+  facet_wrap(~customer_id, ncol = 1) +
+  theme_bw()
+```
+
+```{r}
+sm %>% 
+  create_gran("hour_day") %>% 
+  ggplot(aes(x = hour_day, y = general_supply_kwh)) + 
+  geom_boxplot() + 
+  facet_wrap(~customer_id, ncol = 1) 
+```
+
+## make one granularity
+
+```{r}
+sm_hod <- gravitas::create_gran(sm, "hour_day")
+```
+
+## conditional list across categories of one granularity
+
+
+```{r}
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh)
+
+```
+
+## conditional quantiles across categories of one granularity
+
+```{r}
+quantile_prob_val = seq(0.1, 0.9, 0.1)
+
+ncol_sm <- seq_len(ncol(sm_hod_list))[-ncol(sm_hod_list)]
+nrow_sm <- seq_len(nrow(sm_hod_list))
+
+sm_hod_quantiles <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list[-1] %>% extract(x, y) %>% unlist()
+   quantile(cell, prob = quantile_prob_val)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id")
+
+```
+
+## how do their deciles look for different categories of cyclic granularity
+
+```{r}
+categories_ref <- names(sm_hod_list)[-1] %>% as_tibble() %>% 
+  mutate(categories_serial_id = as.character(row_number()))
+
+
+data_heatmap <- sm_hod_quantiles %>% 
+  pivot_longer(-c(1, 2), names_to = "quantile_prob", values_to = "quantile_val") %>% 
+  left_join(categories_ref) %>% 
+  rename("category" = "value") %>% 
+  select(-categories_serial_id) %>% 
+  mutate(category = as.numeric(category)) 
+
+
+
+data_heatmap%>% 
+ggplot(aes(x= customer_serial_id, y = as.factor(quantile_prob))) +
+  geom_tile(aes(fill = quantile_val)) +
+  scale_fill_distiller(palette = "YlGnBu")+ 
+  facet_wrap(~category) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab("Deciles") +
+  xlab("data sets")
+```
+
+```{r, eval = FALSE}
+data_heatmap %>% 
+  ggplot() + geom_line(aes(x=category, y = quantile_val, color = quantile_prob)) + facet_wrap(~customer_serial_id, ncol = 1) + 
+  scale_color_brewer(palette = "Dark2") + 
+  #scale_y_log10() +
+  theme_bw()
+
+
+data_heatmap %>% 
+  pivot_wider(names_from = customer_serial_id, values_from = quantile_val) %>% 
+  group_by(quantile_prob) %>% 
+  mutate(percent_diff = if_else(`1`==0, 0, (`2`- `1`)*100/`1`)) %>%  ggplot() + geom_line(aes(x=category, y = percent_diff, color = quantile_prob)) +
+  scale_color_brewer(palette = "Dark2") +
+  theme_bw()
+```
+
+## Iterations of each customer
+
+### Data preparation
+
+```{r}
+sample_seed <-  seq(100, 500, 100)
+ncust <- sm %>% distinct(customer_id)
+
+all_data_clust = map_dfr(seq_len(nrow(ncust)), function(x){
+  map(seq_len(length(sample_seed)), function(seed){
+     set.seed(sample_seed[seed])
+     data <- sm %>% as_tibble %>% filter(customer_id %in% ncust$customer_id[x])
+     nr = nrow(data)
+     
+     data1 <- data %>% 
+     mutate(customer_id = paste(customer_id, seed, sep = "-"),
+             general_supply_kwh = general_supply_kwh + rnorm(1, 0, 0.01))
+     data1
+}) %>% bind_rows(.id = "seed_id")
+}) %>% bind_rows(sm %>% as_tibble() %>% bind_cols(seed_id = "0")) %>% 
+  tsibble::as_tsibble(index = reading_datetime, key  = customer_id)
+```
+
+
+
+```{r}
+all_data_clust %>% 
+  ggplot(aes(x = reading_datetime, y = general_supply_kwh)) +
+  geom_line() +
+  facet_wrap(~customer_id, ncol = 1) +
+  theme_bw()
+```
+
+### make one granularity
+
+```{r}
+sm_hod <- gravitas::create_gran(all_data_clust, "hour_day")
+```
+
+## conditional list across categories of one granularity
+
+
+```{r}
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh) 
+
+lookup_tbl <- sm_hod_list %>% 
+  mutate(
+         customer_serial_id = row_number()) %>% 
+  select(customer_id, customer_serial_id)
+
+```
+
+## conditional quantiles across categories of one granularity
+
+```{r}
+quantile_prob_val = seq(0.1, 0.9, 0.1)
+
+ncol_sm <- seq_len(ncol(sm_hod_list))[-ncol(sm_hod_list)]
+nrow_sm <- seq_len(nrow(sm_hod_list))
+
+sm_hod_quantiles <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list[-1] %>% extract(x, y) %>% unlist()
+   quantile(cell, prob = quantile_prob_val)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id")
+
+```
+
+
+## JS Pairwise distances between households
+
+
+```{r}
+sm_dist_data <- sm_hod_quantiles %>% 
+  mutate(customer_serial_id = as.numeric(customer_serial_id)) %>% 
+  pivot_longer(-c(1, 2), names_to = "quantile_prob", values_to = "quantile_val") %>% 
+  select(-quantile_prob) %>% 
+  group_by(customer_serial_id, categories_serial_id) %>%
+  nest() %>% 
+  pivot_wider(names_from = categories_serial_id, values_from = data)
+```
+
+```{r JS}
+
+```
+
+
+
+```{r}
+#ndata <- data_q %>% distinct(unique_data) %>% mutate(index = row_number())
+nrow_data <- nrow(sm_dist_data)
+ncol_data <-  ncol(sm_dist_data[-1])
+
+dist_data <- map(seq_len(nrow_data), function(x){ # first data
+  map(seq_len(nrow_data), function(y){ # 2nd data
+    map(seq_len(ncol_data), function(z){ # number of combinations nx*nfacet
+      JS(
+        prob = quantile_prob_val,
+        unlist(sm_dist_data[-1] %>% extract(x, z)),
+        unlist(sm_dist_data[-1] %>% extract(y, z))
+      ) %>% as_tibble()
+    })%>% bind_rows(.id = "combinations")
+  })%>% bind_rows(.id = "data_type1")
+}) %>% bind_rows(.id = "data_type2") 
+
+
+
+dist_mat <- dist_data %>%
+  mutate(data_type1 = as.numeric(data_type1), data_type2 = as.numeric(data_type2)) %>% 
+  group_by(data_type1, data_type2) %>%
+  summarise(dist = sum(value)) %>%
+  pivot_wider(names_from = data_type2,
+              values_from = dist) 
+
+
+dist_mat_format <- dist_mat %>%
+  ungroup() %>% 
+  select(-data_type1)
+
+rownames(dist_mat_format) <- lookup_tbl$customer_id
+
+```
+
+### hc
+
+```{r}
+d = stats::as.dist(dist_mat_format)
+hc = stats::hclust(d,method="complete")
+plot(hc)
+
+mds <- d %>%
+  cmdscale() %>%
+  as_tibble()
+
+colnames(mds) <- c("Dim.1", "Dim.2")
+rownames(mds) <- lookup_tbl$customer_id
+
+groups<-cutree(hc, k=2)
+
+all_data_cluster <- cbind(dist_mat_format, groups) %>%
+  cbind(mds)%>%
+  mutate(groups = as.factor(groups)) %>% as_tibble()
+
+
+mds_plot_10 <- ggplot(all_data_cluster,
+       aes(x = Dim.1,
+           y = Dim.2,
+       color = groups,
+       label = rownames(mds))) +
+  geom_point(size = 1) +
+  geom_text(check_overlap = TRUE)  +
+  theme_classic()+
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Dark2")
+
+mds_plot_10
+```
+
+# Scaled data
+
+
+### make one granularity
+
+```{r}
+sm_hod <- gravitas::create_gran(all_data_clust, "hour_day")
+```
+
+## conditional list across categories of one granularity
+
+
+```{r}
+
+sm_hod <- sm_hod %>% 
+  group_by(customer_id) %>% 
+  mutate(general_supply_kwh = scale(general_supply_kwh))
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh) 
+
+lookup_tbl <- sm_hod_list %>% 
+  mutate(
+         customer_serial_id = row_number()) %>% 
+  select(customer_id, customer_serial_id)
+
+
+```
+
+## conditional quantiles across categories of one granularity
+
+```{r}
+quantile_prob_val = seq(0.1, 0.9, 0.1)
+
+ncol_sm <- seq_len(ncol(sm_hod_list))[-ncol(sm_hod_list)]
+nrow_sm <- seq_len(nrow(sm_hod_list))
+
+sm_hod_quantiles <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list[-1] %>% extract(x, y) %>% unlist()
+   quantile(cell, prob = quantile_prob_val)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id")
+
+```
+
+
+## JS Pairwise distances between households
+
+
+```{r}
+sm_dist_data <- sm_hod_quantiles %>% 
+  pivot_longer(-c(1, 2), names_to = "quantile_prob", values_to = "quantile_val") %>% 
+  select(-quantile_prob) %>% 
+  group_by(customer_serial_id, categories_serial_id) %>%
+  nest() %>% 
+  pivot_wider(names_from = categories_serial_id, values_from = data)
+```
+
+
+
+```{r}
+#ndata <- data_q %>% distinct(unique_data) %>% mutate(index = row_number())
+nrow_data <- nrow(sm_dist_data)
+ncol_data <-  ncol(sm_dist_data[-1])
+
+dist_data <- map(seq_len(nrow_data), function(x){ # first data
+  map(seq_len(nrow_data), function(y){ # 2nd data
+    map(seq_len(ncol_data), function(z){ # number of combinations nx*nfacet
+      JS(
+        prob = quantile_prob_val,
+        unlist(sm_dist_data[-1] %>% extract(x, z)),
+        unlist(sm_dist_data[-1] %>% extract(y, z))
+      ) %>% as_tibble()
+    })%>% bind_rows(.id = "combinations")
+  })%>% bind_rows(.id = "data_type1")
+}) %>% bind_rows(.id = "data_type2") 
+
+
+
+dist_mat <- dist_data %>%
+  mutate(data_type1 = as.numeric(data_type1), data_type2 = as.numeric(data_type2))%>%
+  group_by(data_type1, data_type2) %>%
+  summarise(dist = sum(value)) %>%
+  pivot_wider(names_from = data_type2,
+              values_from = dist) 
+
+
+dist_mat_format <- dist_mat %>%
+  ungroup() %>% 
+  select(-data_type1)
+
+rownames(dist_mat_format) <- lookup_tbl$customer_id
+
+```
+
+### hc
+
+```{r}
+d = stats::as.dist(dist_mat_format)
+hc = stats::hclust(d,method="complete")
+plot(hc)
+```
+
+```{r}
+mds <- d %>%
+  cmdscale() %>%
+  as_tibble()
+
+colnames(mds) <- c("Dim.1", "Dim.2")
+rownames(mds) <- lookup_tbl$customer_id
+
+library(fpc)
+koptimal = fpc::nselectboot(as.dist(dist_mat_format),
+                        B = 50,
+                        method = "complete",
+                        clustermethod = disthclustCBI, 
+                        classification = "averagedist",
+                        krange = 2:12)
+
+koptimal = koptimal$kopt
+
+groups<-cutree(hc, k=koptimal)
+
+all_data_cluster <- cbind(dist_mat_format, groups) %>%
+  cbind(mds)%>%
+  mutate(groups = as.factor(groups)) %>% as_tibble()
+
+
+mds_plot_10 <- ggplot(all_data_cluster,
+       aes(x = Dim.1,
+           y = Dim.2,
+       color = groups,
+       label = rownames(mds))) +
+  geom_point(size = 1) +
+  geom_text(check_overlap = TRUE)  +
+  theme_classic()+
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Dark2")
+
+mds_plot_10
+```
+
+
+_JS Pairwise distances between datasets_
+Distance between the data sets is computed as the sum of JS distances across different categories.  
+
+_Hierarchical clustering with 4 clusters_
+Hierarchical clustering is performed using k = 4 and dendogram observed
+
+_Clusters obtained visualized using MDS_
+Each cluster represents data sets from a separate design
+
+
+
+
+
