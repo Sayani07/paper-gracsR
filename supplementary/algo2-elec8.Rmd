@@ -1,0 +1,273 @@
+---
+title: "Algorithm using wpd values for clustering 8 households"
+author: "Sayani Gupta"
+date: "13/07/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-lib}
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(lvplot)
+#library(ggridges)
+library(tsibble)
+library(gravitas)
+library(ggpubr)
+library(readr)
+library(kableExtra)
+library(distributional)
+library(ggplot2)
+library(sugrrants)
+library(here)
+library(ggplot2)
+library(patchwork)
+library(scales)
+library(GGally)
+library(viridis)
+```
+
+
+```{r, message=FALSE, warning=FALSE, echo = FALSE}
+
+##----harmony-all
+elec_harmony_all <- read_rds("../../paper-hakear/paper/data/elec_harmony_all.rds")
+
+select_split <- str_split(elec_harmony_all$select_harmony, " ", simplify = TRUE)[,2]
+
+elec_sig_split <- elec_harmony_all %>% 
+  bind_cols(select_split = select_split) %>% 
+  mutate(significant = case_when(
+    select_split == "***" ~ "highest",
+    select_split == "**" ~ "high",
+    select_split == "*" ~ "medium",
+    select_split == "" ~ "low"
+  )) %>% 
+  mutate(rank = case_when(
+    select_split == "***" ~ paste(rank, "***", sep = " "),
+    select_split == "**" ~  paste(rank, "**", sep = " "),
+    select_split == "*" ~  paste(rank, "*", sep = " "),
+    select_split == "" ~  paste(rank, "", sep = " ")
+  ))%>%mutate(comb = paste(facet_variable, x_variable, sep = "-")) 
+  
+elec_sig_split$significant <- 
+  factor(elec_sig_split$significant, levels = c("highest", "high", "medium", "low")) 
+  
+data_comb_filter = elec_sig_split %>% 
+mutate(low_proxy = if_else(significant=="low", 0, 1))%>% 
+select(comb, id, low_proxy) %>% 
+pivot_wider(names_from = id, values_from = low_proxy) %>% 
+mutate(score = rowMeans(across(`id 1`:`id 8`))) %>% 
+filter(score !=0)
+
+
+data_sig_filter = elec_sig_split %>% 
+filter(comb %in% data_comb_filter$comb)
+
+data_clust = data_sig_filter %>% 
+select(comb, id, wpd) %>% 
+pivot_wider(names_from = comb, values_from = wpd) 
+
+hc = stats::hclust(dist(data_clust[-1]),method="complete")
+#plot(hc)
+
+library(fpc)
+koptimal = fpc::nselectboot(dist(data_clust[-1]),
+                        B = 50,
+                        method = "complete",
+                        clustermethod = disthclustCBI, 
+                        classification = "averagedist",
+                        krange = 2:8)
+
+koptimal = koptimal$kopt
+
+groups <- cutree(hc, k=4) %>% as_tibble() %>% 
+mutate(id = data_clust$id)
+
+##----cluster-characterization
+
+data = data_clust %>% 
+left_join(groups)%>% 
+             rename ("group" = "value") %>% 
+             ungroup() %>% 
+             select(group, everything(), -id) %>% 
+             pivot_longer(-1, names_to = "comb", values_to = "wpd")
+
+data_order <- data %>% 
+  group_by(comb) %>% 
+  summarise(m = mean(wpd)) %>% 
+  arrange(desc(m))
+  
+data_median = data %>% 
+  group_by(group, comb) %>% 
+  summarize(wpd_med = median(wpd))
+
+data_pcp <- data_median %>% 
+mutate(group = as.character(group)) %>% 
+  left_join(data_order) %>% 
+  arrange(desc(m)) %>% 
+  pivot_wider(-4, 
+              names_from = comb, 
+              values_from = wpd_med) 
+             
+parcoord <- GGally::ggparcoord(data_pcp,
+                   columns = 2:ncol(data_pcp),
+                   groupColumn = 1,
+                   showPoints = TRUE, 
+                   title = "(c)",
+                   alphaLines = 0.8,
+                   scale = "globalminmax"
+) + ggplot2::theme_bw() +
+  scale_color_viridis(discrete=TRUE) + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.y = ggplot2::element_text(angle = 0)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd")
+
+##----read-orig-data
+
+elec <- read_rds(here("../paper-hakear/paper/data/elec_all-8.rds")) %>% 
+  dplyr::filter(date(reading_datetime) >= ymd("20190701"), date(reading_datetime) < ymd("20191231"), meter_id==1) %>% 
+  select(-meter_id) %>% 
+  rename("id" = "household_id",
+         "date_time" = "reading_datetime") %>% 
+  mutate(date = date(date_time)) %>% 
+  mutate(id = paste("id", id, sep = " ")) %>% 
+  left_join(groups)%>% 
+             rename ("group" = "value")
+
+
+elec_zoom <-  elec %>%
+  as_tibble() %>% 
+  dplyr::filter(date(date_time) > as.Date("2019-08-01") & date(date_time) < (as.Date("2019-09-30"))) %>%
+  ggplot(aes(x=date_time, y = kwh)) +
+  #geom_point(size = 0.1, colour = "black", alpha = 0.3) +
+  geom_line(size = 0.1, colour = "blue") +
+  facet_wrap(~id, 
+             scales = "free_y",
+             ncol = 1,
+             strip.position =  "right") + 
+  xlab("Time [30m]") + 
+  theme_grey() + 
+  ylab("Energy demand (in Kwh)") + ggtitle("(b)") +
+  theme(panel.grid.major.x = element_blank()) +
+  scale_x_datetime("Date", date_labels = "%b %d",
+                   breaks = "1 week",
+                   date_minor_breaks = "1 day")  + theme_bw() +
+  theme(panel.grid.major.x =  element_line(colour = "#A9A9A9"),
+        panel.grid.minor.x =  element_line(colour = "#D3D3D3")) +
+  theme(
+    strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) 
+
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 4, border = 2:7)
+
+elec_zoom
+parcoord
+  
+sm_hod_dow <- elec %>% 
+gravitas::create_gran("hour_day") %>% 
+  gravitas::create_gran("day_week") 
+
+sm_hod_list <- sm_hod_dow %>% 
+  as_tibble() %>% 
+  arrange(group, day_week, hour_day) %>% 
+  mutate(category = paste(hour_day, day_week, sep = "-")) %>% 
+   select(group, category, kwh) %>% 
+  pivot_wider(names_from = category,
+              values_from = kwh)
+ 
+
+quantile_prob_val = c(0.25, 0.5, 0.75)
+  
+  
+  sm_hod_dow %>% 
+  filter(group==1) %>% 
+  gravitas::prob_plot(
+     "day_week",
+     "hour_day",
+  response = "kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 1")
+  
+  sm_hod_dow %>% 
+  filter(group==2) %>% 
+  gravitas::prob_plot(  "day_week",
+     "hour_day",
+  response = "kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10()+
+    ggtitle("Group 2")
+  
+  sm_hod_dow %>% 
+  filter(group==3) %>% 
+  gravitas::prob_plot(  "day_week",
+     "hour_day",
+  response = "kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 3")
+  
+  sm_hod_dow %>% 
+  filter(group==4) %>% 
+  gravitas::prob_plot("day_week",
+     "hour_day",
+  response = "kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 4")
+```
+<!-- ncol_sm <- seq_len(ncol(sm_hod_list))[-ncol(sm_hod_list)] -->
+<!-- nrow_sm <- seq_len(nrow(sm_hod_list)) -->
+
+<!-- sm_hod_quantiles <- map(nrow_sm, function(x){ -->
+<!--   map(ncol_sm, function(y){ -->
+<!--    cell <- sm_hod_list[-1] %>%  -->
+<!--    magrittr::extract(x, y) %>% unlist() -->
+<!--    quantile(cell, prob = quantile_prob_val) -->
+<!-- })  %>% bind_rows(.id = "categories_serial_id") -->
+<!-- }) %>% bind_rows(.id = "group_id") -->
+
+<!-- sm_hod_quantiles_cat <- map(nrow_sm, function(x){ -->
+<!--   map(ncol_sm, function(y){ -->
+<!--    cell <- sm_hod_list%>%  -->
+<!--      dplyr::filter(group == x) %>%  -->
+<!--      select(-c(1)) %>%  -->
+<!--      magrittr::extract(y) %>%  -->
+<!--      unlist() -->
+<!--    quantile(cell, prob = quantile_prob_val) -->
+<!-- })  %>% bind_rows(.id = "categories_serial_id") -->
+<!-- }) %>% bind_rows(.id = "group_id") %>%  -->
+<!--   mutate(group_id = as.integer(group_id), -->
+<!--          categories_serial_id = as.integer(categories_serial_id)) -->
+
+<!-- categories_ref_cat <- names(sm_hod_list)[-c(1)] %>% as_tibble() %>%  -->
+<!--   mutate(categories_serial_id = as.character(row_number())) -->
+
+
+<!-- data_heatmap <- sm_hod_quantiles %>%  -->
+<!--   pivot_longer(-c(1, 2), names_to = "quantile_prob", values_to = "quantile_val") %>%  -->
+<!--   left_join(categories_ref_cat) %>%  -->
+<!--   rename("category" = "value") %>%  -->
+<!--   select(-categories_serial_id) -->
+
+
+<!-- data_heatmap %>%  -->
+<!--   pivot_wider( names_from = quantile_prob,  -->
+<!--                values_from = quantile_val) %>%  -->
+<!--   ggplot(aes(x = category)) +  geom_ribbon(aes(ymin = `25%`,  -->
+<!--                   ymax = `75%`), fill = "lightblue") + -->
+<!--   geom_line(aes(y = `50%`)) + -->
+<!--   facet_wrap(~group_id, ncol = 1, scales = "free_y", labeller = "label_both") + -->
+<!--   theme_bw() + -->
+<!--     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) -->
+
+

@@ -37,6 +37,14 @@ readr::write_rds(elec_ts, "data/elec_ts.rds")
 elec_ts <- read_rds("data/elec_ts.rds")
 gap_df <- has_gaps(elec_ts)
 
+nogap <- gap_df %>% filter(.gaps==FALSE)
+
+
+elec_nogap <- elec_ts %>% 
+  filter(customer_id %in% nogap$customer_id)
+
+readr::write_rds(elec_nogap, "data/elec_nogap.rds")
+
 # sum(gap_df$.gaps) / NROW(gap_df)
 
 ## ---- count-gaps

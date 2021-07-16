@@ -1,5 +1,5 @@
 ---
-title: "Clustering real data with ten customers without iterations"
+title: "Clustering real data with 10 customers and choosing optimal number of clusters"
 output:
   bookdown::pdf_book:
     #base_format: rticles::asa_article
@@ -35,17 +35,13 @@ The data sets contain three columns `customer_id`, `reading_datetime` and `gener
 
 ```{r}
 sm <- gravitas::smart_meter10 
-sm_scaled <- sm %>%
-  group_by(customer_id) %>% 
-  dplyr::mutate(general_supply_kwh = scale(general_supply_kwh)) %>% 
-  ungroup()
 ```
 
 
-```{r raw-all, fig.cap="The raw time plots for demand shown for the entire observation period between 2012-2014 for 10 households (facets). The data is squeezed stopping us from seeing any behavioral patterns."}
+```{r raw-all, fig.cap="The raw time plots for demand shown for the entire observation period between 2012-2014 for ten households (facets). The data is squeezed stopping us from seeing any behavioral patterns."}
 library(lubridate)
 
-sm_scaled %>% 
+sm %>% 
   ggplot(aes(x = reading_datetime, y = general_supply_kwh)) +
   geom_line() +
   facet_wrap(~customer_id, ncol = 1, 
@@ -56,7 +52,7 @@ sm_scaled %>%
 ```
  
 
-```{r raw-sub, fig.cap="The raw plots for ten customers shown for Sept 2013-Oct 2013. The data is zoomed in and the y-scales made free to emphasize weekly, hourly or any behavior/patterns that they might have. There is some daily and weekly pattern in most households."}
+```{r raw-sub, fig.cap="The raw plots for ten customers shown for Sept 2013-Oct 2013. The data is zoomed in and the y-scales made free to emphasize weekly, hourly or any behavior/patterns that they might have. There is some daily and weekly pattern in all households except the 4th one, that has spikes which seem to occur at irregular intervals."}
 sm %>% 
   filter(year(reading_datetime) == 2013 &
            month(reading_datetime) %in% c(9, 10)) %>% 
@@ -75,11 +71,22 @@ sm %>%
 
 ```
 
+# Plots of distribution of data across categories of granularities
+
+The distribution of demand across different hours of the day observed for these five households through heatmaps (Figure \ref{fig:hod-deciles}) and quantile plots (Figure \ref{fig:hod-heatmap}). The following characterization is done to validate results of the clustering approach later on.
+
+```{r hod-box, fig.cap="The raw plots for ten households shown for Sept 2013-Oct 2013. The data is zoomed in to emphasize weekly, hourly or any behavior/patterns that they might have.", eval = FALSE}
+sm %>% 
+  create_gran("hour_day") %>% 
+  ggplot(aes(x = hour_day, y = general_supply_kwh)) + 
+  geom_boxplot() + 
+  facet_wrap(~customer_id, ncol = 1, scales = "free_y",
+             strip.position = "right") 
+```
 
 
-```{r hod}
-sm_hod <- gravitas::create_gran(sm_scaled, "hour_day") %>% 
-  mutate(customer_id = as.integer(customer_id))
+```{r}
+sm_hod <- gravitas::create_gran(sm, "hour_day")
 ```
 
 
@@ -105,13 +112,14 @@ sm_hod_quantiles <- map(nrow_sm, function(x){
    cell <- sm_hod_list[-1] %>% extract(x, y) %>% unlist()
    quantile(cell, prob = quantile_prob_val)
 })  %>% bind_rows(.id = "categories_serial_id")
-}) %>% bind_rows(.id = "customer_serial_id") %>% 
-  mutate(customer_serial_id = as.integer(customer_serial_id),
-         categories_serial_id = as.integer(categories_serial_id))
+}) %>% bind_rows(.id = "customer_serial_id")
+
+```
 
 
+```{r hod-heatmap, fig.cap="Heatmaps show deciles on the y-axis with customers on the x-axis with colors filled by the value of deciles and faceted by hours of the day. It again seems like all the households have gradual change in colors (almost for all hours) as we move to higher deciles except for the 4th household. "}
 categories_ref <- names(sm_hod_list)[-1] %>% as_tibble() %>% 
-  mutate(categories_serial_id = row_number())
+  mutate(categories_serial_id = as.character(row_number()))
 
 
 data_heatmap <- sm_hod_quantiles %>% 
@@ -119,31 +127,77 @@ data_heatmap <- sm_hod_quantiles %>%
   left_join(categories_ref) %>% 
   rename("category" = "value") %>% 
   select(-categories_serial_id) %>% 
-  mutate(category = as.numeric(category))
+  mutate(category = as.numeric(category)) 
 
 
+
+data_heatmap%>% 
+ggplot(aes(x= customer_serial_id, y = as.factor(quantile_prob))) +
+  geom_tile(aes(fill = quantile_val)) +
+  scale_fill_distiller(palette = "YlGnBu")+ 
+  facet_wrap(~category) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylab("deciles") +
+  xlab("customers")
 ```
 
-
-
-```{r hod-deciles, fig.cap = "The deciles plots for 10 households are shown for entire observation period across hours of the day. The y-scales are made free to allow us to see daily patterns for each households. The deciles for all households follow different shape as a result of different customer behavior."}
+```{r hod-deciles, fig.cap = "The deciles plots for ten households are shown for entire observation period across hours of the day. The y-scales are made free to allow us to see daily patterns for each households. The deciles for all households tend to show an increase in the morning and evening hours, although the hours differ. Except for the 90th decile, the deciles for the 4th household look pretty flat."}
 data_heatmap %>% 
   ggplot() + geom_line(aes(x=category, 
                            y = quantile_val, 
-                           color = quantile_prob)) + 
-  facet_wrap(~customer_serial_id, 
-             ncol = 1,
-             scales="free_y") + 
+                           color = quantile_prob)) + facet_wrap(~customer_serial_id, ncol = 1, scales="free_y",
+                                                                strip.position = "right") + 
   scale_color_brewer(palette = "Blues") + 
   #scale_y_log10() +
   theme_bw() +
   xlab("hours of the day") +
-  ylab("demand (in Kwh)") +
-    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0)))
+  ylab("demand (in Kwh)")
+```
+
+# Iterations of each customer (adding some random noise for each iteration)
+
+Iterations of each customer are considered by adding random noise ($N(0, \sigma^2)$, where $\sigma^2$ is very small relative to the the variance of the data). Figure \ref{fig:raw-iter} shows that raw plots of the simulated iterations to show that their structure is same as the parent data set.
+
+```{r}
+sample_seed <-  seq(100, 500, 100)
+ncust <- sm %>% distinct(customer_id)
+
+all_data_clust = map_dfr(seq_len(nrow(ncust)), function(x){
+  map(seq_len(length(sample_seed)), function(seed){
+     set.seed(sample_seed[seed])
+     data <- sm %>% as_tibble %>% filter(customer_id %in% ncust$customer_id[x])
+     nr = nrow(data)
+     
+     data1 <- data %>% 
+     mutate(customer_id = paste(customer_id, seed, sep = "-"),
+             general_supply_kwh = general_supply_kwh + rnorm(1, 0, 0.001))
+     data1
+}) %>% bind_rows(.id = "seed_id")
+}) %>% bind_rows(sm %>% as_tibble() %>% bind_cols(seed_id = "0")) %>% 
+  tsibble::as_tsibble(index = reading_datetime, key  = customer_id)
 ```
 
 
-```{r hod-list}
+
+```{r raw-iter, fig.cap = "Five iterations for each customer are considered by adding random noise $(N(0, \\sigma^2)$, where $\\sigma^2$ is very small relative to the the variance of the data. The raw plots for all simulated dataset is shown to make sure they look similar to the structure."}
+all_data_clust %>% 
+  ggplot(aes(x = reading_datetime, y = general_supply_kwh)) +
+  geom_line() +
+  facet_wrap(~customer_id,
+             strip.position = "right", nrow = 10) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  xlab("time") +
+  ylab("demand (in Kwh)")
+```
+  
+
+```{r}
+sm_hod <- gravitas::create_gran(all_data_clust, "hour_day")
+```
+
+
+```{r}
 sm_hod_list <- sm_hod %>% 
   as_tibble() %>% 
   select(customer_id, hour_day, general_supply_kwh) %>% 
@@ -158,7 +212,7 @@ lookup_tbl <- sm_hod_list %>%
 ```
 
 
-```{r hod-quantile}
+```{r}
 quantile_prob_val = seq(0.1, 0.9, 0.1)
 
 ncol_sm <- seq_len(ncol(sm_hod_list))[-ncol(sm_hod_list)]
@@ -175,7 +229,7 @@ sm_hod_quantiles <- map(nrow_sm, function(x){
 
 
 
-```{r hod-dist}
+```{r}
 sm_dist_data <- sm_hod_quantiles %>% 
   mutate(customer_serial_id = as.numeric(customer_serial_id)) %>% 
   pivot_longer(-c(1, 2), names_to = "quantile_prob", values_to = "quantile_val") %>% 
@@ -183,10 +237,6 @@ sm_dist_data <- sm_hod_quantiles %>%
   group_by(customer_serial_id, categories_serial_id) %>%
   nest() %>% 
   pivot_wider(names_from = categories_serial_id, values_from = data)
-
-sm_hod_quantiles %>% 
-  filter()
-
 ```
 
 ```{r JS}
@@ -195,7 +245,7 @@ sm_hod_quantiles %>%
 
 
 
-```{r hod-dist-mat}
+```{r}
 #ndata <- data_q %>% distinct(unique_data) %>% mutate(index = row_number())
 nrow_data <- nrow(sm_dist_data)
 ncol_data <-  ncol(sm_dist_data[-1])
@@ -230,9 +280,9 @@ rownames(dist_mat_format) <- lookup_tbl$customer_id
 
 ```
 
-# Clustering results
+# Dendogram
 
-The following figures show dendograms when we are using optimal number of clusters (k) from k = fpc::nselectboot(), k = 2, 3, 4 and 5. We observe that the $4^{th}$ household tend to get split as different clusters as increase the number of clusters.
+The following figures show dendograms when we are using optimal number of clusters (k) from k = fpc::nselectboot(). We observe that the $4^{th}$ household tend to get split as different clusters as increase the number of clusters.
 
 ```{r hc}
 d = stats::as.dist(dist_mat_format)
@@ -240,6 +290,7 @@ hc = stats::hclust(d,method="complete")
 plot(hc)
 ```
 
+# Multi-dimensional scaling
 
 ```{r mds-new}
 set.seed(12345)
@@ -256,7 +307,7 @@ koptimal = fpc::nselectboot(as.dist(dist_mat_format),
                         method = "complete",
                         clustermethod = disthclustCBI, 
                         classification = "averagedist",
-                        krange = 2:10)
+                        krange = 2:12)
 
 koptimal = koptimal$kopt
 
@@ -283,89 +334,72 @@ mds_plot_10
 ```
 Optimal number of clusters as defined by the _fpc::nselectboot_ is `r koptimal`.
 
+_k = 2_  
+
+```{r mds4}
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 2, border = 2:5)
+```
+
+
+_k = 3_
+```{r}
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 3, border = 2:5)
+```
+
+
+_k = 4_
+
+```{r}
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 4, border = 2:5)
+```
+
+_k = 5_
+
+```{r}
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 5, border = 2:6)
+```
+
+
+_k = 6_
+
+```{r}
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 6, border = 2:7)
+```
 
 _k = 7_
 
 ```{r}
 plot(hc, cex = 0.6)
-rect.hclust(hc, k = 5, border = 2:8)
+rect.hclust(hc, k = 7, border = 2:8)
+```
+
+_k = 8_
+
+```{r}
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 8, border = 2:9)
 ```
 
 
+_k = 9_
 
-# Cluster characterization
-
-The quartile deviation of different clusters are drawn. The shape of daily load curve is different for all of them. Across each cluster, customers should show different shape and within each cluster, customers should differ in size.
-
-```{r hod-heatmap, fig.cap="Heatmaps show deciles on the y-axis with customers on the x-axis with colors filled by the value of deciles and faceted by hours of the day. It again seems like all the households have gradual change in colors (almost for all hours) as we move to higher deciles except for the 4th household. "}
-quantile_prob_val = c(0.25, 0.5, 0.75)
-
-sm_hod <- gravitas::create_gran(sm, "hour_day") %>% 
-  mutate(customer_id = as.integer(customer_id))
-
-sm_hod_list <- sm_hod %>% 
-  as_tibble() %>% 
-  select(customer_id, hour_day, general_supply_kwh) %>% 
-  pivot_wider(names_from = hour_day,
-              values_from = general_supply_kwh)
-
-
-
-groups_ref <- groups %>% as_tibble %>% 
-              mutate(customer_serial_id = sm_hod_list$customer_id) %>% 
-             rename ("group" = "value")
-
-sm_hod_list_cat <-  sm_hod_list %>% left_join(groups_ref, by = c("customer_id" = "customer_serial_id")) %>% select(group, everything())
-  
-ncol_sm <- seq_len(ncol(sm_hod_list_cat[-c(1, 2)]))
-nrow_sm <- unique(sm_hod_list_cat$group)
-
-
-sm_hod_quantiles_cat <- map(nrow_sm, function(x){
-  map(ncol_sm, function(y){
-   cell <- sm_hod_list_cat%>% 
-     dplyr::filter(group == x) %>% 
-     select(-c(1, 2)) %>% 
-     extract(y) %>% 
-     unlist()
-   quantile(cell, prob = quantile_prob_val)
-})  %>% bind_rows(.id = "categories_serial_id")
-}) %>% bind_rows(.id = "group_id") %>% 
-  mutate(group_id = as.integer(group_id),
-         categories_serial_id = as.integer(categories_serial_id))
-
-categories_ref_cat <- names(sm_hod_list_cat)[-c(1, 2)] %>% as_tibble() %>% 
-  mutate(categories_serial_id = row_number())
-
-
-data_heatmap <- sm_hod_quantiles_cat %>% 
-  pivot_longer(-c(1, 2), names_to = "quantile_prob", values_to = "quantile_val") %>% 
-  left_join(categories_ref_cat) %>% 
-  rename("category" = "value") %>% 
-  select(-categories_serial_id) %>% 
-  mutate(category = as.numeric(category))
-
-# data_heatmap%>% 
-# ggplot(aes(x= as.factor(group_id), y = as.factor(quantile_prob))) +
-#   geom_tile(aes(fill = quantile_val)) +
-#   scale_fill_distiller(palette = "YlGnBu")+ 
-#   facet_wrap(~category) +
-#   theme(axis.text.x = element_text(angle = 90)) +
-#   ylab("deciles") +
-#   xlab("customers")
+```{r}
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 9, border = 2:10)
 ```
 
 
+_k = 10_
 
-```{r cluster-characterization}
-data_heatmap %>% 
-  pivot_wider( names_from = quantile_prob, 
-               values_from = quantile_val) %>% 
-  ggplot(aes(x = category)) +  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`), fill = "lightblue") +
-  geom_line(aes(y = `50%`)) +
-  facet_wrap(~group_id, ncol = 1, scales = "free_y", labeller = "label_both") +
-  theme_bw() +
-    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0)))
+```{r}
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 10, border = 2:11)
 ```
+
+
 

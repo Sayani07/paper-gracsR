@@ -34,47 +34,25 @@ Five households are considered for the following analysis from the SGSC data set
 The data sets contain three columns `customer_id`, `reading_datetime` and `general_supply_kwh`. They consist of half-hourly data from 2012-2014. Figure \ref{fig:raw-all} shows how the raw time plots for these five households look like. Since all the dataset looks squeezed on this linear time scale, Figure \ref{fig:raw-sub} shows how the raw plot looks for 2 months (Sept 2013 and Oct 2013).
 
 ```{r}
-sm <- gravitas::smart_meter10 
+
+elec_ts <- read_rds("../data/elec_ts.rds")
+
+set.seed(12345)
+
+sm_100 <- elec_ts %>%
+  as_tibble() %>% 
+  distinct(customer_id) %>%
+  slice_sample(n = 100)
+
+sm <- elec_ts %>% 
+  filter(customer_id %in% sm_100$customer_id) %>% 
+  ungroup()
+
 sm_scaled <- sm %>%
   group_by(customer_id) %>% 
   dplyr::mutate(general_supply_kwh = scale(general_supply_kwh)) %>% 
   ungroup()
 ```
-
-
-```{r raw-all, fig.cap="The raw time plots for demand shown for the entire observation period between 2012-2014 for 10 households (facets). The data is squeezed stopping us from seeing any behavioral patterns."}
-library(lubridate)
-
-sm_scaled %>% 
-  ggplot(aes(x = reading_datetime, y = general_supply_kwh)) +
-  geom_line() +
-  facet_wrap(~customer_id, ncol = 1, 
-             strip.position = "right") +
-  theme_bw() +
-  xlab("time") +
-  ylab("demand (in Kwh)")
-```
- 
-
-```{r raw-sub, fig.cap="The raw plots for ten customers shown for Sept 2013-Oct 2013. The data is zoomed in and the y-scales made free to emphasize weekly, hourly or any behavior/patterns that they might have. There is some daily and weekly pattern in most households."}
-sm %>% 
-  filter(year(reading_datetime) == 2013 &
-           month(reading_datetime) %in% c(9, 10)) %>% 
-  ggplot(aes(x = reading_datetime, y = general_supply_kwh)) +
-  geom_line() +
-  facet_wrap(~customer_id, ncol = 1, scales = "free_y", 
-             strip.position = "right") +
-  theme_bw()+
-  ylab("demand (in Kwh)") +
-  theme(panel.grid.major.x = element_blank()) +
-  scale_x_datetime("Date", date_labels = "%b %d",
-                   breaks = "1 week",
-                   date_minor_breaks = "1 day")  + 
-  theme(panel.grid.major.x =  element_line(colour = "#A9A9A9"),
-        panel.grid.minor.x =  element_line(colour = "#D3D3D3")) 
-
-```
-
 
 
 ```{r hod}
