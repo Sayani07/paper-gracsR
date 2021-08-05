@@ -61,9 +61,8 @@ read_chunk("R/simdata01.R")
 #   ungroup()
 # write_rds(sm, "../data/elec_nogap-100cust.rds")
 
-sm <- read_rds("../data/elec_nogap-100cust.rds")
+s
 ```
-
 
 
 ```{r hod}
@@ -214,7 +213,7 @@ rownames(dist_mat_format) <- lookup_tbl$customer_id
 # Clustering results
 
 
-```{r hc}
+```{r  <- }
 d = stats::as.dist(dist_mat_format)
 hc = stats::hclust(d,method="complete")
 plot(hc)

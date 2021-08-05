@@ -1,0 +1,146 @@
+---
+title: "Simulation for wpd algorithm"
+author: "Sayani Gupta"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(distributional)
+```
+
+```{r}
+T <- seq(0, 500, 1)
+g1 <- T %%2
+g2 <- T %%3
+
+g3 <- T %%4
+data <- tibble::tibble(T, g1, g2, g3)
+
+generate_dist <- function(x){
+  if(x==0) 
+    sim_dist <- distributional::dist_normal(0,1)
+  if(x==1)
+    sim_dist <- distributional::dist_normal(2,1)
+  if(x==2)
+    sim_dist <- distributional::dist_normal(4,1)
+  if(x==3)
+    sim_dist <- distributional::dist_normal(6,1)
+  return(sim_dist)
+}
+
+set.seed(12345)
+
+y <- data %>% group_split(g1)
+sim_data_g1 <- map(seq_len(length(y)), 
+      function(z){
+  univec =  y %>% magrittr::extract2(z,) %>% select(T, g1)
+  value = univec %>% distinct(g1) %>% pull(g1)
+  return_value = generate_dist(value) %>% distributional::generate(nrow(univec)) %>% unlist() %>% as_tibble() %>% set_names("value") %>% 
+    bind_cols(univec)
+  }) %>% bind_rows() %>% select(T, g1, value)
+
+g2_value = generate(dist_normal(mu = 0, sigma = 1), times = nrow(sim_data_g1)) %>% unlist() %>% as_tibble() %>% set_names("g2_value")
+
+g3_value = generate(dist_normal(mu = 2, sigma = 1), times = nrow(sim_data_g1)) %>% unlist() %>% as_tibble() %>% set_names("g3_value")
+                    
+
+total_data <- sim_data_g1 %>% 
+  arrange(T) %>% 
+  left_join(data) %>% 
+  rename("g1_value" = "value") %>% 
+  bind_cols(g2_value, g3_value) %>% 
+  select(T, g1, g2, g3, everything()) %>% 
+  group_by(g1, g2, g3) %>% 
+  mutate(sim_data = sum(g1_value, g2_value, g3_value))
+
+
+ggplot(total_data, aes(x = as.factor(g1), y = sim_data)) + geom_boxplot()
+ggplot(total_data, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot()
+ggplot(total_data, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot()
+
+```
+
+
+```{r}
+y <- data %>% group_split(g2)
+  
+sim_data_g2 <- map(seq_len(length(y)), 
+      function(z){
+  univec =  y %>% magrittr::extract2(z,) %>% select(T, g2)
+  value = univec %>% distinct(g2) %>% pull(g2)
+  return_value = generate_dist(value) %>% distributional::generate(nrow(univec)) %>% unlist() %>% as_tibble() %>% set_names("value") %>% 
+    bind_cols(univec)
+  }) %>% bind_rows() %>% select(T, g2, value)
+
+ggplot(sim_data_g2, aes(x = as.factor(g2), y = value)) + geom_boxplot()
+```
+
+
+```{r}
+y <- data %>% group_split(g3)
+  
+sim_data_g3 <- map(seq_len(length(y)), 
+      function(z){
+  univec =  y %>% magrittr::extract2(z,) %>% select(T, g3)
+  value = univec %>% distinct(g3) %>% pull(g3)
+  return_value = generate_dist(value) %>% distributional::generate(nrow(univec)) %>% unlist() %>% as_tibble() %>% set_names("value") %>% 
+    bind_cols(univec)
+  }) %>% bind_rows() %>% select(T, g3, value)
+
+ggplot(sim_data_g3, aes(x = as.factor(g3), y = value)) + geom_boxplot()
+```
+# sum up the normal distribution approach
+
+```{r}
+set.seed(12345)
+dist <- dist_normal(mu = c(0,4,4,8), sigma = 1)
+numbers <- generate(dist, times = 100)
+
+
+timeseries <- numbers%>% unlist() %>% matrix(ncol = 4, nrow = 100, byrow = FALSE) %>% t() %>% 
+  matrix(ncol=1, byrow = TRUE)
+
+timeseries <- as_tibble(timeseries) %>% set_names("value") %>% bind_cols(t = seq(0, 399, 1))
+ggplot(timeseries, aes(x = t, y = value)) + geom_line()
+
+
+t <- seq(0,399, 1)
+g1 <- t %%2
+g2 <- t %%3
+
+g3 <- t %%4
+data <- tibble::tibble(t, g1, g2, g3) %>% left_join(timeseries)
+
+ggplot(data, aes(x = as.factor(g1), y = value)) + geom_boxplot()
+ggplot(data, aes(x = as.factor(g2), y = value)) + geom_boxplot()
+ggplot(data, aes(x = as.factor(g3), y = value)) + geom_boxplot()
+
+```
+
+```{r}
+set.seed(12345)
+dist <- dist_normal(mu = c(0,2,4), sigma = 1)
+numbers <- generate(dist, times = 100)
+
+
+timeseries <- numbers%>% unlist() %>% matrix(ncol = 3, nrow = 100, byrow = FALSE) %>% t() %>% 
+  matrix(ncol=1, byrow = TRUE)
+
+timeseries <- as_tibble(timeseries) %>% set_names("value") %>% bind_cols(t = seq(0, 299, 1))
+ggplot(timeseries, aes(x = t, y = value)) + geom_line()
+
+
+t <- seq(0,299, 1)
+g1 <- t %%2
+g2 <- t %%3
+
+g3 <- t %%4
+data <- tibble::tibble(t, g1, g2, g3) %>% left_join(timeseries)
+
+ggplot(data, aes(x = as.factor(g1), y = value)) + geom_boxplot()
+ggplot(data, aes(x = as.factor(g2), y = value)) + geom_boxplot()
+ggplot(data, aes(x = as.factor(g3), y = value)) + geom_boxplot()
+```
+

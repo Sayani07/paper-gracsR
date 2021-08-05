@@ -1,12 +1,10 @@
 ---
 title: "Algorithm using wpd values for clustering 8 households"
-author: "Sayani Gupta"
-date: "13/07/2021"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,echo=FALSE, message=FALSE, warning = FALSE)
 ```
 
 ```{r load-lib}
@@ -72,57 +70,43 @@ data_clust = data_sig_filter %>%
 select(comb, id, wpd) %>% 
 pivot_wider(names_from = comb, values_from = wpd) 
 
-hc = stats::hclust(dist(data_clust[-1]),method="complete")
+hc = stats::hclust(dist(data_clust[-1], method="manhattan"),method="complete")
 #plot(hc)
 
 library(fpc)
-koptimal = fpc::nselectboot(dist(data_clust[-1]),
+koptimal = fpc::nselectboot(dist(data_clust[-1], method="manhattan"),
                         B = 50,
                         method = "complete",
                         clustermethod = disthclustCBI, 
                         classification = "averagedist",
-                        krange = 2:8)
+                        krange = 2:5)
 
 koptimal = koptimal$kopt
+koptimal
 
 groups <- cutree(hc, k=4) %>% as_tibble() %>% 
-mutate(id = data_clust$id)
+mutate(id = data_clust$id) 
+
+groups %>% 
+  dplyr::group_by(value) %>%  
+  summarise(n = n())
+
+data_wide <- data_clust %>% left_join(groups) %>%
+  rename("group" = "value") %>% 
+  mutate(group = as.factor(group)) %>% ungroup()
 
 ##----cluster-characterization
 
-data = data_clust %>% 
-left_join(groups)%>% 
-             rename ("group" = "value") %>% 
-             ungroup() %>% 
-             select(group, everything(), -id) %>% 
-             pivot_longer(-1, names_to = "comb", values_to = "wpd")
 
-data_order <- data %>% 
-  group_by(comb) %>% 
-  summarise(m = mean(wpd)) %>% 
-  arrange(desc(m))
-  
-data_median = data %>% 
-  group_by(group, comb) %>% 
-  summarize(wpd_med = median(wpd))
-
-data_pcp <- data_median %>% 
-mutate(group = as.character(group)) %>% 
-  left_join(data_order) %>% 
-  arrange(desc(m)) %>% 
-  pivot_wider(-4, 
-              names_from = comb, 
-              values_from = wpd_med) 
-             
-parcoord <- GGally::ggparcoord(data_pcp,
-                   columns = 2:ncol(data_pcp),
-                   groupColumn = 1,
+parcoord <- GGally::ggparcoord(data_wide,
+                   columns = 2:(ncol(data_wide)-1),
+                   groupColumn = "group",
                    showPoints = TRUE, 
                    title = "(c)",
                    alphaLines = 0.8,
                    scale = "globalminmax"
 ) + ggplot2::theme_bw() +
-  scale_color_viridis(discrete=TRUE) + 
+  scale_color_brewer(palette = "Dark2") + 
   ggplot2::theme(
     plot.title = ggplot2::element_text(size=10)
   )+
@@ -131,6 +115,51 @@ parcoord <- GGally::ggparcoord(data_pcp,
   xlab("") +
   ylab("wpd")
 
+
+# data = data_clust %>% 
+# left_join(groups)%>% 
+#              rename ("group" = "value") %>% 
+#              ungroup() %>% 
+#              select(group, everything(), -id) %>% 
+#              pivot_longer(-1, names_to = "comb", values_to = "wpd")
+# 
+# data_order <- data %>% 
+#   group_by(comb) %>% 
+#   summarise(m = mean(wpd)) %>% 
+#   arrange(desc(m))
+#   
+# data_median = data %>% 
+#   group_by(group, comb) %>% 
+#   summarize(wpd_med = median(wpd))
+# 
+# data_pcp <- data_median %>% 
+# mutate(group = as.character(group)) %>% 
+#   left_join(data_order) %>% 
+#   arrange(desc(m)) %>% 
+#   pivot_wider(-4, 
+#               names_from = comb, 
+#               values_from = wpd_med) 
+#              
+# parcoord <- GGally::ggparcoord(data_pcp,
+#                    columns = 2:ncol(data_pcp),
+#                    groupColumn = 1,
+#                    showPoints = TRUE, 
+#                    title = "(c)",
+#                    alphaLines = 0.8,
+#                    scale = "globalminmax"
+# ) + ggplot2::theme_bw() +
+#   scale_color_viridis(discrete=TRUE) + 
+#   ggplot2::theme(
+#     plot.title = ggplot2::element_text(size=10)
+#   )+
+#   ggplot2::theme(axis.text.y = ggplot2::element_text(angle = 0)) +
+#   theme(legend.position = "bottom") +
+#   xlab("") +
+#   ylab("wpd")
+```
+
+
+```{r}
 ##----read-orig-data
 
 elec <- read_rds(here("../paper-hakear/paper/data/elec_all-8.rds")) %>% 
@@ -171,10 +200,14 @@ rect.hclust(hc, k = 4, border = 2:7)
 
 elec_zoom
 parcoord
+
+ggpairs_nocolor <- ggpairs(data_wide, columns = 2:(ncol(data_wide)-1))
+ggpairs_nocolor
   
 sm_hod_dow <- elec %>% 
 gravitas::create_gran("hour_day") %>% 
-  gravitas::create_gran("day_week") 
+  gravitas::create_gran("day_week") %>% 
+    dplyr::mutate(kwh = scale(kwh))
 
 sm_hod_list <- sm_hod_dow %>% 
   as_tibble() %>% 
@@ -182,7 +215,7 @@ sm_hod_list <- sm_hod_dow %>%
   mutate(category = paste(hour_day, day_week, sep = "-")) %>% 
    select(group, category, kwh) %>% 
   pivot_wider(names_from = category,
-              values_from = kwh)
+              values_from = kwh) 
  
 
 quantile_prob_val = c(0.25, 0.5, 0.75)
@@ -195,7 +228,7 @@ quantile_prob_val = c(0.25, 0.5, 0.75)
      "hour_day",
   response = "kwh",
   plot_type = "quantile", nrow=1) +
-  scale_y_log10() +
+  #scale_y_log10() +
     ggtitle("Group 1")
   
   sm_hod_dow %>% 
@@ -204,7 +237,7 @@ quantile_prob_val = c(0.25, 0.5, 0.75)
      "hour_day",
   response = "kwh",
   plot_type = "quantile", nrow=1) +
-  scale_y_log10()+
+  #scale_y_log10()+
     ggtitle("Group 2")
   
   sm_hod_dow %>% 
@@ -213,7 +246,7 @@ quantile_prob_val = c(0.25, 0.5, 0.75)
      "hour_day",
   response = "kwh",
   plot_type = "quantile", nrow=1) +
-  scale_y_log10() +
+  #scale_y_log10() +
     ggtitle("Group 3")
   
   sm_hod_dow %>% 
@@ -222,7 +255,7 @@ quantile_prob_val = c(0.25, 0.5, 0.75)
      "hour_day",
   response = "kwh",
   plot_type = "quantile", nrow=1) +
-  scale_y_log10() +
+  #scale_y_log10() +
     ggtitle("Group 4")
 ```
 <!-- ncol_sm <- seq_len(ncol(sm_hod_list))[-ncol(sm_hod_list)] -->
@@ -270,4 +303,5 @@ quantile_prob_val = c(0.25, 0.5, 0.75)
 <!--   theme_bw() + -->
 <!--     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) -->
 
+```
 

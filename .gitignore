@@ -17,4 +17,5 @@ cache/*
 *.aux
 *.bbl
 *.blg
+*.rdb
 

@@ -95,7 +95,7 @@ sm_hod_list <- sm_hod_dow %>%
 
 
 ```{r}
-quantile_prob_val = seq(0.1, 0.9, 0.1)
+
 
 ncol_sm <- seq_len(ncol(sm_hod_list))[-ncol(sm_hod_list)]
 nrow_sm <- seq_len(nrow(sm_hod_list))

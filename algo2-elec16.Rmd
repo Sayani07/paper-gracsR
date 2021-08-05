@@ -149,7 +149,8 @@ parcoord <- GGally::ggparcoord(data_pcp,
                    showPoints = TRUE, 
                    title = "(c)",
                    alphaLines = 0.8,
-                   scale = "globalminmax"
+                   scale = "globalminmax", 
+                   order = "anyClass"
 ) + ggplot2::theme_bw() +
   scale_color_viridis(discrete=TRUE) + 
   ggplot2::theme(

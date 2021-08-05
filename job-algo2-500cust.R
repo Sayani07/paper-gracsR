@@ -1,5 +1,5 @@
 library(knitr)
-library(tidyverse)
+library(dplyr)
 library(lubridate)
 #library(lvplot)
 #library(ggridges)
@@ -8,8 +8,6 @@ library(gravitas)
 #library(ggpubr)
 library(readr)
 #library(kableExtra)
-library(distributional)
-#library(ggplot2)
 #library(sugrrants)
 #library(here)
 #library(patchwork)
@@ -19,8 +17,8 @@ library(distributional)
 
 
 ncust = 100 # number of sampled customers
-nperm = 2 # number of permutations for normalization
-nsamp = 2 # number of samples for threshold
+nperm = 200 # number of permutations for normalization
+nsamp = 200 # number of samples for threshold
 
 #take customers who do not have gaps in their data
 # elec_nogap <- read_rds("data/elec_nogap.rds")
@@ -31,31 +29,26 @@ nsamp = 2 # number of samples for threshold
 # write_rds(elec_nogap_2013, "data/elec_nogap_2013.rds")
 
 # elec_nogap_2013 <- read_rds("data/elec_nogap_2013.rds")
-# 
-# #just take 100 customers from them
+
+#just take 100 customers from them
 # set.seed(12345)
 # 
-# sm_500 <- elec_nogap_2013 %>%
-#   filter(!customer_id %in% elec$customer_id) %>% 
+# sm_100 <- elec_nogap_2013 %>%
 #   as_tibble() %>%
 #   distinct(customer_id) %>%
-#   slice_sample(n = 500)
-
-#elec <- read_rds("data/elec_nogap_2013_100.rds")
-
-# take data for those customers only for 2013
-# new_elec <- elec_nogap_2013 %>%
-#   filter(customer_id %in% sm_500$customer_id) %>%
+#   slice_sample(n = ncust)
+# 
+# # take data for those customers only for 2013
+# elec <- elec_nogap_2013 %>%
+#   filter(customer_id %in% sm_100$customer_id) %>%
 #   ungroup()
+# 
+# write_rds(elec, "data/elec_nogap_2013_100.rds")
 
-#write_rds(elec, "data/elec_nogap_2013_100.rds")
-#write_rds(new_elec, "data/elec_nogap_2013_500.rds")
-
-#elec <- read_rds("data/elec_nogap_2013_100.rds")
 elec <- read_rds("data/elec_nogap_2013_500.rds")
 cust_id <- unique(elec$customer_id)
-#scen <- as.numeric(commandArgs()[[6]])
-scen <- 2
+scen <- as.numeric(commandArgs()[[6]])
+#scen <- 2
 custj <- cust_id[scen]
 # consider harmonies which are generally significant for electricity data
 
@@ -86,5 +79,5 @@ harmonies <- read_rds("data/harmonies.rds")
                                nperm = nperm,
                                nsamp = nsamp
   ) %>% mutate(customer_id = cust)
-  write_rds(elec_select_harmony, paste0("data/elec_harmony-",scen,"-nogap.rds"))
+  write_rds(elec_select_harmony, paste0("data/algo2-500cust/elec_harmony-",scen,"-nogap.rds"))
 
