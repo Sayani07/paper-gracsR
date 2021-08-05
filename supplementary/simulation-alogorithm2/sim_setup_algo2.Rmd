@@ -144,7 +144,6 @@ p1
 
 ```
 
-# Five iterations of each design (changing seeds)
 
 ```{r}
 seed_len = seq(12345, 12348, 1)
@@ -310,7 +309,7 @@ comp <- data.frame(pc$x[,1:2])
 #plot(comp, pch=16, col=rgb(0,0,0,0.5))
 
 hc = stats::hclust(dist(comp))
-groups <- cutree(hc, k=5) %>% as_tibble() %>% bind_cols(comp) %>% 
+groups <- cutree(hc, k=koptimal) %>% as_tibble() %>% bind_cols(comp) %>% 
   mutate(value = as.character(value))
 library(RColorBrewer)
 library(scales)
