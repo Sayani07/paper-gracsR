@@ -360,7 +360,13 @@ _Same scale_
 (p1 +ylim(0,3) + p2 +ylim(0,3))/ (p3+ylim(0,3) + p4+ylim(0,3))
 (p5 +ylim(0,3) + p6 +ylim(0,3))/ (p7+ylim(0,3) + p8+ylim(0,3))
 ```
+
+
+
+
 # PCA based clustering
+
+
 
 ```{r}
 pc <- prcomp(data_pcp[c(-1,-2)], center = F, scale = F)
@@ -387,4 +393,72 @@ data_pcp_all %>%
 ```
 
 One dimensional scale since PC1 explains almost all variation?
+
+#Group2: n=24
+```{r}
+group2_data <- sm_hod_dow %>% 
+  as_tibble() %>% 
+  filter(group==2) %>% 
+  group_by(day_week, hour_day, customer_id) %>% 
+  summarise(median_kwh = median(general_supply_kwh)) 
+
+
+group2_data%>% 
+  ungroup() %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+  ggplot(aes(x = as.integer(hour_day), y = median_kwh)) +
+  geom_line(size = 0.5) +
+  facet_grid(customer_id~day_week, scales = "free_y") + theme_minimal()+ theme(strip.text.y = element_text(size = 5))
+```
+
+#Group4: n=24
+```{r}
+group2_data <- sm_hod_dow %>% 
+  as_tibble() %>% 
+  filter(group==4) %>% 
+  group_by(day_week, hour_day, customer_id) %>% 
+  summarise(median_kwh = median(general_supply_kwh)) 
+
+
+group2_data%>% 
+  ungroup() %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+  ggplot(aes(x = as.integer(hour_day), y = median_kwh)) +
+  geom_line(size = 0.5) +
+  facet_grid(customer_id~day_week, scales = "free_y") + theme_minimal()+ theme(strip.text.y = element_text(size = 5))
+```
+
+#Group5: n=18
+```{r}
+group2_data <- sm_hod_dow %>% 
+  as_tibble() %>% 
+  filter(group==5) %>% 
+  group_by(day_week, hour_day, customer_id) %>% 
+  summarise(median_kwh = median(general_supply_kwh)) 
+
+
+group2_data%>% 
+  ungroup() %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+  ggplot(aes(x = as.integer(hour_day), y = median_kwh)) +
+  geom_line(size = 0.5) +
+  facet_grid(customer_id~day_week, scales = "free_y") + theme_minimal()+ theme(strip.text.y = element_text(size = 5))
+```
+
+#Group6: n=23
+```{r}
+group2_data <- sm_hod_dow %>% 
+  as_tibble() %>% 
+  filter(group==6) %>% 
+  group_by(day_week, hour_day, customer_id) %>% 
+  summarise(median_kwh = median(general_supply_kwh)) 
+
+
+group2_data%>% 
+  ungroup() %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+  ggplot(aes(x = as.integer(hour_day), y = median_kwh)) +
+  geom_line(size = 0.5) +
+  facet_grid(customer_id~day_week, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5))
+```
 

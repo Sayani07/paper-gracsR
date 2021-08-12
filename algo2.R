@@ -68,6 +68,8 @@ library(tictoc)
 #tic()
 elec_split = elec %>% group_split(customer_id)
 
+harmonies_acro <- harmonies %>% mutate(facet_variable=NA, facet_levels=NA) %>% distinct()
+
 elec_select_harmony = parallel::mclapply(1:100, function(x){
   
   data_id <-  elec_split %>% magrittr::extract2(x) %>% 
@@ -78,13 +80,14 @@ elec_select_harmony = parallel::mclapply(1:100, function(x){
                            harmony_tbl = harmonies_acro,
                            response = general_supply_kwh,
                            nperm = 200,
-                           nsamp = 200
-  )
+                           nsamp = 2
+  ) %>% mutate(customer_id = unique(data_id$customer_id))
   #write_rds(k, paste("data/elec_harmony-100-nogap.rds"))
 }, mc.cores = parallel::detectCores() - 1, mc.preschedule = FALSE, mc.set.seed = FALSE)
 #toc()
-
+elec_harmny <- elec_select_harmony %>% bind_rows() 
 write_rds(elec_select_harmony, paste("data/elec_harmony-100-nogap.rds"))
+# write_rds(elec_harmny, paste("data/elec_harmony-100-nogap-onegran.rds"))
 
 # ## ---- elec_select_harmony-8
 # elec_harmony_all <- elec_select_harmony %>% 
