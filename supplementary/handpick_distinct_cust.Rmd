@@ -396,98 +396,9 @@ group_data_orig %>%
              labeller = "label_context") + 
   theme_minimal()+ theme(strip.text.y = element_text(size = 5)) + scale_y_log10() + scale_x_continuous(breaks=seq(1, 31, 7), minor_breaks = seq(1, 31, 7))+ 
        theme(strip.text.x = element_text(size = 6, margin = margin(b = 0, t = 0))) + xlab("dom")
-
-# data_pick %>% 
-#   create_gran("day_month") %>% 
-#   ungroup() %>% left_join(data_pcp_ge2 %>% select(customer_id, group)) %>% 
-#   #filter(group==3) %>% 
-#   #filter(customer_id %in% c(8148781, 10703878)) %>% 
-#   ggplot(aes(x = as.factor(day_month), y = general_supply_kwh)) +
-#   geom_boxplot(size = 0.5) +
-#   facet_wrap(group~customer_id,
-#              labeller = "label_value",
-#              scales = "free_y") + 
-#   theme_minimal()+ theme(strip.text.y = element_text(size = 5)) + scale_y_log10()
 ```
 
-
-
-
-
-
-<!-- #Group2: n=24 -->
-<!-- ```{r} -->
-<!-- group2_data <- sm_hod_dow %>%  -->
-<!--   as_tibble() %>%  -->
-<!--   filter(group==2) %>%  -->
-<!--   group_by(day_week, hour_day, customer_id) %>%  -->
-<!--   summarise(median_kwh = median(general_supply_kwh))  -->
-
-
-<!-- group2_data%>%  -->
-<!--   ungroup() %>%  -->
-<!--   #filter(customer_id %in% c(8148781, 10703878)) %>%  -->
-<!--   ggplot(aes(x = as.integer(hour_day), y = median_kwh)) + -->
-<!--   geom_line(size = 0.5) + -->
-<!--   facet_grid(customer_id~day_week, scales = "free_y") + theme_minimal()+ theme(strip.text.y = element_text(size = 5)) -->
-<!-- ``` -->
-
-
-
-
-
-<!-- #Group4: n=24 -->
-<!-- ```{r} -->
-<!-- group2_data <- sm_hod_dow %>%  -->
-<!--   as_tibble() %>%  -->
-<!--   filter(group==4) %>%  -->
-<!--   group_by(day_week, hour_day, customer_id) %>%  -->
-<!--   summarise(median_kwh = median(general_supply_kwh))  -->
-
-
-<!-- group2_data%>%  -->
-<!--   ungroup() %>%  -->
-<!--   #filter(customer_id %in% c(8148781, 10703878)) %>%  -->
-<!--   ggplot(aes(x = as.integer(hour_day), y = median_kwh)) + -->
-<!--   geom_line(size = 0.5) + -->
-<!--   facet_grid(customer_id~day_week, scales = "free_y") + theme_minimal()+ theme(strip.text.y = element_text(size = 5)) -->
-<!-- ``` -->
-
-<!-- #Group5: n=18 -->
-<!-- ```{r} -->
-<!-- group2_data <- sm_hod_dow %>%  -->
-<!--   as_tibble() %>%  -->
-<!--   filter(group==5) %>%  -->
-<!--   group_by(day_week, hour_day, customer_id) %>%  -->
-<!--   summarise(median_kwh = median(general_supply_kwh))  -->
-
-
-<!-- group2_data%>%  -->
-<!--   ungroup() %>%  -->
-<!--   #filter(customer_id %in% c(8148781, 10703878)) %>%  -->
-<!--   ggplot(aes(x = as.integer(hour_day), y = median_kwh)) + -->
-<!--   geom_line(size = 0.5) + -->
-<!--   facet_grid(customer_id~day_week, scales = "free_y") + theme_minimal()+ theme(strip.text.y = element_text(size = 5)) -->
-<!-- ``` -->
-
-<!-- #Group6: n=23 -->
-<!-- ```{r} -->
-<!-- group2_data <- sm_hod_dow %>%  -->
-<!--   as_tibble() %>%  -->
-<!--   filter(group==6) %>%  -->
-<!--   group_by(day_week, hour_day, customer_id) %>%  -->
-<!--   summarise(median_kwh = median(general_supply_kwh))  -->
-
-
-<!-- group2_data%>%  -->
-<!--   ungroup() %>%  -->
-<!--   #filter(customer_id %in% c(8148781, 10703878)) %>%  -->
-<!--   ggplot(aes(x = as.integer(hour_day), y = median_kwh)) + -->
-<!--   geom_line(size = 0.5) + -->
-<!--   facet_grid(customer_id~day_week, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5)) -->
-<!-- ``` -->
-
-```{r}
+```{r, eval = FALSE}
 data_clust = data_sig_filter %>% 
 select(comb, customer_id, wpd) %>% 
 pivot_wider(names_from = comb, values_from = wpd) %>% 
@@ -534,7 +445,7 @@ data_pcp <- data %>% pivot_wider(
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 # ggpairs_nocolor <- ggpairs(data_pcp, columns = 3:7)
 # ggpairs_nocolor
 
@@ -559,6 +470,8 @@ ggpairs_nocolor + ggpairs_color
 ```
 
 
+# Algorithm discussed today
 
-
+- take significant granularities
+- consider sum of JS distances between each categories of each cyclic granularity
 
