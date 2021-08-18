@@ -1,11 +1,5 @@
----
-title: Algorithm 4
 
-preamble: >
-  \setlength {\marginparwidth }{2cm}
-  \usepackage{mathtools,amssymb,booktabs,longtable,todonotes,amsthm}
-  \def\mod{~\text{mod}~}
----
+# Algorithm 4
 
 _Description:_  
 Extension of Algorithm 1, but also accounts for consecutive differences of categories. If granularity $g$ has $g_{lev}$, it considers the $g_{lev -1}$ consecutive pairwise categories as variables. So we have a data frame with customers as rows, consecutive pairwise categories as variables and the JS distance computed on them for each customer as the cell value. Distances between the customers are computed by considering euclidean distances between the variables. 
