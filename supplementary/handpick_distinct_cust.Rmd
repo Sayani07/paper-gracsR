@@ -139,7 +139,8 @@ data_heatmap %>%
   ggplot(aes(x = as.integer(category))) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`), fill = "lightblue") +
-  geom_line(aes(y = `50%`), size = 0.7) +
+  #geom_line(aes(y = `50%`), size = 0.7) +
+  geom_smooth(aes(y = `50%`), size = 0.7) +
   facet_wrap(design~customer_id, 
              scales = "free_y", 
              labeller = "label_value",
@@ -382,7 +383,87 @@ group_data_orig %>%
              scales = "free_y") + 
   theme_minimal()+ theme(strip.text.y = element_text(size = 5)) + scale_y_log10() + scale_x_continuous(breaks=seq(1, 31, 7), minor_breaks = seq(1, 31, 7))+ 
        theme(strip.text.x = element_text(size = 6, margin = margin(b = 0, t = 0)))+ xlab("dom")
+
+### new quantile scale
+quantile_prob_val = c(0.25, 0.5, 0.75)
+  
+sm_hod <- gravitas::create_gran(data_pick, "day_month")
+
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(design, customer_id, day_month, general_supply_kwh) %>% 
+  pivot_wider(names_from = day_month,
+              values_from = general_supply_kwh)
+
+# groups_ref <- unique(data_pick$design) %>% as_tibble %>% 
+#               mutate(customer_serial_id = sm_hod_list$customer_id) 
+
+# sm_hod_list_cat <-  sm_hod_list %>% left_join(groups_ref, by = c("customer_id" = "customer_serial_id")) %>% select(group, everything())
+  
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, 2)]))
+nrow_sm <- 1:18
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, 2)) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_val)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id") 
+
+
+ref_cat <- names(sm_hod_list)[-c(1, 2)] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>% 
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id, design))
+  
+
 # 
+# %>% 
+#   left_join(categories_ref_cat) %>% 
+#   rename("category" = "value") %>% 
+#   select(-categories_serial_id) %>% 
+#   mutate(category = as.numeric(category))
+
+
+
+data_heatmap %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  #geom_line(aes(y = `50%`), size = 0.7) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") +
+  geom_smooth(aes(y = `50%`)) +
+   geom_smooth(aes(y = `25%`), se = FALSE) +
+   geom_smooth(aes(y = `75%`), se = FALSE) +
+  scale_y_log10()
+
+
+
+
+### all same scale 
 group_data_orig$customer_id <-factor(group_data_orig$customer_id, levels = elec_pred_wo_scaled$customer_id)
 
 group_data_orig %>% 
