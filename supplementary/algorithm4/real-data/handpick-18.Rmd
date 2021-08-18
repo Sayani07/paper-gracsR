@@ -1,0 +1,178 @@
+---
+title: "Hand picking similar behaving group of customers to check clustering results"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, echo = FALSE, message=FALSE, warning=FALSE)
+library(readr)
+library(tidyverse)
+library(gravitas)
+library(tsibble)
+library(parallel)
+library(magrittr)
+library(GGally)
+library(knitr)
+library(patchwork)
+library(caret)
+```
+
+
+```{r read-data}
+data <- read_rds("../../../data/elec_nogap_2013_100.rds")
+```
+
+```{r hand-pick}
+quantile_prob_val = seq(0.1, 0.9, 0.1)
+
+# data_pick <- data %>% 
+#   filter(customer_id %in% 
+#                    c(10538785, 8530300, 8717912, 8171227, 10108102, 10767756, 10895401, 10704368, 9397229, 8281474))
+
+data_pick_onepeak <- 
+  data %>% 
+  filter(customer_id %in% c(8485375,10690820,10859082,8486921, 10208124,8198401))%>% mutate(design = 1)
+
+data_pick_threepeak <- 
+  data %>% 
+  filter(customer_id %in% c(11013154, 10046512, 8637773, 8952846, 8196501, 8627007))%>% mutate(design = 3)
+
+data_pick_twopeak <- 
+  data %>% 
+  filter(customer_id %in% c(8181071, 8955520, 8640839, 10469265, 10538785, 10895401))%>% mutate(design = 2)
+
+data_pick <- bind_rows(data_pick_onepeak, data_pick_twopeak, data_pick_threepeak)
+
+elec_harmony_all <- read_rds("../../../data/elec_harmony-100-nogap-new.rds")%>%
+  filter(customer_id %in% data_pick$customer_id)
+
+elec_harmony_hod <- elec_harmony_all %>% filter(x_variable=="hour_day") %>% 
+  mutate(wpd = round(wpd, 2))
+
+group2_data <- data_pick %>% 
+  create_gran("hour_day") %>% 
+  as_tibble() %>% 
+  group_by(design, hour_day, customer_id) %>% 
+  summarise(median_kwh = median(general_supply_kwh)) 
+
+```
+
+
+```{r characterize, fig.cap= "Median (black) and quartile deviation (blue region) of hourly demand drawn for few customers showing similar behaviors. Roughly speaking, Design 1 has one evening peak, Design 2 has two peaks and Design 3 has three peaks in a day. Each of design 1, 2 and 3 have six similar behaving customers resulting to 18 time series. We want our clustering results to group each of the designs together."}
+quantile_prob_val = c(0.25, 0.5, 0.75)
+  
+sm_hod <- gravitas::create_gran(data_pick, "hour_day")
+
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(design, customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh)
+
+# groups_ref <- unique(data_pick$design) %>% as_tibble %>% 
+#               mutate(customer_serial_id = sm_hod_list$customer_id) 
+
+# sm_hod_list_cat <-  sm_hod_list %>% left_join(groups_ref, by = c("customer_id" = "customer_serial_id")) %>% select(group, everything())
+  
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, 2)]))
+nrow_sm <- 1:18
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, 2)) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_val)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id") 
+
+
+ref_cat <- names(sm_hod_list)[-c(1, 2)] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>% 
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id, design))
+  
+
+# 
+# %>% 
+#   left_join(categories_ref_cat) %>% 
+#   rename("category" = "value") %>% 
+#   select(-categories_serial_id) %>% 
+#   mutate(category = as.numeric(category))
+
+
+
+data_heatmap %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  #geom_smooth(aes(y = `50%`)) +
+  geom_line(aes(y = `50%`), size = 0.7) +
+    facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")
+
+
+
+data_heatmap %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  geom_smooth(aes(y = `50%`)) +
+  #geom_line(aes(y = `50%`), size = 0.7, color = "orange") +
+    facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")
+```
+```{r,echo = TRUE}
+#data_pick <- data_pick %>% filter(!(customer_id %in% c(8485375, 8952846)))
+library(gracsr)
+v2 <- suppressWarnings(
+  dist_pairwise_clust(data_pick, "hour_day", 
+                   response = "general_supply_kwh",
+                   quantile_prob_val = c(0.5, 0.75))) 
+v3 <- suppressWarnings(
+  dist_pairwise_clust(data_pick, "day_month",
+                   response = "general_supply_kwh", 
+                   quantile_prob_val = c(0.5, 0.75))) 
+
+data_dist <- v %>%
+    pivot_wider(
+  names_from = customer_to,
+values_from = dist) %>%
+rename("customer_id" = "customer_from")
+```
+
+
+```{r}
+d = as.dist(v3[,-1])
+hc = stats::hclust(d,method="complete")
+
+groups <- tibble(group = cutree(hc, k=3), customer_id = v2$customer_id)
+groups %>% group_by(group) %>% summarise(n=n())
+groups %>% filter(group==1)
+groups %>% filter(group==2)
+groups %>% filter(group==3)
+```
