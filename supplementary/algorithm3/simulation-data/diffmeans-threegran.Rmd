@@ -13,6 +13,8 @@ library(tidyverse)
 library(knitr)
 library(readr)
 library(GGally)
+library(tsibble)
+library(gravitas)
 ```
 
 # _Simulation design_
@@ -148,14 +150,14 @@ p4 <- ggplot(data_design_4, aes(x = as.factor(g3), y = value)) + geom_boxplot() 
 ```{r all-design}
 bind_data <- bind_rows(data_design_1, data_design_2, data_design_3, data_design_4, .id = "design") %>% mutate(design = paste("design", design, sep = "-"))
 
-p1 <- ggplot(bind_data, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+p1 <- ggplot(bind_data %>% filter(design!="design-2"), aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0))) 
-p2 <- ggplot(bind_data, aes(x = as.factor(g1), y = value)) + geom_boxplot(width=0.5) + xlab("g1") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+p2 <- ggplot(bind_data %>% filter(design!="design-2"), aes(x = as.factor(g1), y = value)) + geom_boxplot(width=0.5) + xlab("g1") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
-p3 <- ggplot(bind_data, aes(x = as.factor(g2), y = value)) + geom_boxplot(width=0.5) + xlab("g2") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+p3 <- ggplot(bind_data %>% filter(design!="design-2"), aes(x = as.factor(g2), y = value)) + geom_boxplot(width=0.5) + xlab("g2") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
 
-p4 <- ggplot(bind_data, aes(x = as.factor(g3), y = value)) + geom_boxplot(width=0.5) +
+p4 <- ggplot(bind_data %>% filter(design!="design-2"), aes(x = as.factor(g3), y = value)) + geom_boxplot(width=0.5) +
   xlab("g3") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0))) +stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
 
@@ -172,7 +174,7 @@ p1
 
 
 ```{r}
-seed_len = seq(12345, 12399, 1)
+seed_len = seq(12345, 12349, 1)
 bind_data_iter <- map(seq_len(length(seed_len)), function(x){
 set.seed(seed_len[x])
 data_design_1 <- generate_design(t = 299, mu = 0)
@@ -184,154 +186,51 @@ bind_data <- bind_rows(data_design_1, data_design_2, data_design_3, data_design_
 
 ```
 
-<!-- Cross-check -->
-<!-- data = bind_data_iter %>% filter(design == "design-2", seed_id == 5) -->
-<!-- p2 <- ggplot(data, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw() + facet_wrap(~design, ncol = 1) -->
-<!-- p3 <- ggplot(data, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw() + facet_wrap(~design, ncol = 1) -->
-<!-- p4 <- ggplot(data, aes(x = as.factor(g3), y = value)) + geom_boxplot() + -->
-<!-- xlab("g3") + theme_bw() + facet_wrap(~design, ncol = 1) -->
-<!-- (p2 + p3 + p4) -->
-
-
-
-<!-- ```{r} -->
-<!-- p2 <- ggplot(data, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw() -->
-<!-- p3 <- ggplot(data, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw() -->
-<!-- p4 <- ggplot(data, aes(x = as.factor(g3), y = value)) + geom_boxplot() + -->
-<!-- xlab("g3") + theme_bw()  -->
-<!-- (p2 + p3 + p4) -->
-<!-- ``` -->
-
 
 ```{r}
-harmony_tbl <- tibble(facet_variable = NA, x_variable = c("g1", "g2", "g3"),
-                      x_levels = c(2, 3, 4), facet_levels = NA)
+
+quantile_prob_val = seq(0.1,0.9,0.1)
+bind_data_iter <- bind_data_iter %>% mutate(
+  customer_id  = paste0(design,"-s-", seed_id)) %>%
+   as_tsibble(key=customer_id,index=t) %>% 
+  filter(design!="design-2")
+
+library(gracsr)
+v2 <- suppressWarnings(
+  scaled_dist_gran(bind_data_iter, "g1", 
+                   response = "value",
+                   quantile_prob_val = quantile_prob_val))%>% rename("dist_g1" = "dist")
+
+v3 <- suppressWarnings(
+  scaled_dist_gran(bind_data_iter, "g2", 
+                   response = "value",
+                   quantile_prob_val = quantile_prob_val)) %>% rename("dist_g2" = "dist")
+
+v4 <- suppressWarnings(
+  scaled_dist_gran(bind_data_iter, "g3", 
+                   response = "value",
+                   quantile_prob_val = quantile_prob_val)) %>% rename("dist_g3" = "dist")
+
+data_dist <- v3 %>% 
+  left_join(v2) %>%
+  left_join(v4) %>% 
+  mutate(dist = dist_g1 + dist_g2 +dist_g3) %>% 
+    pivot_wider(-c(3, 4, 5), 
+                names_from = customer_to,
+              values_from = dist) %>%
+  rename("customer_id" = "customer_from")
+
 ```
 
-```{r wpd-table}
-data <- bind_data_iter %>% mutate(data_id = paste(design, seed_id, sep = "-"))
-bind_data_iter <- tsibble::as_tsibble(data, index = t, key = "data_id")
-  
-data_wpd <- map(seq_len(length(unique(bind_data_iter$data_id))),
-    function(y){
-      z = unique(bind_data_iter$data_id)
-      data_sub <- bind_data_iter %>% filter(data_id==z[y])
-        elec_select_harmony = hakear::select_harmonies(data_sub,
-                               harmony_tbl = harmony_tbl,
-                               response = value,
-                               nperm = 200
-  ) %>% mutate(data_id = unique(data_sub$data_id)) %>% unnest()
-    }) %>% bind_rows()
+```{r groups}
+d = stats::as.dist(data_dist[,-1])
+hc = stats::hclust(d,method="complete")
 
-#write_csv(data_wpd, "data_wpd.rds")
-```
-
-# Table of wpd across designs and wpd
-
-```{r data-wide}
-
-data_wide <- data_wpd %>% select(x_variable, wpd, data_id) %>% 
-  pivot_wider(names_from = x_variable, values_from = wpd)
-data_wide %>% kable()
-
-ggpairs_nocolor <- ggpairs(data_wide, columns = 2:4)
-
-rownames(data_wide) = data_wide$data_id
-
-hc = stats::hclust(dist(data_wide[-1], method = "manhattan"),method="complete")
-
-
-library(fpc)
-koptimal = fpc::nselectboot(dist(data_wide[-1], method="manhattan"),
-                        B = 500,
-                        method = "complete",
-                        clustermethod = disthclustCBI, 
-                        classification = "averagedist",
-                        krange = 2:8)
-
-koptimal = koptimal$kopt
-```
-
-# Clustering of designs
-
-```{r}
-  groups <- cutree(hc, k=4) %>% as_tibble() %>% 
-mutate(data_id = data_wide$data_id) %>% rename("group" = "value") 
-    
-  groups %>% kable()
-  
-data_wide_group <- data_wide %>% left_join(groups)  %>% 
-  mutate(group_id = as.factor(group))
-
-parcoord <- GGally::ggparcoord(data_wide_group,
-                   columns = 2:ncol(data_wide),
-                   groupColumn = "group_id",
-                   showPoints = TRUE, 
-                   title = "(c)",
-                   alphaLines = 0.8,
-                   scale = "globalminmax", 
-                   order = "anyClass"
-) + ggplot2::theme_bw() +
-  scale_color_brewer(palette = "Dark2") + 
-  ggplot2::theme(
-    plot.title = ggplot2::element_text(size=10)
-  )+
-  ggplot2::theme(axis.text.y = ggplot2::element_text(angle = 0)) +
-  theme(legend.position = "bottom") +
-  xlab("") +
-  ylab("wpd")
-parcoord
-ggpairs_nocolor
-  # ggpairs_color <- ggscatmat(data_wide, columns=2:4, color = "group") +
-  # scale_colour_brewer(palette="Set2")
-```
-
-
-# PCA based clustering
-
-```{r, eval = FALSE}
-pc <- prcomp(data_wide_group[c(2, 3, 4)], center = F, scale = F)
-
-# First two principal componentsafc
-comp <- data.frame(pc$x[,1:2])
-
-#plot(comp, pch=16, col=rgb(0,0,0,0.5))
-
-hc = stats::hclust(dist(comp))
-groups <- cutree(hc, k=koptimal) %>% as_tibble() %>% bind_cols(comp) %>% 
-  mutate(value = as.character(value))
-library(RColorBrewer)
-library(scales)
-groups %>% ggplot(aes(x=PC1, y = PC2)) + geom_point(aes(color = value)) +
-  scale_color_brewer(palette = "Dark2") + theme_bw()
-```
-
-
-```{r}
-data_plot <- left_join(data_wide_group,  bind_data_iter %>% distinct(design, data_id)) %>%
-  mutate(pred_group = case_when(
-    group == 1 ~"design-1",
-    group == 2 ~"design-2",
-    group == 3 ~"design-3",
-    group == 4 ~"design-4"
-  )) %>% 
-  mutate(pred_group = as.factor(pred_group),
-         design = as.factor(design)
-  )
-
-
-xtab <- confusionMatrix(data_plot$design, data_plot$pred_group)
-
-
-data_plot %>%  ggplot(aes(x=g1, y=g2)) + geom_point(aes(colour = design)) +
-  scale_color_brewer(palette = "Dark2")
-
-left_join(data_wide_group,  bind_data_iter %>% distinct(design, data_id)) %>%  ggplot(aes(x=g1, y=g3)) + geom_point(aes(colour = design)) +
-  scale_color_brewer(palette = "Dark2")
-
-left_join(data_wide_group,  bind_data_iter %>% distinct(design, data_id)) %>%  ggplot(aes(x=g2, y=g3)) + geom_point(aes(colour = design)) +
-  scale_color_brewer(palette = "Dark2")
-
-
+groups <- tibble(group = cutree(hc, k=3), customer_id = data_dist$customer_id)
+groups %>% group_by(group) %>% summarise(n=n())
+groups %>% filter(group==1)
+groups %>% filter(group==2)
+groups %>% filter(group==3)
+#groups %>% filter(group==4)
 ```
 
