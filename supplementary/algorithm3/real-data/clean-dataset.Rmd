@@ -1,0 +1,684 @@
+---
+title: "Hand picking similar behaving group of customers to check clustering results"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, echo = FALSE, message=FALSE, warning=FALSE, cache = TRUE)
+library(readr)
+library(tidyverse)
+library(gravitas)
+library(tsibble)
+library(parallel)
+library(magrittr)
+library(GGally)
+library(knitr)
+library(patchwork)
+library(caret)
+```
+
+
+```{r read-data}
+data <- read_rds("../../../data/elec_nogap_2013_100.rds")
+quantile_prob_clust = seq(0.1, 0.9, 0.1)
+quantile_prob_graph = c(0.25, 0.5, 0.75)
+```
+
+A clean dataset is obtained by choosing minimum sum of JS distances from each typical customer based on $quantiles = seq(0.1, 0.9, 0.1)$.
+The objective is to see if the clustering algorithm then picks the least distant ones as the group.
+
+## only hod
+
+```{r clean-dataset}
+
+# library(gracsr)
+# v2 <- suppressWarnings(
+#   scaled_dist_gran(data, "hour_day", 
+#                    response = "general_supply_kwh",
+#                    quantile_prob_val = quantile_prob_val)) %>% rename("dist_hod" = "dist")
+# 
+# 
+# 
+# v2 <- v2 %>% arrange(dist_hod) %>% filter(customer_from!=customer_to)
+# 
+# write_rds(v2, "../../../data/scaled_dist_nogap_2013_100.rds")
+v2 <- read_rds("../../../data/scaled_dist_nogap_2013_100.rds")
+
+data_pick_onepeak <- v2 %>% 
+  arrange(dist_hod) %>%
+  filter(customer_from == 8198401) %>% 
+  arrange(dist_hod) %>% 
+  head(n=5) 
+
+data_pick_twopeak <- v2 %>% 
+  arrange(dist_hod) %>%
+  filter(customer_from == 8181071) %>% 
+  arrange(dist_hod) %>%
+  head(n=5)
+  
+data_pick_threepeak <- v2 %>% 
+  arrange(dist_hod) %>%
+  filter(customer_from == 11013154) %>% 
+  arrange(dist_hod) %>% 
+   head(n=5)
+
+data_pick_cust <- bind_rows(
+  c(data_pick_onepeak$customer_from, data_pick_onepeak$customer_to) %>% unique() %>% as_tibble() %>% set_names("customer_id"),
+                       c(data_pick_twopeak$customer_from, data_pick_twopeak$customer_to) %>% unique() %>% as_tibble() %>% set_names("customer_id"),
+                       c(data_pick_threepeak$customer_from, data_pick_threepeak$customer_to) %>% unique() %>% as_tibble() %>% set_names("customer_id"), .id = "design") %>% 
+  filter(!(customer_id %in% c(8171227, 10183908)))
+                       
+data <- read_rds("../../../data/elec_nogap_2013_100.rds")
+
+data_pick <- data %>% filter(customer_id %in% data_pick_cust$customer_id) %>% select(customer_id,reading_datetime, general_supply_kwh) %>% left_join(data_pick_cust)
+
+
+write_csv(data_pick_cust, "../../../data/data_pick_cust_clean.rds")
+```
+
+
+
+```{r characterize-15cust, fig.cap= "Median (black) and quartile deviation (blue region) of hourly demand drawn for few customers showing similar behaviors. Roughly speaking, Design 1 has one evening peak, Design 2 has two peaks and Design 3 has three peaks in a day. Each of design 1, 2 and 3 have six similar behaving customers resulting to 18 time series. We want our clustering results to group each of the designs together."}
+
+sm_hod <- gravitas::create_gran(data_pick, "hour_day")
+
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(design, customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh)
+
+  
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, 2)]))
+nrow_sm <- seq_len(nrow(sm_hod_list))
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, 2)) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_graph)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id") 
+
+
+ref_cat <- names(sm_hod_list)[-c(1, 2)] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>%
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id, design))
+  
+
+data_heatmap %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  geom_line(aes(y = `50%`), size = 0.7) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 5) +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")
+```
+## Do they look similar on the transformed scale?
+
+```{r transformed-scale}
+data_pick_scaled <- data_pick %>%
+    group_by(customer_id) %>%
+    dplyr::mutate(general_supply_kwh =  stats::qqnorm(general_supply_kwh, plot.it=FALSE)$x) %>%
+    ungroup()
+
+sm_hod <- gravitas::create_gran(data_pick_scaled, "hour_day")
+
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(design, customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh)
+
+  
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, 2)]))
+nrow_sm <- seq_len(nrow(sm_hod_list))
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, 2)) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_graph)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id") 
+
+
+ref_cat <- names(sm_hod_list)[-c(1, 2)] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>%
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id, design))
+  
+
+data_heatmap %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  geom_line(aes(y = `50%`), size = 0.7) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 5) +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")
+```
+
+
+## only hod 
+### Does hod as the only variable correctly identifies the groups?
+
+```{r hod-only,echo = TRUE}
+#quantile_prob_val = c(0.5, 0.75)
+#data_pick <- data_pick %>% filter(!(customer_id %in% c(8485375, 8952846)))
+library(gracsr)
+v2 <- suppressWarnings(
+  scaled_dist_gran(data_pick, "hour_day", 
+                   response = "general_supply_kwh",
+                   quantile_prob_val = quantile_prob_clust)) %>% rename("dist_hod" = "dist")
+v3 <- suppressWarnings(
+  scaled_dist_gran(data_pick, "day_month",
+                   response = "general_supply_kwh", 
+                   quantile_prob_val = quantile_prob_clust)) %>% rename("dist_dom" = "dist")
+
+data_dist <- v3 %>% 
+  left_join(v2) %>%
+  mutate(dist = dist_hod + dist_dom) %>% 
+    pivot_wider(-c(3, 4), 
+                names_from = customer_to,
+              values_from = dist) %>%
+  rename("customer_id" = "customer_from")
+```
+
+
+```{r clustering-result}
+d = stats::as.dist(data_dist[,-1])
+hc = stats::hclust(d,method="ward.D")
+
+groups <- tibble(group = cutree(hc, k=3), customer_id = data_dist$customer_id)
+groups %>% group_by(group) %>% summarise(n=n())
+#groups %>% filter(group==1)
+#groups %>% filter(group==2)
+#groups %>% filter(group==3)
+
+
+data_heatmap_new <- data_heatmap %>% left_join(groups)
+
+data_heatmap_new$group = as.factor(data_heatmap_new$group)
+
+data_heatmap_new %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  geom_line(aes(y = `50%`, color = group), size = 0.7) +
+  facet_wrap(group~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 5) +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") +
+  scale_color_brewer(palette = "Dark2")
+```
+
+
+## hod + dom
+### Is the clustering sensitive to nuisance parameter?
+
+
+```{r hod-dom,echo = TRUE}
+#quantile_prob_val = c(0.5, 0.75)
+#data_pick <- data_pick %>% filter(!(customer_id %in% c(8485375, 8952846)))
+library(gracsr)
+v2 <- suppressWarnings(
+  scaled_dist_gran(data_pick, "hour_day", 
+                   response = "general_supply_kwh",
+                   quantile_prob_val = quantile_prob_clust)) %>% rename("dist_hod" = "dist")
+v3 <- suppressWarnings(
+  scaled_dist_gran(data_pick, "day_month",
+                   response = "general_supply_kwh", 
+                   quantile_prob_val = quantile_prob_clust)) %>% rename("dist_dom" = "dist")
+
+data_dist <- v3 %>% 
+  left_join(v2) %>%
+  mutate(dist = dist_hod + dist_dom) %>% 
+    pivot_wider(-c(3, 4), 
+                names_from = customer_to,
+              values_from = dist) %>%
+  rename("customer_id" = "customer_from")
+```
+
+
+```{r clustering-result-hod-dom}
+d = stats::as.dist(data_dist[,-1])
+hc = stats::hclust(d,method="ward.D")
+
+groups <- tibble(group = cutree(hc, k=3), customer_id = data_dist$customer_id)
+groups %>% group_by(group) %>% summarise(n=n())
+#groups %>% filter(group==1)
+#groups %>% filter(group==2)
+#groups %>% filter(group==3)
+
+
+
+
+data_heatmap_new <- data_heatmap %>% left_join(groups)
+
+data_heatmap_new$group = as.factor(data_heatmap_new$group)
+
+data_heatmap_new %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  geom_line(aes(y = `50%`, color = group), size = 0.7) +
+  facet_wrap(group~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 5) +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") +
+  scale_color_brewer(palette = "Dark2")
+```
+
+# All 100 customers
+### Running it on all 100 and making 10 clusters. Do they have sufficiently different shapes?
+### Variable importance
+
+```{r hod-100cust,echo = TRUE}
+# library(gracsr)
+# v2 <- suppressWarnings(
+#   scaled_dist_gran(data, "hour_day", 
+#                    response = "general_supply_kwh",
+#                    quantile_prob_val = quantile_prob_clust)) %>% rename("dist_hod" = "dist")
+
+#write_rds(v2, "../../../data/scaled_dist_100clust_deciles.rds")
+v2 <- read_rds("../../../data/scaled_dist_100clust_deciles.rds")
+
+
+
+data_dist <- v2 %>%
+  mutate(dist = dist_hod) %>% 
+    pivot_wider(-c(3, 4), 
+                names_from = customer_to,
+              values_from = dist) %>%
+  rename("customer_id" = "customer_from")
+
+
+cust_ref <- bind_cols(customer_id=data_dist$customer_id, row = seq_len(nrow(data_dist)))
+
+cust_rm_outlier <-   cust_ref %>% filter(!(row %in% c(73, 82, 79, 97, 25, 91)))
+
+v3 <- v2%>% 
+  filter(customer_from %in% cust_rm_outlier$customer_id,
+         customer_to %in% cust_rm_outlier$customer_id)
+    
+
+data_dist <- v3 %>%
+  mutate(dist = dist_hod) %>% 
+    pivot_wider(-c(3, 4), 
+                names_from = customer_to,
+              values_from = dist) %>%
+  rename("customer_id" = "customer_from")
+
+
+
+
+```
+
+
+```{r hod-100cust-clustering}
+d = stats::as.dist(data_dist[,-1])
+hc = stats::hclust(d,method="ward.D")
+
+library(fpc)
+# koptimal = fpc::nselectboot(as.dist(data_dist[,-1]),
+#                         B = 5000,
+#                         method = "ward.D",
+#                         clustermethod = disthclustCBI, 
+#                         classification = "averagedist",
+#                         krange = 2:20)
+# 
+# koptimal = koptimal$kopt
+
+groups <- tibble(group = cutree(hc, k=10), customer_id = data_dist$customer_id)
+groups %>% group_by(group) %>% summarise(n=n())
+
+data <- read_rds("../../../data/elec_nogap_2013_100.rds")
+data <- data %>% left_join(groups) 
+
+sm_hod <- gravitas::create_gran(data, "hour_day")
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(customer_id, hour_day, general_supply_kwh, group) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh)
+
+
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, 2)]))
+nrow_sm <- unique(sm_hod_list$group)
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(group == group[x]) %>% 
+     select(-c(1, 2)) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_graph)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "group_serial_id") 
+
+
+ref_cat <- names(sm_hod_list)[-c(1, 2)] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- unique(sm_hod_list$group) %>% as_tibble()%>% set_names("group")  %>% 
+    mutate(group_serial_id = as.character(row_number()))
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(group_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>% 
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "group_serial_id") %>% 
+  select(group_serial_id, categories_serial_id, category, everything())
+
+# data_heatmap_100 <- sm_quantiles_ref %>% 
+#  left_join(data %>% distinct(customer_id))
+# 
+
+sm_quantiles_ref$group = as.factor(sm_quantiles_ref$group)
+
+sm_quantiles_ref %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  geom_line(aes(y = `50%`), size = 0.7) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value") +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") +
+  scale_color_brewer(palette = "Dark2") + scale_color_brewer(palette = "Dark2")
+```
+# Split these groups to see if the shapes of individual customers in a group is the same
+
+```{r all100}
+data <- read_rds("../../../data/elec_nogap_2013_100.rds")
+
+sm_hod <- gravitas::create_gran(data, "hour_day")
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh)
+
+
+
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, 2)]))
+nrow_sm <- 1:100
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, 2)) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_graph)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id") 
+
+
+ref_cat <- names(sm_hod_list)[-c(1, 2)] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>% 
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap_100 <- sm_quantiles_ref %>% 
+ left_join(data %>% distinct(customer_id))
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==1) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+    ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5)) +
+  xlab("hour-day") +
+  ggtitle("Group-2")
+
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==2) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+    ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5)) +
+  xlab("hour-day") +
+  ggtitle("Group-2")
+#+   geom_smooth(size = 0.5, alpha = 0.5)
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==3) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+   ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5)) +
+  xlab("hour-day") +
+  ggtitle("Group-3")
+#+   geom_smooth(size = 0.5, alpha = 0.5)
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==4) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+    ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5))+
+  xlab("hour-day") +
+  ggtitle("Group-4")
+#+ geom_smooth(size = 0.5, alpha = 0.5)
+
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==5) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+   ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5)) +
+  xlab("hour-day") +
+  ggtitle("Group-5")
+#+geom_smooth(size = 0.5, alpha = 0.5)
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==6) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+    ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5))+
+  xlab("hour-day") +
+  ggtitle("Group-6")
+#+ geom_smooth(size = 0.5, alpha = 0.5)
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==7) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+   ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5))+
+  xlab("hour-day") +
+  ggtitle("Group-7")
+#+  geom_smooth(size = 0.5, alpha = 0.5)
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==8) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+    ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5))+
+  xlab("hour-day") +
+  ggtitle("Group-8")
+#+ geom_smooth(size = 0.5, alpha = 0.5)
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==9) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+   ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5))+
+  xlab("hour-day") +
+  ggtitle("Group-9")
+#+geom_smooth(size = 0.5, alpha = 0.5)
+
+data_heatmap_100 %>% 
+  left_join(groups) %>% 
+  filter(group==10) %>% 
+  #filter(customer_id %in% c(8148781, 10703878)) %>% 
+  ggplot(aes(x = as.integer(category))) +
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") + 
+  geom_line(size = 0.5, aes(y = `50%`)) +
+  facet_wrap(~customer_serial_id, scales = "free_y") + theme_minimal() + theme(strip.text.y = element_text(size = 5))+
+  xlab("hour-day") +
+  ggtitle("Group-10")
+#+ geom_smooth(size = 0.5, alpha = 0.5) +
+```
+
+
+
+
+
+
+# Which variables are important for this clustering
+
+I can do a ggpairs or parallel coordinate plot for this.
+```{r}
+
+data_pcp <- data_heatmap_100 %>% 
+  left_join(groups)  %>% 
+  select(customer_id, group, category, `50%`) %>% 
+  mutate(category = as.factor(as.integer(category))) %>% 
+  pivot_wider(names_from = category, values_from = `50%`) %>% 
+  mutate(group = as.factor(group))
+
+
+
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 3:ncol(data_pcp),
+                   groupColumn = "group",
+                   showPoints = FALSE, 
+                   alphaLines = 0.8,
+                   order = "allClass",
+                   scale = "globalminmax"
+) + ggplot2::theme_bw() +
+  #scale_color_brewer(palette = "Dark2") + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd") 
+
+ggpairs_color <- ggscatmat(data_pcp, columns=3:ncol(data_pcp)) +
+  scale_colour_brewer(palette="Set2") + theme(legend.position = "bottom")
+parcoord
+```
+
+```{r}
+ggpairs_color
+```
+
+```{r}
+pc <- prcomp(data_pcp[c(-1,-2)], center = F, scale = F)
+summary(pc)
+# First two principal componentsafc
+comp <- data.frame(pc$x[,1:2])
+data_pcp_all <- data_pcp %>% bind_cols(comp)
+
+library(RColorBrewer)
+library(scales)
+data_pcp_all %>% ggplot(aes(x=PC1, y = PC2)) + geom_point(aes(color = group)) +
+  #scale_color_brewer(palette = "Dark2") +
+   theme_bw() + theme(legend.position = "bottom")
+
+```
+
+
+
+# See if month_year works for your case
+# Try with two granularities
+

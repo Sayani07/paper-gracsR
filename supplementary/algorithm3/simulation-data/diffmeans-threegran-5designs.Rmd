@@ -1,0 +1,211 @@
+---
+title: "Simulation with algorithm 2"
+author: "Sayani Gupta"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,echo=FALSE, message=FALSE, warning = FALSE)
+library(patchwork)
+library(distributional)
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(readr)
+library(GGally)
+library(tsibble)
+library(gravitas)
+```
+
+# _Simulation design_
+
+Three circular granularities g1, g2 and g3 are considered with levels 2, 3 and 4 respectively. Many time series with 600 observations are created using the five designs below, each of which is iterated four times. We anticipate to have five clusters, each with four time series conforming to the same design, once we execute the clustering. 
+
+# _Algorithm_
+Compute wpd for each granularity.The distance matrix is then computed with 20 time series as cases and three granularities as variables. Manhattan distances are computed and then hierarchical clustering is applied on them.
+
+
+```{r tab-gran}
+design = c("design-1", "design-2", "design-3", "design-4", "design-5")
+g1 = c("no", "yes" , "no", "yes", "yes")
+g2 = c("no", "no" , "yes", "no", "yes")
+g3 = c("no", "yes" , "no", "yes", "yes")
+table <- tibble(design, g1, g2, g3) %>% kable()
+table
+```
+
+
+```{r}
+t <- seq(0,299, 1)
+
+generate_design <-  function (t = NULL, 
+                           mu = NULL){
+t <- seq(0, t, 1)
+g1 <- t %%2
+g2 <- t %%3
+g3 <- t %%4
+
+# design2 (change across g2 only)
+mu = mu
+len_mu <- length(mu)
+len_obs <-  length(t)/length(mu)
+dist <- dist_normal(mu = mu, sigma = 1)
+numbers <- generate(dist, times = floor(len_obs))
+
+timeseries <- numbers%>% unlist() %>% matrix(ncol = len_mu, nrow = len_obs, byrow = FALSE) %>% t() %>% 
+  matrix(ncol=1, byrow = TRUE)
+
+timeseries <- as_tibble(timeseries) %>% 
+  set_names("value") %>%
+  bind_cols(t %>% as_tibble()) %>% 
+  set_names(c("value", "t"))
+
+ data <- tibble::tibble(t, g1, g2, g3) %>% left_join(timeseries)
+ data
+}
+
+set.seed(12345)
+data_design_1 <- generate_design(t = 599, mu = 0)
+data_design_2 <- generate_design(t = 599, mu = c(0, 2))
+data_design_3 <- generate_design(t = 599, mu = c(0, 2, 4))
+data_design_4 <- generate_design(t = 599, mu = c(0, 2, 4, 6))
+data_design_5 <- generate_design(t = 599, mu = c(0, 2, 4, 6, 8, 10))
+```
+
+<!-- # Design1 -->
+```{r design-null, eval = FALSE}
+p1 <- ggplot(data_design_1, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw() 
+p2 <- ggplot(data_design_1, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw()
+p3 <- ggplot(data_design_1, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw() 
+p4 <- ggplot(data_design_1, aes(x = as.factor(g3), y = value)) + geom_boxplot() +
+  xlab("g3") + theme_bw()
+
+(p1 /(p2 + p3 + p4)) 
+```
+
+<!-- # Design2 -->
+```{r design1, eval = FALSE}
+p1 <- ggplot(data_design_2, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw()
+p2 <- ggplot(data_design_2, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw()
+p3 <- ggplot(data_design_2, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw()
+p4 <- ggplot(data_design_2, aes(x = as.factor(g3), y = value)) + geom_boxplot() +
+  xlab("g3") + theme_bw()
+
+(p1 /(p2 + p3 + p4)) 
+```
+
+<!-- # Design3 -->
+
+```{r design2, eval = FALSE}
+p1 <- ggplot(data_design_3, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw()
+p2 <- ggplot(data_design_3, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw()
+p3 <- ggplot(data_design_3, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw()
+p4 <- ggplot(data_design_3, aes(x = as.factor(g3), y = value)) + geom_boxplot() +
+  xlab("g3") + theme_bw()
+
+(p1 /(p2 + p3 + p4)) 
+```
+
+<!-- # Design4 -->
+
+```{r design3, eval = FALSE}
+p1 <- ggplot(data_design_4, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw()
+p2 <- ggplot(data_design_4, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw()
+p3 <- ggplot(data_design_4, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw()
+p4 <- ggplot(data_design_4, aes(x = as.factor(g3), y = value)) + geom_boxplot() +
+  xlab("g3") + theme_bw()
+
+(p1 /(p2 + p3 + p4)) 
+
+```
+
+
+# Raw plots
+```{r all-design}
+bind_data <- bind_rows(data_design_1, data_design_2, data_design_3, data_design_4,data_design_5, .id = "design") %>% mutate(design = paste("design", design, sep = "-"))
+
+p1 <- ggplot(bind_data, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0))) 
+p2 <- ggplot(bind_data, aes(x = as.factor(g1), y = value)) + geom_boxplot(width=0.5) + xlab("g1") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
+p3 <- ggplot(bind_data, aes(x = as.factor(g2), y = value)) + geom_boxplot(width=0.5) + xlab("g2") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
+
+p4 <- ggplot(bind_data, aes(x = as.factor(g3), y = value)) + geom_boxplot(width=0.5) +
+  xlab("g3") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0))) +stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
+
+p1
+```
+
+
+# Designs (Distribution of simulated data across different granularities)
+
+```{r, out.height="100%"}
+(p2+p3+p4)
+
+```
+
+
+```{r}
+seed_len = seq(12345, 12348, 1)
+bind_data_iter <- map(seq_len(length(seed_len)), function(x){
+set.seed(seed_len[x])
+data_design_2 <- generate_design(t = 599, mu = c(0, 2))
+data_design_3 <- generate_design(t = 599, mu = c(0, 2, 4))
+data_design_4 <- generate_design(t = 599, mu = c(0, 2, 4, 6))
+data_design_1 <- generate_design(t = 599, mu = 0)
+data_design_5 <- generate_design(t = 599, mu = c(0, 2, 4, 6, 8, 10))
+bind_data <- bind_rows(data_design_1, data_design_2, data_design_3, data_design_4,data_design_5, .id = "design") %>% mutate(design = paste("design", design, sep = "-"))
+}) %>% bind_rows(.id = "seed_id")
+```
+
+
+```{r}
+
+quantile_prob_val = seq(0.1,0.9,0.1)
+bind_data_iter <- bind_data_iter %>% mutate(
+  customer_id  = paste0(design,"-s-", seed_id)) %>%
+   as_tsibble(key=customer_id,index=t)
+
+library(gracsr)
+v2 <- suppressWarnings(
+  scaled_dist_gran(bind_data_iter, "g1", 
+                   response = "value",
+                   quantile_prob_val = quantile_prob_val))%>% rename("dist_g1" = "dist")
+
+v3 <- suppressWarnings(
+  scaled_dist_gran(bind_data_iter, "g2", 
+                   response = "value",
+                   quantile_prob_val = quantile_prob_val)) %>% rename("dist_g2" = "dist")
+
+v4 <- suppressWarnings(
+  scaled_dist_gran(bind_data_iter, "g3", 
+                   response = "value",
+                   quantile_prob_val = quantile_prob_val)) %>% rename("dist_g3" = "dist")
+
+data_dist <- v3 %>% 
+  left_join(v2) %>%
+  left_join(v4) %>% 
+  mutate(dist = dist_g1 + dist_g2 +dist_g3) %>% 
+    pivot_wider(-c(3, 4, 5), 
+                names_from = customer_to,
+              values_from = dist) %>%
+  rename("customer_id" = "customer_from")
+
+```
+
+```{r groups}
+d = stats::as.dist(data_dist[,-1])
+hc = stats::hclust(d,method="complete")
+
+groups <- tibble(group = cutree(hc, k=5), customer_id = data_dist$customer_id)
+groups %>% group_by(group) %>% summarise(n=n())
+groups %>% filter(group==1)
+groups %>% filter(group==2)
+groups %>% filter(group==3)
+groups %>% filter(group==4)
+groups %>% filter(group==5)
+#groups %>% filter(group==4)
+```
+

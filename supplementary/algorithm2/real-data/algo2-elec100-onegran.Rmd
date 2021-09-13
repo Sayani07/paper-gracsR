@@ -33,7 +33,7 @@ library(viridis)
 ```{r allplot, message=FALSE, warning=FALSE, echo = FALSE}
 
 ##----harmony-all
-elec_harmony_all <- read_rds("../data/elec_harmony-100-nogap-onegran.rds")
+elec_harmony_all <-read_rds("../../../data/elec_harmony-100-nogap-onegran.rds")
 
 select_split <- str_split(elec_harmony_all$select_harmony, " ", simplify = TRUE)[,2]
 
@@ -291,3 +291,4 @@ data_heatmap %>%
   facet_wrap(~group_id, ncol = 1, scales = "free_y", labeller = "label_both") +
   theme_bw() +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0)))
+```

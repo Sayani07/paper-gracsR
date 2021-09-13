@@ -19,7 +19,7 @@ library(caret)
 
 
 ```{r read-data}
-data <- read_rds("../data/elec_nogap_2013_100.rds")
+data <- read_rds("../../../data/elec_nogap_2013_100.rds")
 ```
 
 ```{r hand-pick}
@@ -43,7 +43,7 @@ data_pick_twopeak <-
 
 data_pick <- bind_rows(data_pick_onepeak, data_pick_twopeak, data_pick_threepeak)
 
-elec_harmony_all <- read_rds("../data/elec_harmony-100-nogap-new.rds")%>%
+elec_harmony_all <- read_rds("../../../data/elec_harmony-100-nogap-new.rds")%>%
   filter(customer_id %in% data_pick$customer_id)
 
 elec_harmony_hod <- elec_harmony_all %>% filter(x_variable=="hour_day") %>% 
@@ -169,32 +169,32 @@ group2_data%>%
 ```{r allplot, message=FALSE, warning=FALSE, echo = FALSE}
 
 ##----harmony-all
-# elec <- read_rds("../data/elec_nogap_2013_100.rds") %>% filter(customer_id %in% data_pick$customer_id)
-# 
-# elec_split = elec %>% group_split(customer_id)
-# harmonies <- read_rds("../../paper-hakear/paper/data/harmonies.rds")
-# 
-# harmonies_acro <- harmonies %>% mutate(facet_variable=NA, facet_levels=NA) %>% distinct()
-# 
-# elec_select_harmony = parallel::mclapply(1:18, function(x){
-#   
-#   data_id <-  elec_split %>% magrittr::extract2(x) %>% 
-#     as_tsibble(index = reading_datetime)
-# 
-#   
-#   k = hakear::select_harmonies(data_id,
-#                            harmony_tbl = harmonies_acro,
-#                            response = general_supply_kwh,
-#                            nperm = 200,
-#                            nsamp = 2
-#   ) %>% mutate(customer_id = unique(data_id$customer_id))
-#   #write_rds(k, paste("data/elec_harmony-100-nogap.rds"))
-# }, mc.cores = parallel::detectCores() - 1, mc.preschedule = FALSE, mc.set.seed = FALSE)
-# #toc()
-# elec_harmny <- elec_select_harmony %>% bind_rows() 
-# write_rds(elec_harmny, paste("../data/elec_harmony-100-nogap-new.rds"))
+elec <- read_rds("../../../data/elec_nogap_2013_100.rds") %>% filter(customer_id %in% data_pick$customer_id)
+
+elec_split = elec %>% group_split(customer_id)
+harmonies <- read_rds("../../../../paper-hakear/paper/data/harmonies.rds")
+
+harmonies_acro <- harmonies %>% mutate(facet_variable=NA, facet_levels=NA) %>% distinct()
+
+elec_select_harmony = parallel::mclapply(1:18, function(x){
+
+  data_id <-  elec_split %>% magrittr::extract2(x) %>%
+    as_tsibble(index = reading_datetime)
 
 
+  k = hakear::select_harmonies(data_id,
+                           harmony_tbl = harmonies_acro,
+                           response = general_supply_kwh,
+                           nperm = 200,
+                           nsamp = 200
+  ) %>% mutate(customer_id = unique(data_id$customer_id))
+    #write_rds(k, paste("data/elec_harmony-100-nogap.rds"))
+}, mc.cores = parallel::detectCores() - 1, mc.preschedule = FALSE, mc.set.seed = FALSE)
+#toc()
+elec_harmny <- elec_select_harmony %>% bind_rows()
+ write_rds(elec_harmny, paste("../../../data/elec_harmony-100-nogap-new-rerun.rds"))
+
+f = read_rds("../../../data/elec_harmony-100-nogap-new.rds")
 
 select_split <- str_split(elec_harmony_all$select_harmony, " ", simplify = TRUE)[,2]
 

@@ -71,6 +71,7 @@ group2_data <- data_pick %>%
 #   ggplot(aes(x = as.integer(hour_day), y = median_kwh)) +
 #   geom_line(size = 0.5) +
 #   facet_wrap(~customer_id, scales = "free_y") + theme_minimal()+ theme(strip.text.y = element_text(size = 5))
+
 ```
 
 
@@ -147,6 +148,323 @@ data_heatmap %>%
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")
 ```
 # quantile_prob_val = c(0.5, 0.75)
+
+
+```{r scaled-data}
+
+data_pick_scaled <- data_pick %>%
+    group_by(customer_id) %>%
+    dplyr::mutate(kwh_scaled = stats::qqnorm(general_supply_kwh, plot.it=FALSE)$x) %>%
+    ungroup()
+    
+quantile_prob_val = c(0.25, 0.5, 0.75)
+  
+#sm_hod_scaled <- gravitas::create_gran(data_pick_scaled, "hour_day")
+
+sm_hod_all <- data_pick %>% 
+bind_cols(data_pick_scaled %>% as_tibble() %>% select(kwh_scaled)) %>% 
+  rename("kwh" = "general_supply_kwh") %>% 
+gravitas::create_gran("hour_day") %>% 
+  pivot_longer(c(5, 11), names_to = "kwh_type", values_to = "kwh_value")
+
+
+sm_hod_all %>%
+filter(design ==1) %>%
+ggplot(aes(x = kwh_value, y = hour_day, fill = kwh_type)) +
+ggridges::geom_density_ridges(alpha = 0.5) +
+facet_wrap(~customer_id, scales = "free_x") +
+  stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.5) +
+    coord_flip() +
+  theme(legend.position = "bottom")
+
+
+
+sm_hod_all %>%
+filter(customer_id %in% c(8181071)) %>%
+ggplot(aes(x = kwh_value, y = hour_day), fill = "blue") +
+ggridges::geom_density_ridges(alpha = 0.5) +
+facet_grid(customer_id~kwh_type, scales = "free_x") +
+  stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.5, color = "blue") +
+    #coord_flip() +
+  theme(legend.position = "bottom")
+
+sm_hod_all %>%
+filter(customer_id %in% c(11013154)) %>%
+ggplot(aes(x = kwh_value, y = hour_day), fill = "blue") +
+ggridges::geom_density_ridges(alpha = 0.5) +
+facet_grid(customer_id~kwh_type, scales = "free_x") +
+  stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.5, color = "blue") +
+    #coord_flip() +
+  theme(legend.position = "bottom")
+
+quantile_q2 <-  function(x){
+  y = quantile(x, probs = c(0.5))
+  #c(y[1], y[2]) %>% as_tibble() %>% bind_cols(names(y)) %>% set_names(c("quant_value", "quantile"))
+}
+
+
+quantile_q1 <-  function(x){
+  y = quantile(x, probs = c(0.25))
+  #c(y[1], y[2]) %>% as_tibble() %>% bind_cols(names(y)) %>% set_names(c("quant_value", "quantile"))
+}
+
+
+quantile_q3 <-  function(x){
+  y = quantile(x, probs = c(0.75))
+  #c(y[1], y[2]) %>% as_tibble() %>% bind_cols(names(y)) %>% set_names(c("quant_value", "quantile"))
+}
+
+
+# sm_hod_all %>%
+# filter(customer_id %in% c(8955520)) %>%
+# ggplot(aes(x = kwh_value, y = hour_day), fill = "blue") +
+# ggridges::geom_density_ridges(alpha = 0.5) +
+# facet_grid(customer_id~kwh_type, scales = "free_x") +
+#   ggridges::stat_density_ridges(quantile_lines = TRUE, quantiles = 0.9) + stat_summary(
+#     fun = quantile_q2,
+#     geom = 'line',
+#     aes(group = 1), size = 0.5, color = "blue") +
+#     #coord_flip() +
+#   theme(legend.position = "bottom")
+
+
+
+
+  
+#one_peak
+
+sm_hod_all %>%
+filter(customer_id %in% c(8198401)) %>%
+ggplot(aes(x = kwh_value, y = hour_day), fill = "#999999") +
+ggridges::geom_density_ridges(alpha = 0.7) +
+facet_wrap(~kwh_type, scales = "free_y", ncol = 1) +
+  stat_summary(
+    fun = quantile_q2,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "blue") +
+    coord_flip() +
+  theme(legend.position = "bottom") +
+  stat_summary(
+    fun = quantile_q1,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "#D55E00") +
+  theme(legend.position = "bottom") +
+   stat_summary(
+    fun = quantile_q3,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "#D55E00") +
+    #coord_flip() +
+  theme(legend.position = "bottom") +
+  theme_bw()
+  
+# two peaks
+sm_hod_all %>%
+filter(customer_id %in% c(10469265)) %>%
+ggplot(aes(x = kwh_value, y = hour_day), fill = "#999999") +
+ggridges::geom_density_ridges(alpha = 0.7) +
+facet_wrap(~kwh_type, scales = "free_y", ncol = 1) +
+  stat_summary(
+    fun = quantile_q2,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "blue") +
+    coord_flip() +
+  theme(legend.position = "bottom") +
+  stat_summary(
+    fun = quantile_q1,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "#D55E00") +
+  theme(legend.position = "bottom") +
+   stat_summary(
+    fun = quantile_q3,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "#D55E00") +
+    #coord_flip() +
+  theme(legend.position = "bottom") +
+  theme_bw()
+
+# Three peaks
+
+sm_hod_all %>%
+filter(customer_id %in% c(10046512)) %>%
+ggplot(aes(x = kwh_value, y = hour_day), fill = "#999999") +
+ggridges::geom_density_ridges(alpha = 0.7) +
+facet_wrap(~kwh_type, scales = "free_y", ncol = 1) +
+  stat_summary(
+    fun = quantile_q2,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "blue") +
+    coord_flip() +
+  theme(legend.position = "bottom") +
+  stat_summary(
+    fun = quantile_q1,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "#D55E00") +
+  theme(legend.position = "bottom") +
+   stat_summary(
+    fun = quantile_q3,
+    geom = 'line',
+    aes(group = 1), size = 0.7, color = "#D55E00") +
+    #coord_flip() +
+  theme(legend.position = "bottom") +
+  theme_bw()
+
+
+
+
+# sm_hod_all %>%
+# filter(customer_id %in% c(8198401)) %>%
+# ggplot(aes(x = kwh_value, y = hour_day), fill = "#999999") +
+# ggridges::geom_density_ridges() +
+# facet_grid(customer_id~kwh_type, scales = "free_x") +
+#   stat_summary(
+#     fun = quantile_q2,
+#     geom = 'line',
+#     aes(group = 1), size = 0.5, color = "blue") +
+#     #coord_flip() +
+#   theme(legend.position = "bottom") +
+#   stat_summary(
+#     fun = quantile_q1,
+#     geom = 'line',
+#     aes(group = 1), size = 0.5, color = "#D55E00") +
+#   theme(legend.position = "bottom") +
+#    stat_summary(
+#     fun = quantile_q3,
+#     geom = 'line',
+#     aes(group = 1), size = 0.5, color = "#D55E00") +
+#     #coord_flip() +
+#   theme(legend.position = "bottom") +
+#   theme_bw()
+  
+# sm_hod_all %>%
+# filter(customer_id %in% c(10469265)) %>%
+# ggplot(aes(x = kwh_value, y = hour_day), fill = "#999999") +
+# ggridges::geom_density_ridges() +
+# facet_grid(customer_id~kwh_type, scales = "free_x") +
+#   stat_summary(
+#     fun = quantile_q2,
+#     geom = 'line',
+#     aes(group = 1), size = 0.5, color = "blue") +
+#     #coord_flip() +
+#   theme(legend.position = "bottom") +
+#   stat_summary(
+#     fun = quantile_q1,
+#     geom = 'line',
+#     aes(group = 1), size = 0.5, color = "#D55E00") +
+#   theme(legend.position = "bottom") +
+#    stat_summary(
+#     fun = quantile_q3,
+#     geom = 'line',
+#     aes(group = 1), size = 0.5, color = "#D55E00") +
+#     #coord_flip() +
+#   theme(legend.position = "bottom") +
+#   theme_bw()
+
+
+
+p1 <- sm_hod %>% 
+filter(design ==1) %>% 
+ggplot(aes(x = general_supply_kwh, y = hour_day)) +
+ggridges::geom_density_ridges(alpha = 0.05) +
+facet_wrap(~customer_id, nrow = 6) + 
+  stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.5) +
+    coord_flip()
+    
+p2 <- gravitas::create_gran(data_pick_scaled, "hour_day") %>% 
+filter(design ==1) %>% 
+ggplot(aes(x = kwh_scaled, y = hour_day)) +
+ggridges::geom_density_ridges(alpha = 0.05, fill = "grey") +
+facet_wrap(~customer_id, ncol = 2, scales = "free_x") + 
+  stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.5) +
+    coord_flip() + theme_bw()
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(design, customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh)
+
+# groups_ref <- unique(data_pick$design) %>% as_tibble %>% 
+#               mutate(customer_serial_id = sm_hod_list$customer_id) 
+
+# sm_hod_list_cat <-  sm_hod_list %>% left_join(groups_ref, by = c("customer_id" = "customer_serial_id")) %>% select(group, everything())
+  
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, 2)]))
+nrow_sm <- 1:18
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, 2)) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_val)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id") 
+
+
+ref_cat <- names(sm_hod_list)[-c(1, 2)] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>% 
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id, design))
+  
+
+ 
+# %>% 
+#   left_join(categories_ref_cat) %>% 
+#   rename("category" = "value") %>% 
+#   select(-categories_serial_id) %>% 
+#   mutate(category = as.numeric(category))
+
+
+
+data_heatmap %>% 
+  ggplot(aes(x = as.integer(category))) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`), fill = "lightblue") +
+  geom_line(aes(y = `50%`), size = 0.7) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+  theme_bw() +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")
+    
+    
+    
+    
+```
+
+
+
 
 ## only hod
 
