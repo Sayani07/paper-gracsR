@@ -1,0 +1,314 @@
+---
+title: "Algorithm using wpd values for clustering 600 households"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,echo=FALSE, message=FALSE, warning = FALSE)
+```
+
+```{r load-lib}
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(lvplot)
+#library(ggridges)
+library(tsibble)
+library(gravitas)
+library(ggpubr)
+library(readr)
+library(kableExtra)
+library(distributional)
+library(ggplot2)
+library(sugrrants)
+library(here)
+library(ggplot2)
+library(patchwork)
+library(scales)
+library(GGally)
+library(viridis)
+library(gracsr)
+library(tsibble)
+library(gravitas)
+```
+
+
+```{r allplot, message=FALSE, warning=FALSE, echo = FALSE}
+
+##----harmony-all
+elec_harmony_all <- read_rds("../../../data/algo2-cust600-wpd-rawdata.rds")
+
+cust_by_wpd <- elec_harmony_all %>% 
+  select(customer_id, x_variable, wpd) %>% 
+  pivot_wider(
+              names_from = x_variable, 
+              values_from = wpd)
+
+# Outliers
+
+
+
+library(OutliersO3)
+
+data <- cust_by_wpd[2:4]
+
+O3x <- O3prep(data, method="HDo", tols=0.01, boxplotLimits=c(3, 6, 10))
+
+O3x1 <- O3plotT(O3x)
+library(gridExtra)
+grid.arrange(O3x1$gO3, O3x1$gpcp, ncol=1)
+
+
+cust_by_wpd <- cust_by_wpd %>% mutate(Case= row_number()) %>% 
+  filter(!(Case %in% O3x1$outsTable$Case))
+
+# O3m <- O3prep(data, method=c("HDo", "PCS"))
+# O3m1 <- O3plotM(O3m)
+# grid.arrange(O3m1$gO3, O3m1$gpcp, ncol=1)
+
+
+library(stray)
+output <- find_HDoutliers(data, knnsearchtype = "brute", alpha = 0.1)
+display_HDoutliers(data, out = output)
+
+
+
+# make a distance matrix from here and perform the algorithm
+
+mydist <- column_to_rownames(cust_by_wpd, var = "customer_id")%>%
+    dist()
+
+groups <- mydist%>% 
+  gracsr::clust_gran(kopt=10) %>% 
+  bind_cols(customer_id = cust_by_wpd$customer_id)
+
+ngroup <- groups %>% group_by(group) %>% count()
+
+cust_by_wpd_join_groups <- cust_by_wpd %>% left_join(groups)
+
+cust_by_wpd_join_groups_long <- cust_by_wpd_join_groups %>%
+  pivot_longer(-c(1,5, 6),names_to = "gran",
+               values_to = "wpd") 
+```
+
+
+```{r}
+cust_by_wpd_join_groups_long%>% 
+  ggplot() +
+  geom_boxplot(aes(x=gran, y = wpd)) +
+  facet_wrap(~group) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+elec <- read_rds("../../../data/elec_nogap_2013_600.rds") %>% select(customer_id, reading_datetime, general_supply_kwh) 
+
+
+characterise_plot_data <- elec %>% 
+  create_gran("month_year") %>% 
+  create_gran("hour_day") %>% 
+  create_gran("wknd_wday") %>% 
+  as_tibble() %>% 
+ select(customer_id,
+        month_year,
+        hour_day,
+        wknd_wday, general_supply_kwh) %>% 
+left_join(groups, by = "customer_id") 
+
+# characterise_plot_data_long <- characterise_plot_data%>% 
+#   pivot_longer(c(-1, -5, -6), 
+#                names_to = "gran", 
+#                values_to = "categories")
+
+moy <- characterise_plot_data %>%
+  ggplot(aes(x=month_year, y = general_supply_kwh)) +
+  geom_boxplot() +
+  facet_wrap(~group, ncol = 1, scales = "free_y")
+
+
+hod <- characterise_plot_data %>%
+  ggplot(aes(x=hour_day, y = general_supply_kwh)) +
+  geom_boxplot() +
+  facet_wrap(~group, ncol = 1, scales = "free_y")
+
+
+wndwday <- characterise_plot_data %>%
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  geom_boxplot() +
+  facet_wrap(~group, ncol = 1, scales = "free_y")
+
+ggpairs_nocolor <- ggscatmat(cust_by_wpd_join_groups, columns=2:4) +
+  scale_colour_brewer(palette="Set2") + theme(legend.position = "bottom")
+
+cust_by_wpd_join_groups$group = as.factor(cust_by_wpd_join_groups$group)
+```
+
+```{r parcoord}
+parcoord <- GGally::ggparcoord(cust_by_wpd_join_groups ,
+                   columns = 2:4,
+                   groupColumn = "group",
+                   showPoints = TRUE, 
+                   title = "(c)",
+                   alphaLines = 0.2,
+                   order = "anyClass",
+                   scale = "globalminmax"
+) + ggplot2::theme_bw() +
+  #scale_color_brewer(palette = "Dark2") + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd")
+parcoord
+
+# PCA based clustering
+
+pc <- prcomp(cust_by_wpd_join_groups[c(-1,-5, -6)], center = F, scale = F)
+summary(pc)
+# First two principal componentsafc
+comp <- data.frame(pc$x[,1:2]) 
+
+data_pcp_all <- comp%>% as_tibble() %>% 
+  bind_cols(cust_by_wpd_join_groups)
+
+
+data_pcp_all %>% ggplot(aes(x=PC1, y = PC2)) + geom_point(aes(color = group)) +
+  scale_color_brewer(palette = "Dark2") + theme_bw() + theme(legend.position = "bottom")
+# 
+# 
+# O3y <- O3prep(data, method=c("HDo", "PCS", "BAC", "adjOut", "DDC", "MCD"))
+# O3y1 <- O3plotM(O3y)
+# cx <- data.frame(outlier_method=names(O3y1$nOut), number_of_outliers=O3y1$nOut)
+# knitr::kable(cx, row.names=FALSE)
+# 
+# grid.arrange(O3y1$gO3, O3y1$gpcp, ncol=1)
+```
+
+
+```{r}
+quantile_prob_val = c(0.25, 0.5, 0.75)
+  
+sm_hod_dow <- elec %>% 
+  left_join(groups)
+
+  sm_hod_dow %>% 
+  filter(group==1) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 1")
+  
+  
+  
+  sm_hod_dow %>% 
+  filter(group==2) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 2")
+  
+  
+    
+  sm_hod_dow %>% 
+  filter(group==3) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 3")
+  
+  
+  
+  sm_hod_dow %>% 
+  filter(group==4) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 4")
+  
+  
+  
+  sm_hod_dow %>% 
+  filter(group==5) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 5")
+  
+  
+    
+  
+  sm_hod_dow %>% 
+  filter(group==6) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 6")
+  
+  
+    
+  
+  sm_hod_dow %>% 
+  filter(group==7) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 7")
+  
+    
+  
+  sm_hod_dow %>% 
+  filter(group==8) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 8")
+  
+  
+    
+  
+  sm_hod_dow %>% 
+  filter(group==9) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 9")
+  
+    
+  
+  sm_hod_dow %>% 
+  filter(group==10) %>% 
+  gravitas::prob_plot(
+     "month_year",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  #scale_y_log10() +
+    ggtitle("Group 10")
+```
+

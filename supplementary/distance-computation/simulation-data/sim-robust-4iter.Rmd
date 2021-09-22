@@ -1,0 +1,317 @@
+---
+title: "Simulation with algorithm 2"
+author: "Sayani Gupta"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,echo=FALSE, message=FALSE, warning = FALSE)
+library(patchwork)
+library(distributional)
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(readr)
+library(GGally)
+```
+
+# _Simulation design_
+
+Three circular granularities g1, g2 and g3 are considered with levels 2, 3 and 4 respectively. Many time series with 600 observations are created using the five designs below, each of which is iterated four times. We anticipate to have five clusters, each with four time series conforming to the same design, once we execute the clustering. 
+
+# _Algorithm_
+
+Robust scaling done for each customer and then JSD is computed between same categories for a granularity.
+
+
+```{r tab-gran}
+design = c("design-1", "design-2", "design-3", "design-4", "design-5")
+g1 = c("no", "yes" , "no", "yes", "yes")
+g2 = c("no", "no" , "yes", "no", "yes")
+g3 = c("no", "yes" , "no", "yes", "yes")
+table <- tibble(design, g1, g2, g3) %>% kable()
+#table
+```
+
+
+```{r}
+t <- seq(0,299, 1)
+
+generate_design <-  function (t = NULL, 
+                           mu = NULL){
+t <- seq(0, t, 1)
+g1 <- t %%2
+g2 <- t %%3
+g3 <- t %%4
+
+# design2 (change across g2 only)
+mu = mu
+len_mu <- length(mu)
+len_obs <-  length(t)/length(mu)
+dist <- dist_normal(mu = mu, sigma = 1)
+numbers <- generate(dist, times = floor(len_obs))
+
+timeseries <- numbers%>% unlist() %>% matrix(ncol = len_mu, nrow = len_obs, byrow = FALSE) %>% t() %>% 
+  matrix(ncol=1, byrow = TRUE)
+
+timeseries <- as_tibble(timeseries) %>% 
+  set_names("value") %>%
+  bind_cols(t %>% as_tibble()) %>% 
+  set_names(c("value", "t"))
+
+ data <- tibble::tibble(t, g1, g2, g3) %>% left_join(timeseries)
+ data
+}
+
+set.seed(12345)
+data_design_1 <- generate_design(t = 599, mu = 0)
+data_design_2 <- generate_design(t = 599, mu = c(0, 2))
+data_design_3 <- generate_design(t = 599, mu = c(0, 2, 4))
+data_design_4 <- generate_design(t = 599, mu = c(0, 2, 4, 6))
+data_design_5 <- generate_design(t = 599, mu = c(0, 2, 4, 6, 8, 10))
+```
+
+<!-- # Design1 -->
+```{r design-null, eval = FALSE}
+p1 <- ggplot(data_design_1, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw() 
+p2 <- ggplot(data_design_1, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw()
+p3 <- ggplot(data_design_1, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw() 
+p4 <- ggplot(data_design_1, aes(x = as.factor(g3), y = value)) + geom_boxplot() +
+  xlab("g3") + theme_bw()
+
+(p1 /(p2 + p3 + p4)) 
+```
+
+<!-- # Design2 -->
+```{r design1, eval = FALSE}
+p1 <- ggplot(data_design_2, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw()
+p2 <- ggplot(data_design_2, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw()
+p3 <- ggplot(data_design_2, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw()
+p4 <- ggplot(data_design_2, aes(x = as.factor(g3), y = value)) + geom_boxplot() +
+  xlab("g3") + theme_bw()
+
+(p1 /(p2 + p3 + p4)) 
+```
+
+<!-- # Design3 -->
+
+```{r design2, eval = FALSE}
+p1 <- ggplot(data_design_3, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw()
+p2 <- ggplot(data_design_3, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw()
+p3 <- ggplot(data_design_3, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw()
+p4 <- ggplot(data_design_3, aes(x = as.factor(g3), y = value)) + geom_boxplot() +
+  xlab("g3") + theme_bw()
+
+(p1 /(p2 + p3 + p4)) 
+```
+
+<!-- # Design4 -->
+
+```{r design3, eval = FALSE}
+p1 <- ggplot(data_design_4, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw()
+p2 <- ggplot(data_design_4, aes(x = as.factor(g1), y = value)) + geom_boxplot() + xlab("g1") + theme_bw()
+p3 <- ggplot(data_design_4, aes(x = as.factor(g2), y = value)) + geom_boxplot() + xlab("g2") + theme_bw()
+p4 <- ggplot(data_design_4, aes(x = as.factor(g3), y = value)) + geom_boxplot() +
+  xlab("g3") + theme_bw()
+
+(p1 /(p2 + p3 + p4)) 
+
+```
+
+
+# Raw plots
+```{r all-design}
+bind_data <- bind_rows(data_design_1, data_design_2, data_design_3, data_design_4,data_design_5, .id = "design") %>% mutate(design = paste("design", design, sep = "-"))
+
+p1 <- ggplot(bind_data, aes(x = t, y = value)) + geom_line() + xlab("time")  + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0))) 
+p2 <- ggplot(bind_data, aes(x = as.factor(g1), y = value)) + geom_boxplot(width=0.5) + xlab("g1") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
+p3 <- ggplot(bind_data, aes(x = as.factor(g2), y = value)) + geom_boxplot(width=0.5) + xlab("g2") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
+
+p4 <- ggplot(bind_data, aes(x = as.factor(g3), y = value)) + geom_boxplot(width=0.5) +
+  xlab("g3") + theme_bw() + facet_wrap(~design, ncol = 1, scales = "free_y") + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0))) +stat_summary(fun.y = median, geom="line", group= 1, color= "blue", size = 0.5)
+
+p1
+```
+
+
+# Designs (Distribution of simulated data across different granularities)
+
+```{r, out.height="100%"}
+(p2+p3+p4)
+
+```
+
+
+```{r}
+seed_len = seq(12345, 12394, 1)
+#seed_len = seq(12345, 12346, 1)
+bind_data_iter <- map(seq_len(length(seed_len)), function(x){
+set.seed(seed_len[x])
+data_design_2 <- generate_design(t = 599, mu = c(0, 2))
+data_design_3 <- generate_design(t = 599, mu = c(0, 2, 4))
+data_design_4 <- generate_design(t = 599, mu = c(0, 2, 4, 6))
+data_design_1 <- generate_design(t = 599, mu = 0)
+data_design_5 <- generate_design(t = 599, mu = c(0, 2, 4, 6, 8, 10))
+bind_data <- bind_rows(data_design_1, data_design_2, data_design_3, data_design_4,data_design_5, .id = "design") %>% mutate(design = paste("design", design, sep = "-"))
+}) %>% bind_rows(.id = "seed_id")
+
+```
+
+
+
+
+
+
+
+```{r}
+harmony_tbl <- tibble(facet_variable = NA, x_variable = c("g1", "g2", "g3"),
+                      x_levels = c(2, 3, 4), facet_levels = NA)
+```
+
+```{r wpd-table}
+data <- bind_data_iter %>% mutate(data_id = paste(design, seed_id, sep = "-"))
+bind_data_iter <- tsibble::as_tsibble(data, index = t, key = "data_id")
+  
+data_wpd <- map(seq_len(length(unique(bind_data_iter$data_id))),
+    function(y){
+      z = unique(bind_data_iter$data_id)
+      data_sub <- bind_data_iter %>% filter(data_id==z[y])
+        elec_select_harmony = hakear::select_harmonies(data_sub,
+                               harmony_tbl = harmony_tbl,
+                               response = value,
+                               nperm = 200
+  ) %>% mutate(data_id = unique(data_sub$data_id)) %>% unnest()
+    }) %>% bind_rows()
+
+#write_csv(data_wpd, "data_wpd.rds")
+```
+
+# Table of wpd across designs and wpd
+
+```{r data-wide}
+
+data_wide <- data_wpd %>% select(x_variable, wpd, data_id) %>% 
+  pivot_wider(names_from = x_variable, values_from = wpd)
+#data_wide %>% kable()
+
+ggpairs_nocolor <- ggpairs(data_wide, columns = 2:4)
+
+rownames(data_wide) = data_wide$data_id
+
+hc = stats::hclust(dist(data_wide[-1], method = "manhattan"),method="complete")
+
+library(fpc)
+koptimal = fpc::nselectboot(dist(data_wide[-1], method="manhattan"),
+                        B = 500,
+                        method = "complete",
+                        clustermethod = disthclustCBI, 
+                        classification = "averagedist",
+                        krange = 2:8)
+
+koptimal = koptimal$kopt
+
+```
+
+# Clustering of designs
+
+```{r}
+  groups <- cutree(hc, k=5) %>% as_tibble() %>% 
+mutate(data_id = data_wide$data_id) %>% rename("group" = "value") 
+    
+
+  
+  
+data_wide_group <- data_wide %>% left_join(groups)  %>% 
+  mutate(group_id = as.factor(group))
+
+parcoord <- GGally::ggparcoord(data_wide_group,
+                   columns = 2:ncol(data_wide),
+                   groupColumn = "group_id",
+                   showPoints = TRUE, 
+                   title = "(c)",
+                   alphaLines = 0.8,
+                   scale = "globalminmax", 
+                   order = "anyClass"
+) + ggplot2::theme_bw() +
+  scale_color_brewer(palette = "Dark2") + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.y = ggplot2::element_text(angle = 0)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd")
+parcoord
+ggpairs_nocolor
+  # ggpairs_color <- ggscatmat(data_wide, columns=2:4, color = "group") +
+  # scale_colour_brewer(palette="Set2")
+```
+
+# With optimal number of clusters
+
+Design 2 and 4 form a part of the same cluster with the optimal number of clusters chosen as 4. Design 2 and 4 are similar in the sense that both of them changes across categories for g1 and g3, and remains constant for g2.
+
+
+```{r}
+  groups <- cutree(hc, k=koptimal) %>% as_tibble() %>% 
+mutate(data_id = data_wide$data_id) %>% rename("group" = "value") 
+
+groups %>% kable()
+  
+
+  #groups %>% kable()
+  
+data_wide_group <- data_wide %>% left_join(groups)  %>% 
+  mutate(group_id = as.factor(group))
+
+parcoord <- GGally::ggparcoord(data_wide_group,
+                   columns = 2:ncol(data_wide),
+                   groupColumn = "group_id",
+                   showPoints = TRUE, 
+                   title = "(c)",
+                   alphaLines = 0.8,
+                   scale = "globalminmax", 
+                   order = "anyClass"
+) + ggplot2::theme_bw() +
+  scale_color_brewer(palette = "Dark2") + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.y = ggplot2::element_text(angle = 0)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd")
+parcoord
+ggpairs_nocolor
+  # ggpairs_color <- ggscatmat(data_wide, columns=2:4, color = "group") +
+  # scale_colour_brewer(palette="Set2")
+```
+
+# PCA based clustering
+
+```{r}
+pc <- prcomp(data_wide_group[c(2, 3, 4)], center = F, scale = F)
+
+
+# First two principal componentsafc
+comp <- data.frame(pc$x[,1:2])
+rownames(comp) = pc$data_id
+#plot(comp, pch=16, col=rgb(0,0,0,0.5))
+
+hc = stats::hclust(dist(comp))
+groups <- cutree(hc, k=koptimal) %>% as_tibble() %>% bind_cols(comp) %>% 
+  mutate(value = as.character(value))
+# 
+# plot(hc, cex = 0.6)
+# rect.hclust(hc, k = 6, border = 2:10)
+
+library(RColorBrewer)
+library(scales)
+groups %>% ggplot(aes(x=PC1, y = PC2)) + geom_point(aes(color = value)) +
+  scale_color_brewer(palette = "Dark2") + theme_bw()
+```
+

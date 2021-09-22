@@ -1,0 +1,278 @@
+---
+title: "4 designs and 5 iterations and categorty changes across 2 granularities (g3 categories const) "
+author: "Sayani Gupta"
+output:
+  bookdown::pdf_book:
+    #base_format: rticles::asa_article
+    fig_height: 5
+    fig_width: 8
+    fig_caption: yes
+    dev: "pdf"
+    keep_tex: yes
+    toc: false
+    cache: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,echo=FALSE, message=FALSE, warning = FALSE)
+library(patchwork)
+library(distributional)
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(readr)
+library(GGally)
+library(tsibble)
+library(tidyverse)
+library(gracsr)
+library(gravitas)
+
+```
+
+# _Simulation design_
+
+
+```{r change-var, echo=TRUE}
+t = 300
+n <- seq(0, t, 1)
+g1 <- n %%2
+g2 <- n %%3
+g3 <- n %%5
+mu1= c(0, 2) # mean of cat of g1
+mu2 = c(7, 5, 1)# mean of cat of g2
+mu3 = c(0, 0, 0, 0, 0) # mean of cat of g3
+```
+
+Three circular granularities g1, g2 and g3 are considered with levels 2, 3 and 5 respectively. Many time series with `r t` observations are created using the five designs below, each of which is iterated five times. We anticipate to have 3 clusters, each with five time series conforming to the same design, once we execute the clustering. 
+
+# _Distance computation_
+
+
+1) wpd for three granularities computed and then distance between designs are computed by computing the euclidean distances between them - gran as variables, 
+designs across rows and cell values as wpd.
+
+2) Robust scaling done for each customer and then JSD is computed between same categories for a granularity.
+
+# _Granularities design_
+```{r}
+design = c("design-1", "design-2", "design-3", "design4")
+g1 = c("no", "no", "yes", "yes")
+g2 = c("no", "yes", "no", "yes")
+g3 = c("no", "no", "no", "no")
+table <- tibble(design, g1, g2, g3) %>% kable()
+table
+
+```
+
+
+# _Simulate data_
+
+
+```{r generate-design}
+generate_design <- function(t, mu1, mu2, mu3){
+t <- seq(0, t, 1)
+g1 <- t %%2
+g2 <- t %%3
+g3 <- t %%5
+
+# null design
+g1_dnull <- rep( rep(0, each = length(unique(g1))), length.out= length(t))
+g2_dnull <- rep( rep(0, each = length(unique(g2))), length.out= length(t))
+g3_dnull <- rep( rep(0, each = length(unique(g3))), length.out= length(t))
+ 
+# mean changing across categories in varying ways
+
+g1_dvary <- rep(mu1, length.out= length(t))
+g2_dvary <- rep(mu2, length.out= length(t))
+g3_dvary <- rep(mu3, length.out= length(t))
+
+
+design1 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dnull)
+design2 = distributional::dist_normal(g1_dvary + g2_dnull + g3_dnull)
+design3 = distributional::dist_normal(g1_dnull + g2_dvary + g3_dnull)
+design4 = distributional::dist_normal(g1_dvary + g2_dvary + g3_dnull)
+#design5 = distributional::dist_normal(g1_dvary + g2_dvary + g3_dvary)
+
+data_bind <- tibble::tibble(
+index = t,
+g1 = g1,
+g2 = g2,
+g3 = g3,
+design1 = distributional::generate(design1, times = 1) %>% unlist(),
+design2 = distributional::generate(design2, times = 1) %>% unlist(),
+design3 = distributional::generate(design3, times = 1) %>% unlist(),
+design4 = distributional::generate(design4, times = 1) %>% unlist(),
+#design5 = distributional::generate(design5, times = 1) %>% unlist()
+) %>% 
+  pivot_longer(-c(1, 2, 3, 4), names_to = "design", values_to = "sim_data")
+
+data_bind
+}
+
+data_bind <- generate_design(t, mu1, mu2, mu3)
+
+data_bind
+
+```
+
+
+# _Plot raw data_
+
+```{r plot-linear , out.width="100%"}
+
+# plot_linear_data <- function(data){
+# ggplot(data,
+#              aes(x = index, y = sim_data)) + 
+#   geom_line() +
+#   xlab("index")+
+#   theme_bw() 
+# }
+
+ggplot(data_bind,
+             aes(x = index, y = sim_data)) + 
+  geom_line() +
+  xlab("index")+
+  theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol =1)
+
+```
+
+# _Plot distribution across granularities_
+
+```{r plot-gran, out.width="100%"}
+
+p2 <- ggplot(data_bind,
+             aes(x = as.factor(g1), y = sim_data)) + 
+  geom_boxplot(alpha =0.5) + xlab("g1") + 
+  theme_bw() +
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue")
+
+p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue")
+
+p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alpha =0.5) +
+  xlab("g3") + theme_bw()+
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue")
+
+(p2 + p3 + p4) * theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))
+
+# 
+# 
+# plot_cyclic_data( data_bind %>% filter(design=="design2"))
+# plot_data( data_bind %>% filter(design=="design3"))
+# plot_data( data_bind %>% filter(design=="design4"))
+# plot_data( data_bind %>% filter(design=="design5"))
+```
+
+
+```{r,eval=FALSE}
+
+data_bind_all <- data_bind %>% pivot_longer(-c(index, design, sim_data), names_to = "gran", values_to = "categories")
+
+ggplot(data_bind_all, aes(x = as.character(categories), y = sim_data)) + geom_boxplot() + facet_grid(design~gran, scales = "free_y")
+
+```
+
+# _Iterate designs_
+
+```{r}
+seed_len = seq(12345, 12349, 1)
+bind_data_iter <- map(seq_len(length(seed_len)), function(x){
+set.seed(seed_len[x])
+data_bind <- generate_design(t, mu1, mu2, mu3)
+}) %>% bind_rows(.id = "seed_id") %>% 
+  mutate(customer_id = paste(design,seed_id, sep ="-"))
+
+bind_data_iter_tsibble <- bind_data_iter %>% 
+  tsibble::as_tsibble(index = index, key = customer_id)
+
+bind_data_iter_tsibble
+```
+
+# _Cluster designs: distance using wpd_
+
+```{r wpd}
+harmony_tbl <- tibble(facet_variable = NA, x_variable = c("g1", "g2", "g3"),
+                      x_levels = c(2, 3, 5), facet_levels = NA)
+
+dist_mat <- bind_data_iter_tsibble %>%
+  #scale_gran(method = "robust", response = "sim_data") %>%
+  dist_wpd(harmony_tbl, response = "sim_data", nperm=100)
+
+
+groups = dist_mat%>% clust_gran(kopt = 4)
+pred_group = paste("design",groups$group,sep = "") %>% as.factor()
+actual_group = as.factor(bind_data_iter_tsibble %>%as_tibble %>% select(customer_id, design) %>% distinct() %>% pull(design))
+
+xtab <- caret::confusionMatrix(pred_group, actual_group)
+xtab$table
+```
+
+
+# _Cluster designs: distance using js distance between categories_
+
+
+```{r js}
+dist_mat_g1 <- bind_data_iter_tsibble %>%
+  scale_gran(method = "robust", response = "sim_data") %>%
+  dist_gran(gran1 = "g1", response= "sim_data")
+
+dist_mat_g2 <- bind_data_iter_tsibble %>%
+  scale_gran(method = "robust", response = "sim_data") %>%
+  dist_gran(gran1 = "g2", response= "sim_data")
+
+
+dist_mat_g3 <- bind_data_iter_tsibble %>%
+  scale_gran(method = "robust", response = "sim_data") %>%
+  dist_gran(gran1 = "g3", response= "sim_data")
+
+dist_mat <- dist_mat_g1 + dist_mat_g2 + dist_mat_g3
+
+groups = dist_mat %>% 
+  clust_gran(kopt = 4)
+
+pred_group = paste("design",groups$group,sep = "") %>% as.factor()
+actual_group = as.factor(bind_data_iter_tsibble %>%as_tibble %>% select(customer_id, design) %>% distinct() %>% pull(design))
+
+xtab <- caret::confusionMatrix(pred_group, actual_group)
+xtab$table
+```
+
+# _Cluster designs: distance using js distance between categories (nqt)_
+
+```{r js-nqt}
+dist_mat_g1 <- bind_data_iter_tsibble %>%
+  scale_gran(method = "nqt", response = "sim_data") %>%
+  dist_gran(gran1 = "g1", response= "sim_data")
+
+dist_mat_g2 <- bind_data_iter_tsibble %>%
+  scale_gran(method = "nqt", response = "sim_data") %>%
+  dist_gran(gran1 = "g2", response= "sim_data")
+
+
+dist_mat_g3 <- bind_data_iter_tsibble %>%
+  scale_gran(method = "nqt", response = "sim_data") %>%
+  dist_gran(gran1 = "g3", response= "sim_data")
+
+dist_mat <- dist_mat_g1 + dist_mat_g2 + dist_mat_g3
+
+groups = dist_mat %>% 
+  clust_gran(kopt = 4)
+
+pred_group = paste("design",groups$group,sep = "") %>% as.factor()
+actual_group = as.factor(bind_data_iter_tsibble %>%as_tibble %>% select(customer_id, design) %>% distinct() %>% pull(design))
+
+xtab <- caret::confusionMatrix(pred_group, actual_group)
+xtab$table
+```
+

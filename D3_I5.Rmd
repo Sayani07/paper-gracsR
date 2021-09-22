@@ -1,0 +1,18 @@
+---
+title: "3 designs and 5 iterations"
+author: "Sayani Gupta"
+date: "15/09/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,echo=FALSE, message=FALSE, warning = FALSE)
+library(patchwork)
+library(distributional)
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(readr)
+library(GGally)
+```
+

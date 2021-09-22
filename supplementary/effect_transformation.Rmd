@@ -28,10 +28,11 @@ response = "general_supply_kwh"
 # Scale the data
 
 v2 <- suppressWarnings(robust_scale_data(sm, "hour_day")) %>% 
-    dplyr::mutate(kwh_nqt = stats::qqnorm(general_supply_kwh, plot.it=FALSE)$x) %>% 
-  mutate(category = as.numeric(category),
-         kwh_robust = )
-
+    dplyr::rename( "kwh_robust" = "scaled_response") %>% 
+    dplyr::mutate(kwh_nqt = stats::qqnorm(general_supply_kwh, plot.it=FALSE)$x)
+    
+    
+C
 
 quantile_q2 <-  function(x){
   y = quantile(x, probs = c(0.5))
@@ -53,7 +54,7 @@ quantile_q3 <-  function(x){
 
 v2 %>%
 dplyr::filter(customer_id %in% c("10018250")) %>%
-  pivot_longer(c("general_supply_kwh", "scaled_response", "kwh_nqt"),
+  pivot_longer(c("general_supply_kwh", "kwh_robust", "kwh_nqt"),
                names_to = "kwh_type",
                values_to = "kwh_value") %>% ggplot(fill = "#999999") +
   ggridges::geom_density_ridges(aes(x = kwh_value, y = as.factor(category)), alpha = 0.7) +
@@ -65,7 +66,7 @@ dplyr::filter(customer_id %in% c("10018250")) %>%
 
 v2 %>%
 dplyr::filter(customer_id %in% c("10018250")) %>%
-  pivot_longer(c("general_supply_kwh", "scaled_response", "kwh_nqt"),
+  pivot_longer(c("general_supply_kwh", "kwh_robust", "kwh_nqt"),
                names_to = "kwh_type",
                values_to = "kwh_value") %>%
 ggplot(aes(x = kwh_value, y = as.factor(category)), fill = "#999999") +

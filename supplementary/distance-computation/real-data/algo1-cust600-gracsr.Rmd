@@ -1,0 +1,73 @@
+---
+title: "Algorithm using wpd values for clustering 600 households"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,echo=FALSE, message=FALSE, warning = FALSE)
+```
+
+```{r load-lib}
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(lvplot)
+#library(ggridges)
+library(tsibble)
+library(gravitas)
+library(ggpubr)
+library(readr)
+library(kableExtra)
+library(distributional)
+library(ggplot2)
+library(sugrrants)
+library(here)
+library(ggplot2)
+library(patchwork)
+library(scales)
+library(GGally)
+library(viridis)
+library(gracsr)
+library(tsibble)
+library(gravitas)
+```
+
+
+# distance using js distance between categories (robust scaling)
+
+```{r js-based}
+elec <- read_rds("../../../data/elec_nogap_2013_600.rds") %>% select(customer_id, reading_datetime, general_supply_kwh)
+# 
+# dist_mat_moy$customer_id[which(is.na(dist_mat_moy$general_supply_kwh))] %>% unique()
+# c(8258490, 8662370, 10880968)
+
+# throw away customers for which IQR is zero
+
+elec_iqr0 <- elec %>% as_tibble() %>% group_by(customer_id) %>%
+  summarise(q2 = stats::median(general_supply_kwh, na.rm = TRUE),
+iqr = stats::IQR(general_supply_kwh, na.rm = TRUE)) %>% filter(iqr==0| q2==0)
+
+
+
+
+dist_mat_moy <- elec %>%
+  filter(!(customer_id %in% 
+             elec_iqr0$customer_id)) %>% 
+  scale_gran(method = "robust", response = "general_supply_kwh") %>%
+  dist_gran(gran1 = "month_year", response= "general_supply_kwh")
+
+dist_mat_hod <- elec %>%
+  scale_gran(method = "robust", response = "general_supply_kwh") %>%
+  dist_gran(gran1 = "hour_day", response= "general_supply_kwh")
+
+
+dist_mat_wndwday <- elec %>%
+  scale_gran(method = "robust", response = "general_supply_kwh") %>%
+  dist_gran(gran1 = "wknd_wday", response= "general_supply_kwh")
+
+dist_mat <- dist_mat_moy + dist_mat_hod + dist_mat_wndwday
+
+groups = dist_mat %>% 
+  clust_gran(kopt = 20)
+```
+
