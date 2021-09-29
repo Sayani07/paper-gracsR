@@ -197,13 +197,18 @@ We can then model different data generation processes depending on our level of 
 
 The data set solely contains readings from smart meters and no information about the consumers' specific physical, geographical, or behavioural attributes. As a result, no attempt is made to explain why consumption varies. Instead, this work investigates how much energy usage heterogeneity can be found in smart meter data and what some of the most common electricity use patterns are. It is worth noting that when studying these dynamics, a variety of objectives may be pursued. One objective could be to group consumers with similar shapes over all relevant cyclic granularities. In this scenario, the variation in customers within each group is in magnitude rather than shape, while the variation between groups is only in shape. Most clustering algorithms offer only daily energy profiles throughout the hours of the day, but we suggest a broader approach to the problem, aiming to group consumers with similar shapes across all significant cyclic granularities. Another purpose of clustering could be to group customers that have similar differences in patterns across all major cyclic granularities, capturing similar jumps across categories regardless of the overall shape. For example, in the first goal, similar shapes across hours of the day will be grouped together, resulting in customers with similar behaviour across all hours of the day, whereas in the second goal, any similar big-enough jumps across hours of the day will be clubbed together, regardless of which hour of the day it is. Both of these objectives may be useful in a practical context and, depending on the data set, may or may not propose the same customer classification.
 
-The foundation of our method is unsupervised clustering algorithms based exclusively on time-series features. First, we study the underlying distributions that may have resulted in different patterns across temporal granularities in order to identify a mechanism to classify them based on the similarity of those distributions. Depending on the goal of clustering, the distance metric for defining similarity would be different. These distance metrics could be fed into a clustering algorithm to break large data sets into subgroups that can then be analyzed separately. These clusters may be commonly associated with real-world data segmentation. However, since the data is unlabeled a priori, more information is required to corroborate this.
+The proposed methodology aim to leverage the intrinsic temporal data structure hidden in time series data. The foundation of our method is unsupervised clustering algorithms based exclusively on time-series features. First, we study the underlying distributions that may have resulted in different patterns across temporal granularities in order to identify a mechanism to classify them based on the similarity of those distributions. Depending on the goal of clustering, the distance metric for defining similarity would be different. These distance metrics could be fed into a clustering algorithm to break large data sets into subgroups that can then be analyzed separately. These clusters may be commonly associated with real-world data segmentation. However, since the data is unlabeled a priori, more information is required to corroborate this. This section presents the work flow of the methodology: 
 
-This section presents the work flow of the methodology:
 
-- _Choose significant harmonies or cyclic granularities_
+- _Data preparation_
 
-For each key variable, the raw smart meter data is a sequence that is indexed by time and comprises values of several measurement variables at each time point. This sequence, though, could be depicted in a variety of ways. A shuffling of the raw sequence could reflect the distribution of hourly consumption over a single day, while another could indicate consumption over a week or a year. These temporal deconstructions of a time period into units such as hour-of-day, work-day/weekend are called cyclic temporal granularities. They are useful for exploring repetitive patterns in time series data that get lost in the linear representation of time. However, it is advantageous to consider only those cyclic granularities across which there is a significant repetitive pattern for the majority of customers or noteworthy in an electricity-behavior context. In that case, when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered.
+@wang2020tsibble introduced the tidy "tsibble" data structure to support exploration and modeling of temporal data. A tsibble comprises an index, optional key(s), and measured variables. An index is a variable with inherent ordering from past to present and a key is a set of variables that define observational units over time. A linear granularity is a mapping of the index set to subsets of the time domain. For example, if the index of a tsibble is days, then a linear granularity might be weeks, months or years. For each key variable, the raw smart meter data is a sequence that is indexed by time and comprises values of several measurement variables at each time point. This sequence, though, could be depicted in a variety of ways. A shuffling of the raw sequence could reflect the distribution of hourly consumption over a single day, while another could indicate consumption over a week or a year. These temporal deconstructions of a time period into units such as hour-of-day, work-day/weekend are called cyclic temporal granularities. All cyclic granularities can be expressed in terms of the index set and could be augmented with the initial tsibble structure (index, key, measurements). It is worthwhile to note that the data structure changes while transporting from linear to cyclic scale of time as multiple observations of the measured variable would correspond to each category of the cyclic granularities. In this paper, quantiles are chosen to characterize the distributions for each category of the cyclic granularity. So, each category of a cyclic granularity corresponds to a list of numbers which is essentially few chosen quantiles of the multiple observations.
+
+
+- _Finding significant cyclic granularities or harmonies_
+
+\noindent These cyclic granularities are useful for exploring repetitive patterns in time series data that get lost in the linear representation of time. It is advantageous to consider only those cyclic granularities across which there is a significant repetitive pattern for the majority of customers or noteworthy in an electricity-behavior context. In that case, when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered. [XXX reference 2nd chapter] proposes a way to select significant cyclic granularities and harmonies which is used for this paper.
+
 
 
 - _Individual or combined categories of cyclic granularities as DGP_
@@ -211,6 +216,7 @@ For each key variable, the raw smart meter data is a sequence that is indexed by
 The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand. In this work, instead of considering the probability distributions of the linear time series, we assume that the measured variables across different categories of any cyclic granularity are from data generating processes.
 Hence, we want to be able to cluster distributions of the form $f_{i,A,B \dots, {N_C}}(v)$, where $A, B$ represent the cyclic granularities under consideration such that $A = \{a_j: j=1, 2, \dots J\}$,  $B = \{b_k: k  = 1, 2, \dots K\}$ and so on. We consider individual each category of a cyclic granularity ($A$) or combination of categories for interaction of cyclic granularities (for e.g. $A*B$) to have a distribution. For example, let us consider we have two cyclic  granularities of interest, $A = {0, 1, 2, \dots, 23}$ representing hour-of-day and  $B = \{Mon, Tue, Wed, \dots, Sun\}$ representing day-of-week. 
 each customer $i$ consist of a collection of probability distributions. In case individual granularities ($A$ or $B$) are considered there are  $J = 24$ distributions of the form $f_{i,j}(v)$ or $K = 7$ distributions of the form $f_{i,k}(v)$ for each customer $i$. In case of interaction,  $J*K=168$ distributions of the form $f_{i,j, k}(v)$ could be conceived for each customer $i$. As a result, a distance between collections of these univariate probability distributions is required. Depending on the objective of the problem, there could be many approaches to considering such distances. This paper considers two approaches, which are explained in the next segment.
+
 
 - _Distance metrics_
 
@@ -220,28 +226,39 @@ Considering each individual or combined categories of cyclic granularities as a 
 
 **Inter-category distances**
 
-This distance matrix considers two objects to be similar if every category of an individual cyclic granularity or combination of categories for interacting cyclic granularities have similar distributions. In this study, the distribution for each category is characterized using deciles and the distances between distributions are computed by using the Jensen-Shannon distance, which is symmetric and hence could be used as a distance measure. The total distance between two elements $x$ and $y$ is then defined as $$S^A_{x,y} = \sum_{j} D_{x,y}(A)$$ (sum of distances between each category $j$ of cyclic granularity A) or  $$S^{A*B}_{x,y} = \sum_j \sum_k D_{x,y}(A, B)$$ (sum of distances between each combination of categories $(j, k)$ of the harmony $(A, B)$. When combining distances from individual cyclic granularities $A$ and $B$, $$S^{A, B}_{x, y} = S^A_{x,y}/J + S^B_{x,y}/K$$ is used, which could also be shown to be a distance metric easily. This is shown for cyclic granularity $A$ and $B$, but could be practically extended to more granularities.
+This distance matrix considers two objects to be similar if every category of an individual cyclic granularity or combination of categories for interacting cyclic granularities have similar distributions. In this study, the distribution for each category is characterized using deciles and the distances between distributions are computed by using the Jensen-Shannon distance, which is symmetric and hence could be used as a distance measure. 
 
+
+\noindent The total distance between two elements $x$ and $y$ is then defined as $$S^A_{x,y} = \sum_{j} D_{x,y}(A)$$ (sum of distances between each category $j$ of cyclic granularity A) or  $$S^{A*B}_{x,y} = \sum_j \sum_k D_{x,y}(A, B)$$ (sum of distances between each combination of categories $(j, k)$ of the harmony $(A, B)$. When combining distances from individual cyclic granularities $A$ and $B$, $$S^{A, B}_{x, y} = S^A_{x,y}/J + S^B_{x,y}/K$$ is used, which could also be shown to be a distance metric easily. This is shown for cyclic granularity $A$ and $B$, but could be practically extended to more granularities.
 
 **Intra-category distances**
-Choose all significant granularities and compute wpd for all these granularities for all customers. Distance between customers is taken as the euclidean distances between them with the granularities being the variables and wpd being the value under each variable for which Euclidean distance needs to be measured.  
 
-- 
-
+Compute weighted pairwise distances ($wpd$) (XXX reference) for all considered granularities for all objects. $wpd$ is designed to capture the maximum variation in the measured variable explained by an individual cyclic granularity or their interaction and is estimated by the maximum pairwise distances between consecutive between consecutive categories normalized by appropriate parameters. A higher value of $wpd$ indicates that some interesting pattern is expected, whereas a lower value would indicate otherwise. 
 
 
-
+\noindent Distance between objects is then taken as the euclidean distances between them with the granularities being the variables and $wpd$ being the value under each variable. Since Euclidean distance is chosen, the observations with high values of features ($wpd$ values) will be clustered together. The same holds true for observations with low values of features. Thus this distance matrix would be useful to group customers that have similar significance of patterns across different granularities.
 
 
 
-Consider a harmony table consisting of many harmonies, each of the form $(A, B)$, such that $A = \{ a_j: j = 1, 2, \dots, J\}$ and $B = \{ b_k: k = 1, 2, \dots, K\}$. Each household consists of a $J*K$ distributions one harmony. We compute the distributional difference
-between $(A, B)$ for the $s^{th}$ household using $wpd_{{s}}(A,B)$.
-$wpd_{{s}}(A,B)$ denotes the normalized weighted-pairwise distributional distances between $(A, B)$ and is a feature which measures distributional difference between harmonies. If we have $H_{N_C}$ harmonies in the harmony table, then for each household we have a vector of $wpd_{{s}}$ of $H_{N_C}$ elements with each element corresponding to one harmony. We aim to have pockets of households showing similar periodic behavior by conidering $wpd$ vlaues for different harmonies and some time series features. The features should also characterize probability distributions of different household.
+<!-- Consider a harmony table consisting of many harmonies, each of the form $(A, B)$, such that $A = \{ a_j: j = 1, 2, \dots, J\}$ and $B = \{ b_k: k = 1, 2, \dots, K\}$. Each household consists of a $J*K$ distributions one harmony. We compute the distributional difference -->
+<!-- between $(A, B)$ for the $s^{th}$ household using $wpd_{{s}}(A,B)$. -->
+<!-- $wpd_{{s}}(A,B)$ denotes the normalized weighted-pairwise distributional distances between $(A, B)$ and is a feature which measures distributional difference between harmonies. If we have $H_{N_C}$ harmonies in the harmony table, then for each household we have a vector of $wpd_{{s}}$ of $H_{N_C}$ elements with each element corresponding to one harmony. We aim to have pockets of households showing similar periodic behavior by conidering $wpd$ vlaues for different harmonies and some time series features. The features should also characterize probability distributions of different household. -->
 
 
+<!-- grouping probability distributions across a harmony. This clustering algorithm is adopted to remove or appropriately adjust for auto correlation and unequal length in the data. The method could be further extended by clustering probability distributions conditional on one or more cyclic granularities. The following are some of the advantages of our proposed method. -->
+
+
+
+_Pre-processing steps_
+
+- Handling trend, seasonality, non-stationarity and auto-correlation: Trend and seasonality are fundamental characteristics of time series data, and it is reasonable to define a time series according to its degree of trend and seasonality. These characteristics of the time series are lost or handled independently by considering probability distributions ( trend is lost) across categories of cyclic granularities (by independently modeling all seasonal fluctuations), and so there is no need to de-trend or de-seasonalize the data before conducting the clustering method. There is no need to omit holiday or weekend patterns for similar reasons.
+
+- Data transformation: Robust scaling method is used before computing the Inter-category distances and NQT is built-in transformation used for computation of $wpd$, which forms the basis of Intra-category distances.
 
 
 - _Clustering algorithm_
+
+In the analysis of energy smart metre data, K-Means or hierarchical clustering are often employed. These are simple and effective techniques that work well in a range of scenarios. For clustering, both employ a distance measure, and the distance measure chosen has a major influence on the structure of the clusters. We employ agglomerative hierarchical clustering in conjunction with Ward's criteria (XXX reference). Individual entities with the highest similarity computed using the desired distance metrics are sequentially merged using agglomerative algorithms. We can possibly employ any clustering method that supports the given distance metric as input.
 
 - _Characterization of clusters_
 
@@ -249,103 +266,102 @@ $wpd_{{s}}(A,B)$ denotes the normalized weighted-pairwise distributional distanc
 
 
 
-- A random sample  of the original data is taken for clustering analysis and includes missing and noisy observations (detailed description in Appendix)
+<!-- - A random sample  of the original data is taken for clustering analysis and includes missing and noisy observations (detailed description in Appendix) -->
 
-- All harmonies are computed for each customer in the sample.
-Cyclic granularities which are clashes for all customers in the sample are removed.
+<!-- - All harmonies are computed for each customer in the sample. -->
+<!-- Cyclic granularities which are clashes for all customers in the sample are removed. -->
 
-- It is worth noting that a number of other solutions may be considered at the pre-processing stage of the method. We have considered a) Normal-Quantile Transform and b) Robust transformation.
+<!-- - It is worth noting that a number of other solutions may be considered at the pre-processing stage of the method. We have considered a) Normal-Quantile Transform and b) Robust transformation. -->
 
-- Two methods are considered for computing dissimilarity between two customers. The first one involves computing according to one granularity is computed as the sum of the JS distances between distribution of all the categories of the granularity. When we consider more than one granularity, we consider the sum of the  average distances for all the granularity so that the combined metric is also a distance.
+<!-- - Two methods are considered for computing dissimilarity between two customers. The first one involves computing according to one granularity is computed as the sum of the JS distances between distribution of all the categories of the granularity. When we consider more than one granularity, we consider the sum of the  average distances for all the granularity so that the combined metric is also a distance. -->
 
-- Given the scale of dissimilarity among the energy readings, the model chooses optimal number of clusters
+<!-- - Given the scale of dissimilarity among the energy readings, the model chooses optimal number of clusters -->
 
-- Once clusters have been allocated, the groups are explored visually.
+<!-- - Once clusters have been allocated, the groups are explored visually. -->
 
-- Results are reported and compared.
+<!-- - Results are reported and compared. -->
 
-Two methods are used for computing distances between subjects and then hierarchical clustering algorithm is used.
+<!-- Two methods are used for computing distances between subjects and then hierarchical clustering algorithm is used. -->
 
-The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the probability distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand.
+<!-- The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the probability distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand. -->
 
-We want to cluster distributions of the form $f_{i,j,k}(v)$, where $i$ and $j$ denote 
+<!-- We want to cluster distributions of the form $f_{i,j,k}(v)$, where $i$ and $j$ denote  -->
 
-Consider a harmony table consisting of many harmonies, each of the form $(A, B)$, such that $A = \{ a_j: j = 1, 2, \dots, J\}$ and $B = \{ b_k: k = 1, 2, \dots, K\}$. Each household consists of a $J*K$ distributions one harmony. We compute the distributional difference
-between $(A, B)$ for the $s^{th}$ household using $wpd_{{s}}(A,B)$.
-$wpd_{{s}}(A,B)$ denotes the normalized weighted-pairwise distributional distances between $(A, B)$ and is a feature which measures distributional difference between harmonies. If we have $H_{N_C}$ harmonies in the harmony table, then for each household we have a vector of $wpd_{{s}}$ of $H_{N_C}$ elements with each element corresponding to one harmony. We aim to have pockets of households showing similar periodic behavior by conidering $wpd$ vlaues for different harmonies and some time series features. The features should also characterize probability distributions of different household.
-
-
-### Notations
-
-Consider an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the probability distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a household and the underlying variable as the electricity demand. Further consider a cyclic granularity of the form $B = \{ b_k: k = 1, 2, \dots, K\}$. Each customer consists of collection of probability distributions.
+<!-- Consider a harmony table consisting of many harmonies, each of the form $(A, B)$, such that $A = \{ a_j: j = 1, 2, \dots, J\}$ and $B = \{ b_k: k = 1, 2, \dots, K\}$. Each household consists of a $J*K$ distributions one harmony. We compute the distributional difference -->
+<!-- between $(A, B)$ for the $s^{th}$ household using $wpd_{{s}}(A,B)$. -->
+<!-- $wpd_{{s}}(A,B)$ denotes the normalized weighted-pairwise distributional distances between $(A, B)$ and is a feature which measures distributional difference between harmonies. If we have $H_{N_C}$ harmonies in the harmony table, then for each household we have a vector of $wpd_{{s}}$ of $H_{N_C}$ elements with each element corresponding to one harmony. We aim to have pockets of households showing similar periodic behavior by conidering $wpd$ vlaues for different harmonies and some time series features. The features should also characterize probability distributions of different household. -->
 
 
-So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand. We want to cluster distributions of the form $f_{i,j,k}(v)$, where $i$ and $j$ denote $i^{th}$ and $j^{th}$ customer respectively.
+<!-- ### Notations -->
+
+<!-- Consider an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the probability distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a household and the underlying variable as the electricity demand. Further consider a cyclic granularity of the form $B = \{ b_k: k = 1, 2, \dots, K\}$. Each customer consists of collection of probability distributions. -->
 
 
-
-a harmony table consisting of many harmonies, each of the form $(A, B)$, such that $A = \{ a_j: j = 1, 2, \dots, J\}$ and $B = \{ b_k: k = 1, 2, \dots, K\}$. 
+<!-- So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand. We want to cluster distributions of the form $f_{i,j,k}(v)$, where $i$ and $j$ denote $i^{th}$ and $j^{th}$ customer respectively. -->
 
 
 
-
-### A single or pair of granularities together (change names)
-
-The methodology can be summarized in the following steps:
-
-- _Pre-processing step_
-
-Robust scaling method or NQT used for each customer.
-
-
-- _NQT_
-
-
-- _Treatment to outliers_
-
-
-- _Handling trend, seasonality, non-stationarity and auto-correlation_
-
-Trend and seasonality are common features of time series, and it is natural to characterize a time series by its degree of trend and seasonality. By considering the probability distributions through the use of $wpd_{norm_{s,t}}(A,B)$, these features of the time series are lost and hence there is no need to de-trend or de-seasonalize the data before performing the clustering algorithm. No need to exclude holiday or weekend patterns.
+<!-- a harmony table consisting of many harmonies, each of the form $(A, B)$, such that $A = \{ a_j: j = 1, 2, \dots, J\}$ and $B = \{ b_k: k = 1, 2, \dots, K\}$.  -->
 
 
 
-### Many granularities together (change names)
 
-The methodology can be summarized in the following steps:
+<!-- ### A single or pair of granularities together (change names) -->
+
+<!-- The methodology can be summarized in the following steps: -->
+
+<!-- - _Pre-processing step_ -->
+
+<!-- Robust scaling method or NQT used for each customer. -->
 
 
-1. Compute quantiles of distributions across each category of the cyclic granularity
-2. Compute JS distance between households for each each category of the cyclic granularity
-3. Total distance between households computed as sum of JS distances for all hours
-4. Cluster using this distance with hierarchical clustering algorithm (method "Ward.D")
+<!-- - _NQT_ -->
 
-_Pro:_  
-- distance metric makes sense to group different shapes together  
-- simulation results look great on typical designs  
-_Cons:_  
-- Can only take one granularity at once  
-- Clustering a big blob of points together whereas the aim is to groups these big blob into smaller ones  
 
-### Multiple-granularities
-
-_Description:_  
-
-Choose all significant granularities and compute wpd for all these granularities for all customers. Distance between customers is taken as the euclidean distances between them with the granularities being the variables and wpd being the value under each variable for which Euclidean distance needs to be measured.  
-_Pro:_  
-- Can only take many granularities at once
-- can apply variable selection PCP and other interesting clustering techniques
-- simulation results look great on typical designs
-- splitting the data into similar sized groups  
-_Cons:_  
-- distance metric does not make sense to split the data into similar shaped clusters 
+<!-- - _Treatment to outliers_ -->
 
 
 
 
 
 
-<!-- grouping probability distributions across a harmony. This clustering algorithm is adopted to remove or appropriately adjust for auto correlation and unequal length in the data. The method could be further extended by clustering probability distributions conditional on one or more cyclic granularities. The following are some of the advantages of our proposed method. -->
+<!-- ### Many granularities together (change names) -->
+
+<!-- The methodology can be summarized in the following steps: -->
+
+
+<!-- 1. Compute quantiles of distributions across each category of the cyclic granularity -->
+<!-- 2. Compute JS distance between households for each each category of the cyclic granularity -->
+<!-- 3. Total distance between households computed as sum of JS distances for all hours -->
+<!-- 4. Cluster using this distance with hierarchical clustering algorithm (method "Ward.D") -->
+
+<!-- _Pro:_   -->
+<!-- - distance metric makes sense to group different shapes together   -->
+<!-- - simulation results look great on typical designs   -->
+<!-- _Cons:_   -->
+<!-- - Can only take one granularity at once   -->
+<!-- - Clustering a big blob of points together whereas the aim is to groups these big blob into smaller ones   -->
+
+<!-- ### Multiple-granularities -->
+
+<!-- _Description:_   -->
+
+<!-- Choose all significant granularities and compute wpd for all these granularities for all customers. Distance between customers is taken as the euclidean distances between them with the granularities being the variables and wpd being the value under each variable for which Euclidean distance needs to be measured.   -->
+<!-- _Pro:_   -->
+<!-- - Can only take many granularities at once -->
+<!-- - can apply variable selection PCP and other interesting clustering techniques -->
+<!-- - simulation results look great on typical designs -->
+<!-- - splitting the data into similar sized groups   -->
+<!-- _Cons:_   -->
+<!-- - distance metric does not make sense to split the data into similar shaped clusters  -->
+
+
+# Simulations
+
+
+
+# Application
+
 
 
 
@@ -353,6 +369,8 @@ _Cons:_
 The methodology is again applied to the 100 households and some preliminary results are presented. Figure \ref{fig:mds} show the multidimensional scaling of the 100 households with colors representing groups presented by hierarchical clustering method. The clusters have very different size and are far apart with no overlapping. They should be distinct from each other in terms of their periodic patterns. Figure \ref{fig:cyclic-cluster} shows the cyclic presentation of time where it could be viewed in details how these clusters are different with respect to the periodic pattern (day-of-week, hour-of-day). Distribution of energy demand across day-of-week and hour-of-day for three groups clustered through the proposed methodology is shown. For group-1, the morning peak looks very sharp, for group-2 the morning and evening peaks are rounded and spread over few hours, for group-3 peaks are less rounded. They differ in their relationship between 75th and 90th percentile. Also, the 75th and 90th percentile of group 2 are quite close, implying the behavior of this group is more regular.
 
  <!-- - Handling autocorrelation: Autocorrelation in the time series is likely to get removed from considering probability distributions and cyclic granularities in the clustering algorithm. -->
+
+Generally most of the indices used for internal clustering validation combine compactness and separation measures.
 
 _Distinction, repeatability, and robustness metrics_
 
@@ -375,16 +393,6 @@ the pairwise minimum distances between objects in different clusters
 
 _Connectivity:_ corresponds to what extent items are placed in the same cluster as their nearest neighbors in the data space. The connectivity has a value between 0 and infinity and should be minimized.
 
-Generally most of the indices used for internal clustering validation combine compactness and separation measures.
-
-## Results
-
-
-## Software implementation
-
-The implementation for our framework is available in the R package [`gracsr`](https://github.com/Sayani07/gracsr) for ease of use in other applications.
-
-# Results
 
 ## Clustering results for 100 customers
 
@@ -407,6 +415,10 @@ The robustness of this clustering method is provided through practical explanati
 <!-- ### Weather -->
 
 <!-- Weather, notably temperature (and humidity) can be the main driver(s) for energy usage.  In NSW many households have electric heaters so their use can impact winter energy use and air-conditioners can impact summer energy use. Relevant weather data could be obtained from the [Bureau of Meteorology](www.bom.gov.au). Some weather stations have 30 minute (sometimes even smaller interval) weather data. Potentially, there could be lag effects of weather on energy usage which should be considered. -->
+
+## Software implementation
+
+The implementation for our framework is available in the R package [`gracsr`](https://github.com/Sayani07/gracsr) for ease of use in other applications.
 
 ## Discussion
 
