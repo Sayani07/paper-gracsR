@@ -195,11 +195,47 @@ We can then model different data generation processes depending on our level of 
 <!-- being the cluster dispersion index (CDI) [22–24], the Davies–Bouldin index (DBI) [25,26] and the mean index adequacy (MIA) [8,13]. -->
 
 
-## Clustering methodology
+The data set solely contains readings from smart meters and no information about the consumers' specific physical, geographical, or behavioural attributes. As a result, no attempt is made to explain why consumption varies. Instead, this work investigates how much energy usage heterogeneity can be found in smart meter data and what some of the most common electricity use patterns are. It is worth noting that when studying these dynamics, a variety of objectives may be pursued. One objective could be to group consumers with similar shapes over all relevant cyclic granularities. In this scenario, the variation in customers within each group is in magnitude rather than shape, while the variation between groups is only in shape. Most clustering algorithms offer only daily energy profiles throughout the hours of the day, but we suggest a broader approach to the problem, aiming to group consumers with similar shapes across all significant cyclic granularities. Another purpose of clustering could be to group customers that have similar differences in patterns across all major cyclic granularities, capturing similar jumps across categories regardless of the overall shape. For example, in the first goal, similar shapes across hours of the day will be grouped together, resulting in customers with similar behaviour across all hours of the day, whereas in the second goal, any similar big-enough jumps across hours of the day will be clubbed together, regardless of which hour of the day it is. Both of these objectives may be useful in a practical context and, depending on the data set, may or may not propose the same customer classification.
+
+The foundation of our method is unsupervised clustering algorithms based exclusively on time-series features. First, we study the underlying distributions that may have resulted in different patterns across temporal granularities in order to identify a mechanism to classify them based on the similarity of those distributions. Depending on the goal of clustering, the distance metric for defining similarity would be different. These distance metrics could be fed into a clustering algorithm to break large data sets into subgroups that can then be analyzed separately. These clusters may be commonly associated with real-world data segmentation. However, since the data is unlabeled a priori, more information is required to corroborate this.
+
+This section presents the work flow of the methodology:
+
+- _Find significant harmonies or cyclic granularities_:
+
+For each key variable, the raw smart meter data is indexed by time and comprises values of several variables of interest (measurement variables) at each time point. This sequence, though, could be depicted in a variety of ways. One sequence could reflect the distribution of hourly consumption over a single day, while another could indicate consumption over a week or a year. The sequence of measured variables throughout each category of any cyclic granularity could be regarded as a single data generating process. It is beneficial to evaluate those cyclic granularities that are significant for the majority of customers or noteworthy in an electricity-behavior context, so that when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered.
+
+
+
+
+- _Distance metric_
+
+- _Clustering algorithm_
+
+- _Characterization of clusters_
+
+
+
+
+
+- A random sample  of the original data is taken for clustering analysis and includes missing and noisy observations (detailed description in Appendix)
+
+- All harmonies are computed for each customer in the sample.
+Cyclic granularities which are clashes for all customers in the sample are removed.
+
+- It is worth noting that a number of other solutions may be considered at the pre-processing stage of the method. We have considered a) Normal-Quantile Transform and b) Robust transformation.
+
+- Two methods are considered for computing dissimilarity between two customers. The first one involves computing according to one granularity is computed as the sum of the JS distances between distribution of all the categories of the granularity. When we consider more than one granularity, we consider the sum of the  average distances for all the granularity so that the combined metric is also a distance.
+
+- Given the scale of dissimilarity among the energy readings, the model chooses optimal number of clusters
+
+- Once clusters have been allocated, the groups are explored visually.
+
+- Results are reported and compared.
 
 Two methods are used for computing distances between subjects and then hierarchical clustering algorithm is used.
 
-The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the probability distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a household and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand.
+The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the probability distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand.
 
 We want to cluster distributions of the form $f_{i,j,k}(v)$, where $i$ and $j$ denote 
 
@@ -262,6 +298,7 @@ _Cons:_
 ### Multiple-granularities
 
 _Description:_  
+
 Choose all significant granularities and compute wpd for all these granularities for all customers. Distance between customers is taken as the euclidean distances between them with the granularities being the variables and wpd being the value under each variable for which Euclidean distance needs to be measured.  
 _Pro:_  
 - Can only take many granularities at once
