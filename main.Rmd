@@ -210,7 +210,6 @@ The proposed methodology aim to leverage the intrinsic temporal data structure h
 \noindent These cyclic granularities are useful for exploring repetitive patterns in time series data that get lost in the linear representation of time. It is advantageous to consider only those cyclic granularities across which there is a significant repetitive pattern for the majority of customers or noteworthy in an electricity-behavior context. In that case, when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered. [XXX reference 2nd chapter] proposes a way to select significant cyclic granularities and harmonies which is used for this paper.
 
 
-
 - _Individual or combined categories of cyclic granularities as DGP_
 
 The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand. In this work, instead of considering the probability distributions of the linear time series, we assume that the measured variables across different categories of any cyclic granularity are from data generating processes.
@@ -249,11 +248,11 @@ Compute weighted pairwise distances ($wpd$) (XXX reference) for all considered g
 
 
 
-_Pre-processing steps_
+- _Pre-processing steps_
 
-- Handling trend, seasonality, non-stationarity and auto-correlation: Trend and seasonality are fundamental characteristics of time series data, and it is reasonable to define a time series according to its degree of trend and seasonality. These characteristics of the time series are lost or handled independently by considering probability distributions ( trend is lost) across categories of cyclic granularities (by independently modeling all seasonal fluctuations), and so there is no need to de-trend or de-seasonalize the data before conducting the clustering method. There is no need to omit holiday or weekend patterns for similar reasons.
+    **Handling trend, seasonality, non-stationarity and auto-correlation:** Trend and seasonality are fundamental characteristics of time series data, and it is reasonable to define a time series according to its degree of trend and seasonality. These characteristics of the time series are lost or handled independently by considering probability distributions ( trend is lost) across categories of cyclic granularities (by independently modeling all seasonal fluctuations), and so there is no need to de-trend or de-seasonalize the data before conducting the clustering method. There is no need to omit holiday or weekend patterns for similar reasons.
 
-- Data transformation: Robust scaling method is used before computing the Inter-category distances and NQT is built-in transformation used for computation of $wpd$, which forms the basis of Intra-category distances.
+    **Data transformation:** Robust scaling method is used before computing the Inter-category distances and NQT is built-in transformation used for computation of $wpd$, which forms the basis of Intra-category distances.
 
 
 - _Clustering algorithm_
@@ -261,6 +260,13 @@ _Pre-processing steps_
 In the analysis of energy smart metre data, K-Means or hierarchical clustering are often employed. These are simple and effective techniques that work well in a range of scenarios. For clustering, both employ a distance measure, and the distance measure chosen has a major influence on the structure of the clusters. We employ agglomerative hierarchical clustering in conjunction with Ward's criteria (XXX reference). Individual entities with the highest similarity computed using the desired distance metrics are sequentially merged using agglomerative algorithms. We can possibly employ any clustering method that supports the given distance metric as input.
 
 - _Characterization of clusters_
+
+Depending on the distance measure utilized for the study, the cluster characterization technique will differ. Clusters that utilise intra-category distances are characterised using multi-dimensional scaling and parallel coordinate displays. For inter-category distances, the distribution across major granularities may be presented to ensure that the goal of similar shapes within clusters and distinct shapes across clusters is met. This technique may potentially make advantage of multi-dimensional scaling.
+
+
+\noindent Multidimensional scaling (MDS) (XXX reference) refers to a family of methods that analyse a matrix of distances or dissimilarities to provide a representation of the data points in a reduced-dimension space. There are many kinds of MDS, but they all solve the same fundamental issue: Given a $n*n$ matrix of dissimilarities and a distance measure, identify a configuration of $n$ points $x_1, x_2, \dots, x_n$ in the reduced dimension space $R^q$ ($q<p$) where the distance between the points is near to the dissimilarity between the points. All techniques must determine the coordinates of the points as well as the space dimension, $q$. Metric and nonmetric MDS are the two main kinds of MDS. Metric MDS methods presume a functional connection between the interpoint distances and the supplied dissimilarities and assume that the data are quantitative. We use metric MDS.
+
+\noindent Parallel coordinate plots (XXX reference) Parallel coordinates have been extensively used to display high-dimensional and multivariate data, allowing for the detection of patterns within the data via visual grouping.
 
 
 
