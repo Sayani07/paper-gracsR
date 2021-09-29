@@ -201,17 +201,34 @@ The foundation of our method is unsupervised clustering algorithms based exclusi
 
 This section presents the work flow of the methodology:
 
-- _Find significant harmonies or cyclic granularities_:
+- _Choose significant harmonies or cyclic granularities_
 
-For each key variable, the raw smart meter data is a sequence that is indexed by time and comprises values of several variables of interest (measurement variables) at each time point. This sequence, though, could be depicted in a variety of ways. A shuffling of the raw sequence could reflect the distribution of hourly consumption over a single day, while another could indicate consumption over a week or a year. These temporal deconstructions of a time period into units such as hour-of-day, work-day/weekend, called cyclic temporal granularities, are useful for exploring repetitive patterns in time series data that get lost in the linear representation of time. However, it is advantageous to consider those cyclic granularities across which there is a significant repetitive pattern for the majority of customers or noteworthy in an electricity-behavior context, because when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered.
+For each key variable, the raw smart meter data is a sequence that is indexed by time and comprises values of several measurement variables at each time point. This sequence, though, could be depicted in a variety of ways. A shuffling of the raw sequence could reflect the distribution of hourly consumption over a single day, while another could indicate consumption over a week or a year. These temporal deconstructions of a time period into units such as hour-of-day, work-day/weekend are called cyclic temporal granularities. They are useful for exploring repetitive patterns in time series data that get lost in the linear representation of time. However, it is advantageous to consider only those cyclic granularities across which there is a significant repetitive pattern for the majority of customers or noteworthy in an electricity-behavior context. In that case, when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered.
 
 
+- _Individual or combined categories of cyclic granularities as DGP_
+
+The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand. In this work, instead of considering the probability distributions of the linear time series, we assume that the measured variables across different categories of any cyclic granularity are from data generating processes.
+Hence, we want to be able to cluster distributions of the form $f_{i,A,B \dots, {N_C}}(v)$, where $A, B$ represent the cyclic granularities under consideration such that $A = \{a_j: j=1, 2, \dots J\}$,  $B = \{b_k: k  = 1, 2, \dots K\}$ and so on. We consider individual each category of a cyclic granularity ($A$) or combination of categories for interaction of cyclic granularities (for e.g. $A*B$) to have a distribution. For example, let us consider we have two cyclic  granularities of interest, $A = {0, 1, 2, \dots, 23}$ representing hour-of-day and  $B = \{Mon, Tue, Wed, \dots, Sun\}$ representing day-of-week. 
+each customer $i$ consist of a collection of probability distributions. In case individual granularities ($A$ or $B$) are considered there are  $J = 24$ distributions of the form $f_{i,j}(v)$ or $K = 7$ distributions of the form $f_{i,k}(v)$ for each customer $i$. In case of interaction,  $J*K=168$ distributions of the form $f_{i,j, k}(v)$ could be conceived for each customer $i$. As a result, a distance between collections of these univariate probability distributions is required. Depending on the objective of the problem, there could be many approaches to considering such distances. This paper considers two approaches, which are explained in the next segment.
 
 - _Distance metrics_
 
-The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand.
+Considering each individual or combined categories of cyclic granularities as a data generating process lead to a collection of conditional distributions for each customer $i$. The (dis) similarity between each pair of observations should be obtained by combining the distances between these collections of conditional distributions such that the resulting metric is a distance metric, which could be fed into the clustering algorithm. Two types of distance metric is considered:
 
-If we consider the sequence of measured variables for each category of any cyclic granularity to be from a single data generating process, we want to cluster distributions of the form $f_{i,j,k}(v)$, where $j$ and $k$ denote two granularities. For example, j=hour of day and k=day of week. We still want the households in clusters, but each household consists of a collection of probability distributions f_{i,h,d}(x) where $h=1,...,24$ and $d=1,...,7$. In this example (hour of day/day of week), we would have $24*7=168$ distributions per household if we consider interaction of the households or $24+7=31$ distributions if individual effect of granularities need to be considered. So we need a distance between collections of these univariate probability distributions. There could be several ways of considering such distances. We consider the following two approoaches:
+<!-- The choice of distance measures is a critical step in clustering. It defines how the similarity of two elements (x, y) is calculated. -->
+
+**Inter-category distances**
+
+This distance matrix considers two objects to be similar if every category of an individual cyclic granularity or combination of categories for interacting cyclic granularities have similar distributions. In this study, the distribution for each category is characterized using deciles and the distances between distributions are computed by using the Jensen-Shannon distance, which is symmetric and hence could be used as a distance measure. The total distance between two elements $x$ and $y$ is then defined as $$S^A_{x,y} = \sum_{j} D_{x,y}(A)$$ (sum of distances between each category $j$ of cyclic granularity A) or  $$S^{A*B}_{x,y} = \sum_j \sum_k D_{x,y}(A, B)$$ (sum of distances between each combination of categories $(j, k)$ of the harmony $(A, B)$. When combining distances from individual cyclic granularities $A$ and $B$, $$S^{A, B}_{x, y} = S^A_{x,y}/J + S^B_{x,y}/K$$ is used, which could also be shown to be a distance metric easily. This is shown for cyclic granularity $A$ and $B$, but could be practically extended to more granularities.
+
+
+**Intra-category distances**
+Choose all significant granularities and compute wpd for all these granularities for all customers. Distance between customers is taken as the euclidean distances between them with the granularities being the variables and wpd being the value under each variable for which Euclidean distance needs to be measured.  
+
+- 
+
+
 
 
 
@@ -288,6 +305,7 @@ Robust scaling method or NQT used for each customer.
 
 
 - _Handling trend, seasonality, non-stationarity and auto-correlation_
+
 Trend and seasonality are common features of time series, and it is natural to characterize a time series by its degree of trend and seasonality. By considering the probability distributions through the use of $wpd_{norm_{s,t}}(A,B)$, these features of the time series are lost and hence there is no need to de-trend or de-seasonalize the data before performing the clustering algorithm. No need to exclude holiday or weekend patterns.
 
 
