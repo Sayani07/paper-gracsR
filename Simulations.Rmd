@@ -1,0 +1,692 @@
+---
+title: "simulations"
+author: "Sayani Gupta"
+date: "27/09/2021"
+preamble: >
+  \setlength {\marginparwidth }{2cm}
+  \usepackage{mathtools,amssymb,booktabs,longtable,todonotes,amsthm}
+  \def\mod{~\text{mod}~}
+output:
+  bookdown::pdf_book:
+    base_format: rticles::asa_article
+    fig_height: 4
+    fig_width: 6
+    fig_caption: yes
+    dev: "pdf" 
+    keep_tex: yes
+    toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(readr)
+library(tidyverse)
+library(gravitas)
+library(tsibble)
+library(parallel)
+library(magrittr)
+library(GGally)
+library(knitr)
+library(patchwork)
+library(caret)
+library(plotly)
+library(gracsr)
+library(here)
+
+```
+
+## Materials and methods
+
+### Simulations
+
+To test clustering algorithm solutions against ground truth cluster assignments, we generate simulations to represent important problems that could be encountered in electricity data contexts. The code to generate these simulations are included in the Supplementary paper. When we move from the linear to the cyclic world of temporal granularities, we can see patterns across different categories of the granularities which gets lost in the linear representation. Populations are modeled by a collection of these cyclic granularities. Each cyclic granularity might or might not have patterns across its categories. Each cluster is characterized by similar patterns across one or more of these cyclic granularities.
+
+A small example is given to setup the problem.
+
+We constructed the simulation parameters to represent common patterns in electricity data. 50, 200 and 500 time series were chosen for different simulation designs with different granularities and patterns changing across different granularities.
+The data type is fixed to be "continuous".We generated independent replications of all combinations of the simulation parameters.
+
+Consider a continuous time series variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with 2, 3 and 5 levels respectively. Categories of g1, g2 and g3 are represented by ${0,1}$, ${0, 1, 2}$ and ${0, 1, 2, 3, 4}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$.
+
+<!-- Consider the case where distribution of $y$ would vary across levels of $g1$ and g2$ but will not vary across levels of $g3$ as described in Figure .Figure \ref shows four designs where $g3$ acts as a nuisance variable, and $g1$ and $g2$ varies in both  Design 2 and 3, and $g2$ varies in all designs. -->
+
+
+Consider a case where distribution of $y$ would vary across levels of $g2$
+for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities.
+
+
+```{r change-var, echo=FALSE}
+t = 300
+n <- seq(0, t, 1)
+g1 <- n %%2
+g2 <- n %%3
+g3 <- n %%5
+mu11 = c(0, 5)
+mu12 = c(3, 0)
+mu21= c(2, 0, 0)
+mu22 = c(0, 2, 0)
+mu23 = c(0, 0, 2)
+mu3 = c(0, 0, 0, 0, 0)
+```
+
+```{r generate-design} 
+generate_design <- function(t, mu21, mu22, mu23){
+  
+t <- seq(0, t, 1)
+g1 <- t %%2
+g2 <- t %%3
+g3 <- t %%5
+
+# null design
+g1_dnull <- rep( rep(0, each = length(unique(g1))), length.out= length(t))
+g2_dnull <- rep( rep(0, each = length(unique(g2))), length.out= length(t))
+g3_dnull <- rep( rep(0, each = length(unique(g3))), length.out= length(t))
+ 
+# mean changing across categories in varying ways
+
+g11_dvary <- rep(mu11, length.out= length(t))
+g12_dvary <- rep(mu12, length.out= length(t))
+g21_dvary <- rep(mu21, length.out= length(t))
+g22_dvary <- rep(mu22, length.out= length(t))
+g23_dvary <- rep(mu23, length.out= length(t))
+g3_dvary <- rep(0, length.out= length(t))
+
+design1 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dnull)
+design2 = distributional::dist_normal(g11_dvary + g21_dvary + g3_dnull)
+design3 = distributional::dist_normal(g12_dvary + g22_dvary + g3_dnull)
+design4 = distributional::dist_normal(g1_dnull + g23_dvary + g3_dnull)
+
+data_bind <- tibble::tibble(
+index = t,
+g1 = g1,
+g2 = g2,
+g3 = g3,
+design1 = distributional::generate(design1, times = 1) %>% unlist(),
+design2 = distributional::generate(design2, times = 1) %>% unlist(),
+design3 = distributional::generate(design3, times = 1) %>% unlist(),
+design4 = distributional::generate(design4, times = 1) %>% unlist(),
+#design5 = distributional::generate(design5, times = 1) %>% unlist()
+) %>% 
+  pivot_longer(-c(1, 2, 3, 4), names_to = "design", values_to = "sim_data")
+
+data_bind
+}
+
+data_bind <- generate_design(t, mu21, mu22, mu23)
+
+#data_bind
+
+```
+
+
+```{r plot-linear , out.width="100%", fig.cap="The linear and cyclic representation of the time series variable y. It is not possible to comprehend these patterns across cyclic granularities g1, g2 and g3 or group similar series just by looking at the linear plots."}
+
+# plot_linear_data <- function(data){
+# ggplot(data,
+#              aes(x = index, y = sim_data)) + 
+#   geom_line() +
+#   xlab("index")+
+#   theme_bw() 
+# }
+
+ggplot(data_bind,
+             aes(x = index, y = sim_data)) + 
+  geom_line() +
+  xlab("index")+
+  theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol =1)+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+p2 <- ggplot(data_bind,
+             aes(x = as.factor(g1), y = sim_data)) + 
+  geom_boxplot(alpha =0.5) + xlab("g1") + 
+  theme_bw() +
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue") +
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue") + ylab("")+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alpha =0.5) +
+  xlab("g3") + theme_bw()+
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue")+ ylab("")+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+(p2 + p3 + p4) * theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)),
+    panel.spacing =unit(0, "lines")) * theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+# 
+# 
+# plot_cyclic_data( data_bind %>% filter(design=="design2"))
+# plot_data( data_bind %>% filter(design=="design3"))
+# plot_data( data_bind %>% filter(design=="design4"))
+# plot_data( data_bind %>% filter(design=="design5"))
+```
+
+A subset of many possible designs are shown in Figure \ref{fig: plot-linear }. For the parameter space (XXX unique  combinations shown in table YYY), 100, 500 independent replications of all possible combination of simulation parameters were generated. The clustering methodologies were run all these unique combinations and subsets of these to verify if the methodologies work as expected.
+
+
+
+<!-- Many time series with observations are created using the four designs below, each of which is iterated five times. We anticipate to have 4 clusters, each with five time series conforming to the same design, once we execute the clustering.  -->
+
+<!-- Distribution of each categories (cat-0, cat-1, cat-2) is (1, 1, 1), (1, 2, 3), (1, 3, 2), (2, 1, 3), (2, 3, 1), (3, 1, 2), (3, 2, 1) corresponding to 7 scenarios each with many designs. For the scenario (1, 1, 1) there will be have $(2^3 -2) = 6$ possible ways in which $g2$ can vary, for the  scenario $(1, 2, 3)$, there will be $(2^3 -1) = 7$ possible ways in which $g2$ can vary. Imagine the null design corresponds to (0, 0, 0) when there is no pattern across categories.Since $g2$ has three levels, each of which can vary or not, we have $(2^3 -2) = 6$ possible ways in which $g2$ can vary leading to $7$ designs as follows (2 correspond to the cases where all categories vary or no categories vary.) -->
+
+### Clustering algorithms
+
+We choose the algorithms with most common use in smart meter clustering. . First, we used agglomerative hierarchical clustering with Ward’s criterion
+(HC), a dominant approach for smart meter clustering. Second, we also used k-means clustering. For each clustering algorithm, we assumed
+the number of clusters was known, recovering the number of clusters
+given from the simulation parameters. 
+
+
+| Granularity type                                                   	| # Significant 	| # Replications 	|
+|--------------------------------------------------------------------	|---------------	|----------------	|
+| **Individual**  <br><br># obs: 300, 500, 2000  <br># clusters: 6/7 	| 1/2/3         	| 25, 100, 200   	|
+| **Interaction**  <br><br># obs: 500, 2000  <br># clusters: 4       	| 1/2           	| 25, 100, 200   	|
+
+
+### Distance metrics 
+
+
+#### A single or pair of granularities together (change names)
+
+The methodology can be summarized in the following steps:
+
+- _Pre-processing step_
+
+Robust scaling method or NQT used for each customer.
+
+
+- _NQT_
+
+
+- _Treatment to outliers_
+
+
+- _Handling trend, seasonality, non-stationarity and auto-correlation_
+Trend and seasonality are common features of time series, and it is natural to characterize a time series by its degree of trend and seasonality. By considering the probability distributions through the use of $wpd_{norm_{s,t}}(A,B)$, these features of the time series are lost and hence there is no need to de-trend or de-seasonalize the data before performing the clustering algorithm. No need to exclude holiday or weekend patterns.
+
+
+
+#### Many granularities together (change names)
+
+The methodology can be summarized in the following steps:
+
+
+1. Compute quantiles of distributions across each category of the cyclic granularity
+2. Compute JS distance between households for each each category of the cyclic granularity
+3. Total distance between households computed as sum of JS distances for all hours
+4. Cluster using this distance with hierarchical clustering algorithm (method "Ward.D")
+
+_Pro:_  
+- distance metric makes sense to group different shapes together  
+- simulation results look great on typical designs  
+_Cons:_  
+- Can only take one granularity at once  
+- Clustering a big blob of points together whereas the aim is to groups these big blob into smaller ones  
+
+#### Multiple-granularities
+
+_Description:_  
+
+Choose all significant granularities and compute wpd for all these granularities for all customers. Distance between customers is taken as the euclidean distances between them with the granularities being the variables and wpd being the value under each variable for which Euclidean distance needs to be measured.  
+_Pro:_  
+- Can only take many granularities at once
+- can apply variable selection PCP and other interesting clustering techniques
+- simulation results look great on typical designs
+- splitting the data into similar sized groups  
+_Cons:_  
+- distance metric does not make sense to split the data into similar shaped clusters 
+
+
+### Prototype application
+
+A clean data set is obtained by carefully choosing customers which shows similar shapes across one or more cyclic granularity. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one.
+
+Fig \ref{fig:}, \ref{fig:} and \ref{fig:} shows the distribution of 24 customers across hour-of-day, month-of-year and wknd-wday respectively. Every row in \ref{fig:} shows different shapes across hour-of-day and across columns show similar shapes for each row.
+We use our methodology to see if the customers are allocated to same group have similar shapes across one or more granularity.
+
+
+
+```{r data-pick}
+
+quantile_prob_graph <- c(0.25, 0.5, 0.75)
+
+wkndwday <- read_rds(here("data/dist_gran_wkndwday_356cust_robust.rds")) %>% broom::tidy()
+
+moy <- read_rds(here("data/dist_gran_moy_356cust.rds")) %>% broom::tidy()
+
+hod <- read_rds(here("data/dist_gran_hod_356cust_robust.rds")) %>% broom::tidy()
+
+distance <- wkndwday %>% 
+  left_join(moy, by = c("item1", "item2")) %>% 
+  left_join(hod, by = c("item1", "item2")) %>% 
+  rename("wkndwday" ="distance.x",
+         "moy" = "distance.y",
+         "hod" = "distance") %>%
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2))) 
+
+total_distance <- distance %>% 
+  mutate(total = hod) 
+
+data_pick_one <- total_distance %>% filter(item1 %in% 
+                            c(8454221)) %>% group_by(item1) %>% arrange(total) %>% head(5) %>% 
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+
+#11013154  8181071 11048034
+data_pick_two <- total_distance %>% filter(item1 %in% 
+                            c(8181071)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>% 
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+
+data_pick_three <- total_distance %>% filter(item1 %in% 
+                            c(11013154)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>% 
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+data_pick_three <- total_distance %>% filter(item1 %in%
+                            c(11013154)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>%
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+# 8653709
+data_pick_four <- total_distance %>% filter(item1 %in%
+                            c(8184707)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>%
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+data_pick_cust <- bind_rows(
+unique(c(data_pick_one$item1,data_pick_one$item2)) %>% as_tibble(),    unique(c(data_pick_two$item1,data_pick_two$item2)) %>% as_tibble(), 
+c(11013154, 8495194, 8627007,10109182,10677705,8952846) %>% as_tibble(),
+unique(c(data_pick_four$item1,data_pick_four$item2)) %>% as_tibble(),
+.id = "design")
+
+
+
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))%>%
+  filter(customer_id %in% data_pick_cust$value) %>% 
+  gracsr::scale_gran( method = "robust", response = "general_supply_kwh")
+
+
+# data_pick_three <- total_distance %>% filter(item1 %in% 
+#                             c(11013154)) %>% 
+#   mutate(item1 = as.integer(as.character(item1)),
+#          item2 = as.integer(as.character(item2)))
+```
+
+```{r heatmap-hod}
+sm_hod <- gravitas::create_gran(data_pick, "hour_day")
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(customer_id, hour_day, general_supply_kwh) %>% 
+  pivot_wider(names_from = hour_day,
+              values_from = general_supply_kwh)  %>% 
+  left_join(data_pick_cust, by = c("customer_id" = "value"))
+  
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, ncol(sm_hod_list))]))
+nrow_sm <- seq_len(nrow(sm_hod_list))
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, ncol(sm_hod_list))) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_graph, na.rm = TRUE)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id")
+
+
+ref_cat <- names(sm_hod_list)[-c(1, ncol(sm_hod_list))] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>%
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap_hod <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id)) %>% 
+  left_join(data_pick_cust, by = c("customer_id" = "value")) %>% 
+  mutate(categories_serial_id = as.factor(categories_serial_id))
+  
+
+data_heatmap_hod %>% 
+  ggplot(aes(x = categories_serial_id)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id)) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  scale_x_discrete(breaks = seq(1, 24, 3))
+
+```
+
+```{r heatmap-moy}
+sm_hod <- gravitas::create_gran(data_pick, "month_year")
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(customer_id, month_year, general_supply_kwh) %>% 
+  pivot_wider(names_from = month_year,
+              values_from = general_supply_kwh)  %>% 
+  left_join(data_pick_cust, by = c("customer_id" = "value"))
+  
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, ncol(sm_hod_list))]))
+nrow_sm <- seq_len(nrow(sm_hod_list))
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, ncol(sm_hod_list))) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_graph, na.rm = TRUE)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id")
+
+
+ref_cat <- names(sm_hod_list)[-c(1, ncol(sm_hod_list))] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>%
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap_moy <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id)) %>% 
+  left_join(data_pick_cust, by = c("customer_id" = "value")) %>% 
+  mutate(categories_serial_id = as.factor(categories_serial_id))
+  
+
+data_heatmap_moy %>% 
+  ggplot(aes(x = categories_serial_id)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id)) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  scale_x_discrete(breaks = seq(1, 12, 2))
+
+```
+
+
+```{r heatmap-wkndwday}
+sm_hod <- gravitas::create_gran(data_pick, "wknd_wday")
+
+sm_hod_list <- sm_hod %>% 
+  as_tibble() %>% 
+  select(customer_id, wknd_wday, general_supply_kwh) %>% 
+  pivot_wider(names_from = wknd_wday,
+              values_from = general_supply_kwh)  %>% 
+  left_join(data_pick_cust, by = c("customer_id" = "value"))
+  
+ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, ncol(sm_hod_list))]))
+nrow_sm <- seq_len(nrow(sm_hod_list))
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list%>% 
+     dplyr::filter(customer_id == customer_id[x]) %>% 
+     select(-c(1, ncol(sm_hod_list))) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_graph, na.rm = TRUE)
+})  %>% bind_rows(.id = "categories_serial_id")
+}) %>% bind_rows(.id = "customer_serial_id")
+
+
+ref_cat <- names(sm_hod_list)[-c(1, ncol(sm_hod_list))] %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>%
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap_wkndwday <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id)) %>% 
+  left_join(data_pick_cust, by = c("customer_id" = "value")) %>% 
+  mutate(categories_serial_id = as.factor(categories_serial_id))
+  
+
+data_heatmap_wkndwday %>% 
+  ggplot(aes(x = categories_serial_id)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id)) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) 
+
+```
+
+
+```{r clustering}
+filtered_distance <- distance %>% filter(item1 %in% data_pick_cust$value) %>% 
+  filter(item2 %in% data_pick_cust$value)
+
+
+# filtered_distance <- bind_rows(data_pick_one, )
+#   
+#   data_pick_one
+
+
+total_distance <- filtered_distance %>% 
+mutate(total = wkndwday/2 + moy/12 + hod/24) 
+#mutate(total = hod) 
+
+total_distance_wide <- total_distance %>% pivot_wider(-c(2:5), 
+                               names_from = item2,
+                               values_from = total)
+#total_distance_wide$`11013154` <- NA
+
+rownames(total_distance_wide) <- total_distance_wide$item1
+
+mds_data <- total_distance_wide %>% 
+  mutate_all(~replace(., is.na(.), 0)) %>%
+   tibble::rownames_to_column() %>%  
+   select(-item1) %>% 
+   pivot_longer(-rowname) %>% 
+   pivot_wider(names_from=rowname, values_from=value) 
+
+rownames(mds_data) <- total_distance_wide$item1
+
+# group <- mds_data[-1] %>% clust_gran(kopt=4)
+# 
+
+df <- mds_data[-1] %>% as.matrix()
+DM <- matrix(0, ncol(mds_data), ncol(mds_data))
+DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)]
+
+f = as.dist(DM)
+
+#f %>% hclust %>% cutree(k=4)
+
+
+first_lot <- mds_data %>% names()
+# because distance matrix is such  that 1:23 appears in columns and 2:24 appears in rows such that 1st customer is missing from row and last customer is missing from variables
+id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
+
+group <- f %>% hclust (method = "ward.D") %>% cutree(k=4)
+
+cluster_result <- bind_cols(id = id, group = group) %>% mutate(id =  as.numeric(id))
+
+mds  = cmdscale(f)
+rownames(mds) = id
+colnames(mds) = c("mds1", "mds2")
+
+ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result$group), 
+       aes(x = mds1, y = mds2, color = as.factor(group))) +
+  geom_point() +
+  geom_text(aes(label = id))
+
+cluster_result %>% filter(group==1)
+cluster_result %>% filter(group==2)
+cluster_result %>% filter(group==3)
+cluster_result %>% filter(group==4)
+
+  #x = ~mds1.hod, y = ~ mds2.hod, text = ~customer_id
+```
+
+
+
+```{r data-heatmap-hod}
+data_heatmap_hod %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = categories_serial_id)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")
+```
+
+
+
+
+
+
+```{r data-heatmap-moy}
+data_heatmap_moy %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = categories_serial_id)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")
+```
+
+
+```{r data-heatmap-wkndwday}
+data_heatmap_wkndwday %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = categories_serial_id)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")
+
+
+```
+
+
+
+```{r first-try, eval = FALSE}
+
+sm_hod_list_new <- sm_hod_list %>% left_join(cluster_result, by = c("customer_id" = "id")) 
+
+
+
+sm_hod_list_ncol <- sm_hod_list_new[-c(1, ncol(sm_hod_list_new),(ncol(sm_hod_list_new)-1))]
+     
+ncol_sm <- unique(cluster_result$group)
+nrow_sm <- seq_len(nrow(sm_hod_list_new))
+
+
+sm_hod_quantiles_cat <- map(nrow_sm, function(x){
+  map(ncol_sm, function(y){
+   cell <- sm_hod_list_new%>% 
+     dplyr::filter(group == group[x]) %>% 
+     #select(-c(1, ncol(sm_hod_list_new),(ncol(sm_hod_list_new)-1))) %>% 
+     extract(y) %>% 
+     unlist()
+   quantile(cell, prob = quantile_prob_graph, na.rm = TRUE)
+})  %>% bind_rows(.id = "group_id")
+}) %>% bind_rows(.id = "customer_serial_id")
+
+
+ref_cat <- names(sm_hod_list_ncol) %>% as_tibble() %>% set_names("category") %>%  
+  mutate(categories_serial_id = row_number())
+
+
+ref_cust <- sm_hod_list_new$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
+    mutate(customer_serial_id = row_number())
+  
+sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
+  mutate(customer_serial_id = as.integer(customer_serial_id),
+         categories_serial_id = as.integer(categories_serial_id)) %>%
+  left_join(ref_cat, by = "categories_serial_id") %>% 
+  left_join(ref_cust, by = "customer_serial_id") %>% 
+  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
+
+data_heatmap_hod <- sm_quantiles_ref %>% 
+ left_join(data_pick %>% distinct(customer_id)) %>% 
+  left_join(data_pick_cust, by = c("customer_id" = "value")) %>% 
+  mutate(categories_serial_id = as.factor(categories_serial_id))
+  
+
+data_heatmap_hod %>% 
+  ggplot(aes(x = categories_serial_id)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id)) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  scale_x_discrete(breaks = seq(1, 24, 3))
+
+```
+

@@ -203,12 +203,26 @@ This section presents the work flow of the methodology:
 
 - _Find significant harmonies or cyclic granularities_:
 
-For each key variable, the raw smart meter data is indexed by time and comprises values of several variables of interest (measurement variables) at each time point. This sequence, though, could be depicted in a variety of ways. One sequence could reflect the distribution of hourly consumption over a single day, while another could indicate consumption over a week or a year. The sequence of measured variables throughout each category of any cyclic granularity could be regarded as a single data generating process. It is beneficial to evaluate those cyclic granularities that are significant for the majority of customers or noteworthy in an electricity-behavior context, so that when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered.
+For each key variable, the raw smart meter data is a sequence that is indexed by time and comprises values of several variables of interest (measurement variables) at each time point. This sequence, though, could be depicted in a variety of ways. A shuffling of the raw sequence could reflect the distribution of hourly consumption over a single day, while another could indicate consumption over a week or a year. These temporal deconstructions of a time period into units such as hour-of-day, work-day/weekend, called cyclic temporal granularities, are useful for exploring repetitive patterns in time series data that get lost in the linear representation of time. However, it is advantageous to consider those cyclic granularities across which there is a significant repetitive pattern for the majority of customers or noteworthy in an electricity-behavior context, because when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered.
+
+
+
+- _Distance metrics_
+
+The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand.
+
+If we consider the sequence of measured variables for each category of any cyclic granularity to be from a single data generating process, we want to cluster distributions of the form $f_{i,j,k}(v)$, where $j$ and $k$ denote two granularities. For example, j=hour of day and k=day of week. We still want the households in clusters, but each household consists of a collection of probability distributions f_{i,h,d}(x) where $h=1,...,24$ and $d=1,...,7$. In this example (hour of day/day of week), we would have $24*7=168$ distributions per household if we consider interaction of the households or $24+7=31$ distributions if individual effect of granularities need to be considered. So we need a distance between collections of these univariate probability distributions. There could be several ways of considering such distances. We consider the following two approoaches:
 
 
 
 
-- _Distance metric_
+
+Consider a harmony table consisting of many harmonies, each of the form $(A, B)$, such that $A = \{ a_j: j = 1, 2, \dots, J\}$ and $B = \{ b_k: k = 1, 2, \dots, K\}$. Each household consists of a $J*K$ distributions one harmony. We compute the distributional difference
+between $(A, B)$ for the $s^{th}$ household using $wpd_{{s}}(A,B)$.
+$wpd_{{s}}(A,B)$ denotes the normalized weighted-pairwise distributional distances between $(A, B)$ and is a feature which measures distributional difference between harmonies. If we have $H_{N_C}$ harmonies in the harmony table, then for each household we have a vector of $wpd_{{s}}$ of $H_{N_C}$ elements with each element corresponding to one harmony. We aim to have pockets of households showing similar periodic behavior by conidering $wpd$ vlaues for different harmonies and some time series features. The features should also characterize probability distributions of different household.
+
+
+
 
 - _Clustering algorithm_
 
