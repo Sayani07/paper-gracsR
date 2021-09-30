@@ -287,7 +287,7 @@ mds_wpd <- base %>%
   add_trace(x = ~mds1.wpd, y = ~ mds2.wpd, text = ~customer_id)
 
  
-subplot(mds_total, quantile_plot, nrows = 2, widths = c(.6, .4), titleX = TRUE) %>% layout(showlegend = FALSE) %>% highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = .2, off = "plotly_deselect")
+subplot(mds_total, quantile_plot, widths = c(.6, .4), titleX = TRUE) %>% layout(showlegend = FALSE) %>% highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = .2, off = "plotly_deselect")
 
 
 
@@ -314,7 +314,7 @@ base <- plot_ly(tx, color = I("black")) %>%
   group_by(customer_id) %>%
   add_trace(x = ~mds1.hod, y = ~ mds2.hod, text = ~customer_id)
 
-subplot(mds_hod, quantile_plot, widths = c(.6, .4), titleX = TRUE) %>% layout(showlegend = FALSE) %>% highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = .2, off = "plotly_deselect", persistent = TRUE)
+subplot(mds_hod, quantile_plot, widths = c(.6, .4), titleX = TRUE) %>% layout(showlegend = FALSE) %>% highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = .2, off = "plotly_deselect")
 # 
 
 

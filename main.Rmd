@@ -60,6 +60,7 @@ library(naniar)
 library(here)
 library(tsibble)
 library(knitr)
+library(patchwork)
 ```
 
 ```{r external, include = FALSE, cache = FALSE}
@@ -106,80 +107,37 @@ The following contributions are made through the following chapter:
 <!-- Background literature and shortcomings -->
 
 
-# Preliminary exploratoration
+<!-- # Preliminary exploratoration -->
 
-## Electricity demand data
+<!-- ## Electricity demand data -->
 
 <!-- _Electricity use interval reading data_   -->
 <!-- The data from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) is available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee). -->
 
 
-### Data source
+<!-- ### Data source -->
 
-The entire data is procured from CSIRO. A subset of this data is also available from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) is available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee). It consists of the following data sets. 
-_1. CustomerData:_ 78720 customers with 62 variables about them 
-_2. EUDMData:_ 300 billion half-hourly consumption level data  
-_3. OffersData:_ Method of contact to customer to join SGSC customer trial, either door-to-door (D2D) or via Telesales  
-_4. PEResponseData:_ Peak Events response customer wise  
-_5. PETimesData:_ Peak Events time stamps  
+<!-- The entire data is procured from CSIRO. A subset of this data is also available from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) is available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee). It consists of the following data sets.  -->
+<!-- _1. CustomerData:_ 78720 customers with 62 variables about them  -->
+<!-- _2. EUDMData:_ 300 billion half-hourly consumption level data   -->
+<!-- _3. OffersData:_ Method of contact to customer to join SGSC customer trial, either door-to-door (D2D) or via Telesales   -->
+<!-- _4. PEResponseData:_ Peak Events response customer wise   -->
+<!-- _5. PETimesData:_ Peak Events time stamps   -->
 
-Only _CustomerData_ and _EUDMData_ are relevant for the clustering goals of this paper. _EUDMData_ contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. `CustomerData` provides demographic data for 78,720 customers with information on their Local Government Area amongst others.
-
-### Raw data
+<!-- Only _CustomerData_ and _EUDMData_ are relevant for the clustering goals of this paper. _EUDMData_ contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. `CustomerData` provides demographic data for 78,720 customers with information about their Local Government Area amongst others. -->
 
 
-### Missing Data
+<!-- ## LGA and weather data -->
 
-Electricity usage for some customers may become unavailable due to power outage or not recording their usage properly, thus resulting in implicit missing values in the database. It is interesting to explore where missing-ness occurs or if there is a relationship between the underlying missing patterns. We use the R package `tsibble` to do this. 
-
-```{r, out.width="100%"}
-include_graphics("figs/missing-data.png")
-```
+<!-- Since the smart meters have been installed at different dates for each household, it is reasonable to assume that the records are obtainable for different time lengths -->
+<!-- for each household. Since, general supply is available for only 13,735 customers, we will restrict ourselves to look at the LGA information for these customers only. We find that there are only 26 LGA that is covered for these customers. -->
 
 
-13735 customers in elec_ts
-8685 customers in elec_nogap
-5050 customers in count_na_df
-
-Then is the graph of missing observations even interesting.
-You can show two graphs, one to show that missingness do not have a pattern
-another to show even if no missing, they start and end at different times. (A sample of 50 customers). 
+<!-- _Weather data_   -->
+<!-- This data is obtained through [Australian Government Bureau of Meteorology](BOM)(http://www.bom.gov.au/) and provides hourly data for nearest weather stations for all the LGAs -->
 
 
-## LGA and weather data
-
-Since the smart meters have been installed at different dates for each household, it is reasonable to assume that the records are obtainable for different time lengths
-for each household. Since, general supply is available for only 13,735 customers, we will restrict ourselves to look at the LGA information for these customers only. We find that there are only 26 LGA that is covered for these customers.
-
-
-_Weather data_  
-This data is obtained through [Australian Government Bureau of Meteorology](BOM)(http://www.bom.gov.au/) and provides hourly data for nearest weather stations for all the LGAs
-
-
-This section familiarizes the 13,000 SGSC households through visualization and provide a detailed layout of data structures (like missing observations/number of customers/number of observations) and also the external data that needs to be utilized for validating the clustering process. The [ABS TableBuilder](https://www.abs.gov.au/websitedbs/censushome.nsf/home/tablebuilder) has census data from 2011 and 2016. The data is at SA2 and LGA levels. However, some of the LGA in NSW changed between 2011 and 2016 and hence there would not be a one-to-one correspondence between the LGAs. Weather, notably temperature (and humidity) can be the main driver(s) for energy usage. In NSW many households have electric heaters so their use can impact winter energy use and air-conditioners can impact summer energy use. Relevant weather data could be obtained from the [Bureau of Meteorology](www.bom.gov.au). Some weather stations have 30 minute (sometimes even smaller interval) weather data. Potentially, there could be lag effects of weather on energy usage which should be considered.
-
-\noindent A dataset of 100 SGSC homes has been used to lay out the structure to be used for analyzing the big dataset. The smaller dataset contains half-hourly kwh values form 2012 to 2014 and has asynchronous time series distributed evenly over the observation period (Figure \ref{fig:elec-raw}), similar to the bigger data set. Figure \ref{fig:count-gaps} can be used to interpret missingness in the data, where the customers are arranged from maximum to minimum missing. It looks like data is most missing before 2013 and for a particular date in 2014.
-
-
-
-```{r miss-data}
-empty_as_na <- function(x){
-    if("factor" %in% class(x)) x <- as.character(x) ## since ifelse wont work with factors
-    ifelse(as.character(x)!="", x, NA)
-}
-
-```
-
-
-#NEW
-
-The raw smart meter data is indexed by time for each key variable and includes values of different variables of interest (measurement variables) at each time point. However, this series could be represented in several possible ways. One sequence could represent distribution of hourly consumption across a single day, while another could track consumption across days of a week or months of a year. Depending on the cyclic granularity considered, each sequence could be thought of as a different data generating processes.
-
-
-
-We can then model different data generation processes depending on our level of aggregation and time scale. 
-
-
+<!-- This section familiarizes the 13,000 SGSC households through visualization and provide a detailed layout of data structures (like missing observations/number of customers/number of observations) and also the external data that needs to be utilized for validating the clustering process. The [ABS TableBuilder](https://www.abs.gov.au/websitedbs/censushome.nsf/home/tablebuilder) has census data from 2011 and 2016. The data is at SA2 and LGA levels. However, some of the LGA in NSW changed between 2011 and 2016 and hence there would not be a one-to-one correspondence between the LGAs. Weather, notably temperature (and humidity) can be the main driver(s) for energy usage. In NSW many households have electric heaters so their use can impact winter energy use and air-conditioners can impact summer energy use. Relevant weather data could be obtained from the [Bureau of Meteorology](www.bom.gov.au). Some weather stations have 30 minute (sometimes even smaller interval) weather data. Potentially, there could be lag effects of weather on energy usage which should be considered. -->
 
 
 
@@ -362,29 +320,244 @@ Depending on the distance measure utilized for the study, the cluster characteri
 <!-- - distance metric does not make sense to split the data into similar shaped clusters  -->
 
 
-# Simulations
+# Validation
+
+To test clustering algorithm solutions against ground truth cluster assignments, we generate simulations to represent important problems that could be encountered in electricity data contexts. The code to generate these simulations are included in the Supplementary paper.
+
+
+## Data designs
+
+When we move from the linear to the cyclic world of temporal granularities, we can see patterns across different categories of the granularities which gets lost in the linear representation. Populations are modeled by a collection of these cyclic granularities. Each cyclic granularity might or might not have patterns across its categories. Each cluster is characterized by similar patterns across one or more of these cyclic granularities.
+
+
+A small example is given to setup the problem.
+
+We constructed the simulation parameters to represent common patterns in electricity data. 50, 200 and 500 time series were chosen for different simulation designs with different granularities and patterns changing across different granularities.
+The data type is fixed to be "continuous".We generated independent replications of all combinations of the simulation parameters.
+
+Consider a continuous time series variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with 2, 3 and 5 levels respectively. Categories of g1, g2 and g3 are represented by ${0,1}$, ${0, 1, 2}$ and ${0, 1, 2, 3, 4}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$.
+
+<!-- Consider the case where distribution of $y$ would vary across levels of $g1$ and g2$ but will not vary across levels of $g3$ as described in Figure .Figure \ref shows four designs where $g3$ acts as a nuisance variable, and $g1$ and $g2$ varies in both  Design 2 and 3, and $g2$ varies in all designs. -->
+
+
+Consider a case where distribution of $y$ would vary across levels of $g2$
+for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities.
+
+
+```{r change-var, echo=FALSE}
+t = 300
+n <- seq(0, t, 1)
+g1 <- n %%2
+g2 <- n %%3
+g3 <- n %%5
+mu11 = c(0, 5)
+mu12 = c(3, 0)
+mu21= c(2, 0, 0)
+mu22 = c(0, 2, 0)
+mu23 = c(0, 0, 2)
+mu3 = c(0, 0, 0, 0, 0)
+```
+
+```{r generate-design} 
+generate_design <- function(t, mu21, mu22, mu23){
+  
+t <- seq(0, t, 1)
+g1 <- t %%2
+g2 <- t %%3
+g3 <- t %%5
+
+# null design
+g1_dnull <- rep( rep(0, each = length(unique(g1))), length.out= length(t))
+g2_dnull <- rep( rep(0, each = length(unique(g2))), length.out= length(t))
+g3_dnull <- rep( rep(0, each = length(unique(g3))), length.out= length(t))
+ 
+# mean changing across categories in varying ways
+
+g11_dvary <- rep(mu11, length.out= length(t))
+g12_dvary <- rep(mu12, length.out= length(t))
+g21_dvary <- rep(mu21, length.out= length(t))
+g22_dvary <- rep(mu22, length.out= length(t))
+g23_dvary <- rep(mu23, length.out= length(t))
+g3_dvary <- rep(0, length.out= length(t))
+
+design1 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dnull)
+design2 = distributional::dist_normal(g11_dvary + g21_dvary + g3_dnull)
+design3 = distributional::dist_normal(g12_dvary + g22_dvary + g3_dnull)
+design4 = distributional::dist_normal(g1_dnull + g23_dvary + g3_dnull)
+
+data_bind <- tibble::tibble(
+index = t,
+g1 = g1,
+g2 = g2,
+g3 = g3,
+design1 = distributional::generate(design1, times = 1) %>% unlist(),
+design2 = distributional::generate(design2, times = 1) %>% unlist(),
+design3 = distributional::generate(design3, times = 1) %>% unlist(),
+design4 = distributional::generate(design4, times = 1) %>% unlist(),
+#design5 = distributional::generate(design5, times = 1) %>% unlist()
+) %>% 
+  pivot_longer(-c(1, 2, 3, 4), names_to = "design", values_to = "sim_data")
+
+data_bind
+}
+
+data_bind <- generate_design(t, mu21, mu22, mu23)
+
+#data_bind
+
+```
+
+
+```{r plot-linear , out.width="100%", fig.cap="The linear and cyclic representation of the time series variable y. It is not possible to comprehend these patterns across cyclic granularities g1, g2 and g3 or group similar series just by looking at the linear plots."}
+
+# plot_linear_data <- function(data){
+# ggplot(data,
+#              aes(x = index, y = sim_data)) + 
+#   geom_line() +
+#   xlab("index")+
+#   theme_bw() 
+# }
+
+ggplot(data_bind,
+             aes(x = index, y = sim_data)) + 
+  geom_line() +
+  xlab("index")+
+  theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol =1)+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+p2 <- ggplot(data_bind,
+             aes(x = as.factor(g1), y = sim_data)) + 
+  geom_boxplot(alpha =0.5) + xlab("g1") + 
+  theme_bw() +
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue") +
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue") + ylab("")+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alpha =0.5) +
+  xlab("g3") + theme_bw()+
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 1, color = "blue")+ ylab("")+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+(p2 + p3 + p4) * theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)),
+    panel.spacing =unit(0, "lines")) * theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+# 
+# 
+# plot_cyclic_data( data_bind %>% filter(design=="design2"))
+# plot_data( data_bind %>% filter(design=="design3"))
+# plot_data( data_bind %>% filter(design=="design4"))
+# plot_data( data_bind %>% filter(design=="design5"))
+```
+
+A subset of many possible designs are shown in Figure \ref{fig: plot-linear }. For the parameter space (XXX unique  combinations shown in table YYY), 100, 500 independent replications of all possible combination of simulation parameters were generated. The clustering methodologies were run all these unique combinations and subsets of these to verify if the methodologies work as expected.
+
+
+| Granularity type                                                   	| # Significant 	| # Replications 	|
+|--------------------------------------------------------------------	|---------------	|----------------	|
+| **Individual**  <br><br># obs: 300, 500, 2000  <br># clusters: 6/7 	| 1/2/3         	| 25, 100, 200   	|
+| **Interaction**  <br><br># obs: 500, 2000  <br># clusters: 4       	| 1/2           	| 25, 100, 200   	|
+
+
+## Results
+
+- confusion matrix could be used for showing results if proper labeling is used
+
+- write about features that we have spiked into the data set
+- write about you incorporated noise
+- What is the additional structure you can incorporate that will lead to failing of method1 and method2?
+- And both gives the same result? Basically say when method 1 works better than method 2 and vice versa!
+
+-
+
 
 
 
 # Application
 
 
+## Data source
+
+The entire data is procured from CSIRO. A subset of this data is also available from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) is available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee). It consists of the following data sets. 
+_1. CustomerData:_ 78720 customers with 62 variables about them 
+_2. EUDMData:_ 300 billion half-hourly consumption level data  
+_3. OffersData:_ Method of contact to customer to join SGSC customer trial, either door-to-door (D2D) or via Telesales  
+_4. PEResponseData:_ Peak Events response customer wise  
+_5. PETimesData:_ Peak Events time stamps  
+
+Only _CustomerData_ and _EUDMData_ are relevant for the clustering goals of this paper. _EUDMData_ contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. `CustomerData` provides demographic data for 78,720 customers most of which are missing and not utilized for the purpose of this paper. To meet the requirements for anonymity preservation, the energy patterns could not be identified at the individual level, but rather by the geographical location of their residence information about their Local Government Area.
+
+### Raw data
 
 
- 
-The methodology is again applied to the 100 households and some preliminary results are presented. Figure \ref{fig:mds} show the multidimensional scaling of the 100 households with colors representing groups presented by hierarchical clustering method. The clusters have very different size and are far apart with no overlapping. They should be distinct from each other in terms of their periodic patterns. Figure \ref{fig:cyclic-cluster} shows the cyclic presentation of time where it could be viewed in details how these clusters are different with respect to the periodic pattern (day-of-week, hour-of-day). Distribution of energy demand across day-of-week and hour-of-day for three groups clustered through the proposed methodology is shown. For group-1, the morning peak looks very sharp, for group-2 the morning and evening peaks are rounded and spread over few hours, for group-3 peaks are less rounded. They differ in their relationship between 75th and 90th percentile. Also, the 75th and 90th percentile of group 2 are quite close, implying the behavior of this group is more regular.
+
+### Missing Data
+
+Electricity usage for some customers may become unavailable due to power outage or not recording their usage properly, thus resulting in implicit missing values in the database. It is interesting to explore where missing-ness occurs or if there is a relationship between the underlying missing patterns. We use the R package `tsibble` to do this. 
+
+```{r, out.width="100%"}
+include_graphics("figs/missing-data.png")
+```
+
+
+- if there is any systematic missing patterns in the data
+- this missing plot can go in the supplementary
+- how to add missing values (should be added in data pre-processing)
+- instance learning
+- types of summary techniques to use (
+generally multivariate means and sd are used, I can't use that in a time series context, you can show across different granularity?
+within-group sum of squares and between-group sum of squares
+
+)
+
+13735 customers in elec_ts
+8685 customers in elec_nogap
+5050 customers in count_na_df
+
+Then is the graph of missing observations even interesting.
+You can show two graphs, one to show that missingness do not have a pattern
+another to show even if no missing, they start and end at different times. (A sample of 50 customers). 
+
+\noindent A dataset of 100 SGSC homes has been used to lay out the structure to be used for analyzing the big dataset. The smaller dataset contains half-hourly kwh values form 2012 to 2014 and has asynchronous time series distributed evenly over the observation period (Figure \ref{fig:elec-raw}), similar to the bigger data set. Figure \ref{fig:count-gaps} can be used to interpret missingness in the data, where the customers are arranged from maximum to minimum missing. It looks like data is most missing before 2013 and for a particular date in 2014.
+
+
+
+```{r miss-data}
+empty_as_na <- function(x){
+    if("factor" %in% class(x)) x <- as.character(x) ## since ifelse wont work with factors
+    ifelse(as.character(x)!="", x, NA)
+}
+
+```
+
 
  <!-- - Handling autocorrelation: Autocorrelation in the time series is likely to get removed from considering probability distributions and cyclic granularities in the clustering algorithm. -->
 
-Generally most of the indices used for internal clustering validation combine compactness and separation measures.
+<!-- At this stage, we need to define the aim of clustering as there could be various aims of clustering like between-cluster separation, within cluster homogeneity: low distances, within-cluster homogeneous distributional shape, good representation of data by centroids, little loss of information, high density without cluster gaps, uniform cluster sizes, stability and others. Finally, how distinct they are and how can we summarize the main features of the cluster would be discussed here. -->
 
-_Distinction, repeatability, and robustness metrics_
-
-We will also determine if any identified clusters or patterns are indeed statistically meaningful in the sense that they actually exist and are not a random allocation. Hence, the robustness of this methodology is tested through simulations. This section will contain the data structure and detailed methodology to be employed for the cluster analysis. The cluster validation indexes like average silhouette width (ASW) is to be employed here to check how homogeneous these clusters are. At this stage, we need to define the aim of clustering as there could be various aims of clustering like between-cluster separation, within cluster homogeneity: low distances, within-cluster homogeneous distributional shape, good representation of data by centroids, little loss of information, high density without cluster gaps, uniform cluster sizes, stability and others. Finally, how distinct they are and how can we summarize the main features of the cluster would be discussed here.
-
-_Cluster validation_
+### Cluster validation
 
 **Internal cluster validation** uses the internal information of the clustering process to evaluate the goodness of a clustering structure without reference to external information. It can be also used for estimating the number of clusters and the appropriate clustering algorithm without any external data.  
+
+Generally most of the indices used for internal clustering validation combine compactness and separation measures.
+
+<!-- _Distinction, repeatability, and robustness metrics_ -->
+
+We will also determine if any identified clusters or patterns are indeed statistically meaningful in the sense that they actually exist and are not a random allocation. Hence, the robustness of this methodology is tested through simulations. This section will contain the data structure and detailed methodology to be employed for the cluster analysis. The cluster validation indexes like average silhouette width (ASW) is to be employed here to check how homogeneous these clusters are.
 
 **External cluster validation** consists in comparing the results of a cluster analysis to an externally known result, such as externally provided class labels. It measures the extent to which cluster labels match externally supplied class labels. Since we know the “true” cluster number in advance, this approach is mainly used for selecting the right clustering algorithm for a specific data set.  
 
@@ -404,9 +577,7 @@ _Connectivity:_ corresponds to what extent items are placed in the same cluster 
 
 ## Clustering results for 5K customers
 
-## Combining findings with external data
-
-The robustness of this clustering method is provided through practical explanation of the formed clusters, visualizing how they relate to any weather, socio-economic or geographical conditions. 
+<!-- The robustness of this clustering method is provided through practical explanation of the formed clusters, visualizing how they relate to any weather, socio-economic or geographical conditions.  -->
 <!-- Furthermore, we ensure that a cross-validation algorithm is employed leading to robust clusters.  -->
 <!-- We will present how matching other data like geography, census and weather would help us in validating our clustering approach. -->
 

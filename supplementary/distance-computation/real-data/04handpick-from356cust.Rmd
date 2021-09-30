@@ -470,54 +470,20 @@ data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))%>%
   filter(customer_id %in% data_pick_cust$value) %>% 
   gracsr::scale_gran( method = "robust", response = "general_supply_kwh")
 
-
-sm_hod <- gravitas::create_gran(data_pick, "hour_day")
-
-sm_hod_list <- sm_hod %>% 
-  as_tibble() %>% 
-  select(customer_id, hour_day, general_supply_kwh) %>% 
-  pivot_wider(names_from = hour_day,
-              values_from = general_supply_kwh)  %>% 
-  left_join(data_pick_cust, by = c("customer_id" = "value"))
+data_heatmap <- quantile_gran(data_pick, "hour_day", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
   
-ncol_sm <- seq_len(ncol(sm_hod_list[-c(1, ncol(sm_hod_list))]))
-nrow_sm <- seq_len(nrow(sm_hod_list))
 
-
-sm_hod_quantiles_cat <- map(nrow_sm, function(x){
-  map(ncol_sm, function(y){
-   cell <- sm_hod_list%>% 
-     dplyr::filter(customer_id == customer_id[x]) %>% 
-     select(-c(1, ncol(sm_hod_list))) %>% 
-     extract(y) %>% 
-     unlist()
-   quantile(cell, prob = quantile_prob_graph, na.rm = TRUE)
-})  %>% bind_rows(.id = "categories_serial_id")
-}) %>% bind_rows(.id = "customer_serial_id")
-
-
-ref_cat <- names(sm_hod_list)[-c(1, ncol(sm_hod_list))] %>% as_tibble() %>% set_names("category") %>%  
-  mutate(categories_serial_id = row_number())
-
-
-ref_cust <- sm_hod_list$customer_id %>% as_tibble()%>% set_names("customer_id")  %>% 
-    mutate(customer_serial_id = row_number())
+# data_heatmap <- sm_quantiles_ref %>% 
+#  left_join(data_pick %>% distinct(customer_id)) %>% 
+#   left_join(data_pick_cust, by = c("customer_id" = "value")) %>% 
+#   mutate(categories_serial_id = as.factor(categories_serial_id))
   
-sm_quantiles_ref <- sm_hod_quantiles_cat %>% 
-  mutate(customer_serial_id = as.integer(customer_serial_id),
-         categories_serial_id = as.integer(categories_serial_id)) %>%
-  left_join(ref_cat, by = "categories_serial_id") %>% 
-  left_join(ref_cust, by = "customer_serial_id") %>% 
-  select(customer_serial_id, categories_serial_id, category, customer_id, everything())
-
-data_heatmap <- sm_quantiles_ref %>% 
- left_join(data_pick %>% distinct(customer_id)) %>% 
-  left_join(data_pick_cust, by = c("customer_id" = "value")) %>% 
-  mutate(categories_serial_id = as.factor(categories_serial_id))
-  
+data_heatmap$category <- factor(data_heatmap$category, levels = 0:23)
 
 data_heatmap %>% 
-  ggplot(aes(x = categories_serial_id)) + 
+  ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`, group=customer_id), fill = "lightblue") +
   geom_line(aes(y = `50%`, group=customer_id)) +

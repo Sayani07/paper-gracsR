@@ -1,7 +1,7 @@
 base
 ggplot2
 gravitas
-gracsR
+gracsr
 ggdendro
 dplyr
 readr
@@ -16,3 +16,4 @@ naniar
 here
 tsibble
 knitr
+patchwork
