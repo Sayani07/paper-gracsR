@@ -67,6 +67,24 @@ library(patchwork)
 knitr::read_chunk(here('script/smart_meter.R'))
 ```
 
+
+```{r mytheme}
+theme_validation <- function() {
+  theme_bw() +
+      theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 1)),
+    plot.margin = margin(0, 0, 0, 0, "cm"),
+    axis.title.y = element_blank(),
+    #axis.text.x = element_blank(),
+  axis.text.y = element_blank(),
+  axis.ticks = element_blank(),
+      legend.position = "bottom"
+    )
+}
+
+```
+
+
 # Introduction
 
 <!-- Description of data available -->
@@ -320,14 +338,166 @@ Depending on the distance measure utilized for the study, the cluster characteri
 <!-- - distance metric does not make sense to split the data into similar shaped clusters  -->
 
 
+
 # Validation
 
-To test clustering algorithm solutions against ground truth cluster assignments, we generate simulations to represent important problems that could be encountered in electricity data contexts. The code to generate these simulations are included in the Supplementary paper.
+To evaluate clustering approaches, we create data designs that replicate prototype behaviours that might be seen in electricity data contexts. We spiked several features in the data to see where one method works better than the other and where they might give us the same outcome or the effect of missing data and trends on the proposed methods. A continuous measured variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with $2$, $3$ and $5$ levels respectively. Categories of $g1$, $g2$ and $g3$ are represented by ${g10,g11}$, ${g20, g21, g22}$ and ${g30, g31, g32, g32, g34}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$. Each categories of $g1$, $g2$ and $g3$ could be assumed to be from same distribution, few from one and others from separate distributions, or all from different distributions, resulting in distinct data designs. We created independent replications $(R = \{50, 200, 500\})$ of all data designs to see if our proposed clustering approaches can detect distinct designs in various groups for small, medium and large number of series. A sample size of $T=\{300, 500, 2000\}$ is used in all designs to test small, medium and large sized series. For all data designs, the data type is set to "continuous," and a gaussian and non-Gaussian setup is assumed. The code for creating these designs can be found in the Supplementary section (link to github repo). The results for $T=300$ and $R=50$. The rest of the results could be found in the supplementary paper.
+
+## Data designs  
+
+**Three signifiant granularities**
+
+Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1).
+
+| granularity 	|  Alternate design 	|
+|---	|---	|
+| g1 	| g10 ~ N(0, 1), g11 ~ N(2, 1) 	|
+| g2 	| g21 ~ N(2, 1), g22 ~ N(1, 1), g23 ~ N(0, 1) 	|
+| g3 	| g31 ~ N(0, 1), g32 ~ N(1, 1), <br><br>g33 ~ N(2, 1), g34 ~ N(1, 1), g35 ~ N(0, 1) 	|
+
+A combination of these null and alternate distributions are considered when building the designs as in the table \ref{tab:tab-design}. Figure \ref{#fig:plot-linear-3change} shows the linear and cyclic representation of $y$ under these five designs.
 
 
-## Data designs
+```{r tab-design}
+design = c("design-1", "design-2", "design-3", "design-4", "design5")
+g1 = c("null", "vary", "null", "null", "vary")
+g2 = c("null", "null", "vary", "null", "vary")
+g3 = c("null", "null", "null", "vary", "vary")
+table <- tibble(design, g1, g2, g3) %>% kable()
+table
 
-When we move from the linear to the cyclic world of temporal granularities, we can see patterns across different categories of the granularities which gets lost in the linear representation. Populations are modeled by a collection of these cyclic granularities. Each cyclic granularity might or might not have patterns across its categories. Each cluster is characterized by similar patterns across one or more of these cyclic granularities.
+```
+
+
+```{r generate-design-3change}
+generate_design <- function(t, mu1, mu2, mu3){
+  
+t <- seq(0, t, 1)
+g1 <- t %%2
+g2 <- t %%3
+g3 <- t %%5
+
+# null design
+g1_dnull <- rep( rep(0, each = length(unique(g1))), length.out= length(t))
+g2_dnull <- rep( rep(0, each = length(unique(g2))), length.out= length(t))
+g3_dnull <- rep( rep(0, each = length(unique(g3))), length.out= length(t))
+ 
+# mean changing across categories in varying ways
+
+g1_dvary <- rep(mu1, length.out= length(t))
+g2_dvary <- rep(mu2, length.out= length(t))
+g3_dvary <- rep(mu3, length.out= length(t))
+
+
+design1 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dnull)
+design2 = distributional::dist_normal(g1_dvary + g2_dnull + g3_dnull)
+design3 = distributional::dist_normal(g1_dnull + g2_dvary + g3_dnull)
+design4 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dvary)
+design5 = distributional::dist_normal(g1_dvary + g2_dvary + g3_dvary)
+
+data_bind <- tibble::tibble(
+index = t,
+g1 = g1,
+g2 = g2,
+g3 = g3,
+design1 = distributional::generate(design1, times = 1) %>% unlist(),
+design2 = distributional::generate(design2, times = 1) %>% unlist(),
+design3 = distributional::generate(design3, times = 1) %>% unlist(),
+design4 = distributional::generate(design4, times = 1) %>% unlist(),
+design5 = distributional::generate(design5, times = 1) %>% unlist()
+) %>% 
+  pivot_longer(-c(1, 2, 3, 4), names_to = "design", values_to = "sim_data")
+
+data_bind
+}
+
+t = 300
+mu1= c(0, 2)
+mu2 = c(2, 1, 0)
+mu3 = c(0, 1, 2, 1, 0)
+
+data_bind <- generate_design(t, mu1, mu2, mu3)
+
+```
+
+```{r plot-linear-change , out.width="100%", fig.cap="The linear and cyclic representation of the time series variable y. It is not possible to comprehend these patterns across cyclic granularities g1, g2 and g3 or group similar series just by looking at the linear plots."}
+
+# plot_linear_data <- function(data){
+# ggplot(data,
+#              aes(x = index, y = sim_data)) + 
+#   geom_line() +
+#   xlab("index")+
+#   theme_bw() 
+# }
+
+p1 <- ggplot(data_bind,
+             aes(x = index, y = sim_data)) + 
+  geom_line() +
+  xlab("index")+
+  facet_wrap(~design, scales = "free_y",ncol =1) +
+  theme_validation()
+
+p2 <- ggplot(data_bind,
+             aes(x = as.factor(g1), y = sim_data)) + 
+  geom_boxplot(alpha =0.5) + xlab("g1") + 
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  theme_validation()
+
+
+
+p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") + ylab("")+
+  theme_validation()
+
+p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alpha =0.5) +
+  xlab("g3") + theme_bw()+
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, colosr = "blue")+ ylab("")+
+  theme_validation()
+
+
+(p1 + (p2 + p3 + p4)) *
+  theme_validation() + plot_layout(widths = c(2, 1))
+# 
+# plot_cyclic_data( data_bind %>% filter(design=="design2"))
+# plot_data( data_bind %>% filter(design=="design3"))
+# plot_data( data_bind %>% filter(design=="design4"))
+# plot_data( data_bind %>% filter(design=="design5"))
+```
+
+
+**Two significant granularities**
+
+Consider a case where distribution of $y$ would vary across levels of $g2$ for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities.
+
+**One signifiant granularity**
+
+Consider a case where distribution of $y$ would vary across levels of $g2$
+for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. 
+
+**Missing data**
+
+**Trend**
+
+**Outliers**
+
+observations:
+
+designs:
+
+
+
+
+
+<!-- When we move from the linear to the cyclic world of temporal granularities, we can see patterns across different categories of the granularities which gets lost in the linear representation. Populations are modeled by a collection of these cyclic granularities. Each cyclic granularity might or might not have patterns across its categories. Each cluster is characterized by similar patterns across one or more of these cyclic granularities. -->
 
 
 A small example is given to setup the problem.
@@ -335,7 +505,7 @@ A small example is given to setup the problem.
 We constructed the simulation parameters to represent common patterns in electricity data. 50, 200 and 500 time series were chosen for different simulation designs with different granularities and patterns changing across different granularities.
 The data type is fixed to be "continuous".We generated independent replications of all combinations of the simulation parameters.
 
-Consider a continuous time series variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with 2, 3 and 5 levels respectively. Categories of g1, g2 and g3 are represented by ${0,1}$, ${0, 1, 2}$ and ${0, 1, 2, 3, 4}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$.
+Consider a continuous time series variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with 2, 3 and 5 levels respectively. Categories of g1, g2 and g3 are represented by ${0,1}$, ${0, 1, 2}$ and ${0, 1, 2, 3, 4}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by $\{0, 1, 2, \dots, 6\}$ or $\{Mon, Tue, \dots, Sun\}$.
 
 <!-- Consider the case where distribution of $y$ would vary across levels of $g1$ and g2$ but will not vary across levels of $g3$ as described in Figure .Figure \ref shows four designs where $g3$ acts as a nuisance variable, and $g1$ and $g2$ varies in both  Design 2 and 3, and $g2$ varies in all designs. -->
 
@@ -418,45 +588,42 @@ data_bind <- generate_design(t, mu21, mu22, mu23)
 #   theme_bw() 
 # }
 
-ggplot(data_bind,
+p1 <- ggplot(data_bind,
              aes(x = index, y = sim_data)) + 
   geom_line() +
   xlab("index")+
-  theme_bw() +
-  facet_wrap(~design, scales = "free_y",ncol =1)+ theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+  facet_wrap(~design, scales = "free_y",ncol =1) +
+  theme_validation()
 
 p2 <- ggplot(data_bind,
              aes(x = as.factor(g1), y = sim_data)) + 
   geom_boxplot(alpha =0.5) + xlab("g1") + 
-  theme_bw() +
   facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
     fun = median,
     geom = 'line',
-    aes(group = 1), size = 1, color = "blue") +
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+    aes(group = 1), size = 0.8, color = "blue") +
+  theme_validation()
+
+
 
 p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
   facet_wrap(~design, scales = "free_y",ncol = 1)+ stat_summary(
     fun = median,
     geom = 'line',
-    aes(group = 1), size = 1, color = "blue") + ylab("")+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+    aes(group = 1), size = 0.8, color = "blue") + ylab("")+
+  theme_validation()
 
 p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alpha =0.5) +
   xlab("g3") + theme_bw()+
   facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
     fun = median,
     geom = 'line',
-    aes(group = 1), size = 1, color = "blue")+ ylab("")+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+    aes(group = 1), size = 0.8, color = "blue")+ ylab("")+
+  theme_validation()
 
-(p2 + p3 + p4) * theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)),
-    panel.spacing =unit(0, "lines")) * theme(plot.margin = margin(0, 0, 0, 0, "cm") )
 
-# 
+(p1 + (p2 + p3 + p4)) *
+  theme_validation() + plot_layout(widths = c(2, 1))
 # 
 # plot_cyclic_data( data_bind %>% filter(design=="design2"))
 # plot_data( data_bind %>% filter(design=="design3"))
