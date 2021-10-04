@@ -1,3 +1,5 @@
+# Rscripts for simulation chapter 3, patterns across 3 grans changing atleast across one design amongst 5 designs
+
 library(conflicted)
 library(tidyverse)
 library(gracsr)
@@ -8,18 +10,18 @@ library(here)
 
 
 # fix parameters
- 
+
 # niter
 #seed_len = seq(12345, 12350, 1)
 # number of iterations corresponding to
-niter <- c(50, 100, 500, 1000)#number of series you are clustering
-nT <-  c(300, 1000, 5000) # length of the time series
-mean_diff <- c(1, 2, 5) # difference between consecutive categories
+# niter <- c(5, 50, 100, 500, 1000) #number of series you are clustering
+# nT <-  c(300, 1000, 5000, 10000) # length of the time series
+# mean_diff <- c(1, 2, 5) # difference between consecutive categories
 
-# number of iterations corresponding to
-niter <- c(50) #number of series you are clustering
+#number of iterations corresponding to
+niter <- c(5) #number of series you are clustering
 nT <-  c(300) # length of the time series
-mean_diff <- c(1) # difference between consecutive categories
+mean_diff <- c(1,2) # difference between consecutive categories
 
 time_series <- c("ar1", "arma22")
 
@@ -33,10 +35,10 @@ scen <- 2
 
 simj<-simtable[scen,] #Extract row of table
 mean_diffj <- simj$mean_diff
-niter <- simj$niter
-nT <- simj$nT
+niterj <- simj$niter
+nTj <- simj$nT
 time_seriesj <- simj$time_series
-seed_lenj <- simj$seed_len
+#seed_lenj <- simj$seed_len
 
 
 
@@ -145,30 +147,24 @@ generate_design <- function(n = 300, #length of time series
 
 
 set.seed(123)
-  
+
 ##----bind-designs for many iterations
-bind_data_iter <- map(seq_len(niter), 
+bind_data_iter <- map(seq_len(niterj), 
                       function(x){
-  #set.seed(seed_len[x])  
-  design1 <- generate_design(n=nT) # null design
-  design2 <- generate_design(n=nT,mu12=2)
-  design3 <- generate_design(n=nT,mu22=2, mu23 =4)
-  design4 <- generate_design(n=nT,mu32 = 2,mu33 = 4,mu34 = 2)
-  design5 <- generate_design(n=nT,mu12=2, mu22=2, mu23 =4, mu32 = 2,mu33 = 4, mu34 = 2)
-  
-  bind_design <- bind_rows(design1, design2, design3, design4, design5, .id = "design")
-}) %>% bind_rows(.id = "seed_id") %>% 
+                        #set.seed(seed_len[x])  
+                        design1 <- generate_design(n=nTj) # null design
+                        design2 <- generate_design(n=nTj,mu12=mean_diffj, mu21 = mean_diffj)
+                        design3 <- generate_design(n=nTj,mu11=mean_diffj, mu22=mean_diffj)
+                
+                        design4 <- generate_design(n=nTj,mu23 = mean_diffj)        
+                        bind_design <- bind_rows(design1, design2, design3, design4, .id = "design")
+                      }) %>% bind_rows(.id = "seed_id") %>% 
   mutate(customer_id = paste(design,seed_id, sep ="-"))
 
 
 ##---tsibble-data
 bind_data_iter_tsibble <- bind_data_iter %>% 
   tsibble::as_tsibble(index = index, key = customer_id)
-
-bind_data_iter_tsibble
-
-
-
 
 ##----wpd-method
 
@@ -179,20 +175,20 @@ dist_mat <- bind_data_iter_tsibble %>%
   #scale_gran(method = "robust", response = "sim_data") %>%
   dist_wpd(harmony_tbl, response = "ts", nperm=100)
 
-groups = dist_mat%>% clust_gran(kopt = 5)
+groups = dist_mat%>% clust_gran(kopt = 4)
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
 actual_group = as.factor(bind_data_iter_tsibble %>%as_tibble %>% select(customer_id, design) %>% distinct() %>% pull(design))
 
 xtab <- caret::confusionMatrix(pred_group, actual_group)
 
-pred_ref_table <- xtab$table %>% as_tibble()
+pred_ref_table <- xtab$table %>% as_tibble() %>% mutate(simj)
 
-write_rds(pred_ref_table, "wpd/3gran_change_5D/pred_ref_table.rds")
+write_rds(pred_ref_table, here(paste0("wpd/2gran_change_4D/pred_ref_table_", scen, ".rds")))
 
-confmatrix <- xtab %>% broom::tidy(by_class = FALSE)
+confmatrix <- xtab %>% broom::tidy(by_class = FALSE) %>% mutate(simj)
 
-write_rds(confmatrix, "wpd/3gran_change_5D/confmatrix.rds")
+write_rds(confmatrix, here(paste0("wpd/2gran_change_4D/confmatrix_", scen, ".rds")))
 # 
 # xtab %>% broom::tidy(by_class = FALSE)
 # 
@@ -217,7 +213,7 @@ dist_mat_g3 <- bind_data_iter_tsibble %>%
 dist_mat <- dist_mat_g1 + dist_mat_g2 + dist_mat_g3
 
 groups = dist_mat %>% 
-  clust_gran(kopt = 5)
+  clust_gran(kopt = 4)
 
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
@@ -228,13 +224,15 @@ xtab <- caret::confusionMatrix(pred_group, actual_group)
 
 # xtab %>% broom::tidy(by_class = FALSE)
 
-pred_ref_table <- xtab$table %>% as_tibble()
+pred_ref_table <- xtab$table %>% as_tibble() %>% mutate(simj)
 
-write_rds(pred_ref_table, here("js-nqt/3gran_change_5D/pred_ref_table.rds"))
+write_rds(pred_ref_table, here(paste0("js-nqt/2gran_change_4D/pred_ref_table_", scen, ".rds")))
 
-confmatrix <- xtab %>% broom::tidy(by_class = FALSE)
 
-write_rds(confmatrix, here("js-nqt/3gran_change_5D/confmatrix.rds"))
+confmatrix <- xtab %>% broom::tidy(by_class = FALSE) %>% mutate(simj)
+
+write_rds(confmatrix, here(paste0("js-nqt/2gran_change_4D/confmatrix_", scen, ".rds")))
+
 
 
 
@@ -256,7 +254,7 @@ dist_mat_g3 <- bind_data_iter_tsibble %>%
 dist_mat <- dist_mat_g1 + dist_mat_g2 + dist_mat_g3
 
 groups = dist_mat %>% 
-  clust_gran(kopt = 5)
+  clust_gran(kopt = 4)
 
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
@@ -267,13 +265,13 @@ xtab <- caret::confusionMatrix(pred_group, actual_group)
 
 # xtab %>% broom::tidy(by_class = FALSE)
 
-pred_ref_table <- xtab$table %>% as_tibble()
+pred_ref_table <- xtab$table %>% as_tibble() %>% mutate(simj)
 
-write_rds(pred_ref_table, here("js-robust/3gran_change_5D/pred_ref_table.rds"))
+write_rds(pred_ref_table, here(paste0("js-robust/2gran_change_4D/pred_ref_table_", scen, ".rds")))
 
-confmatrix <- xtab %>% broom::tidy(by_class = FALSE)
+confmatrix <- xtab %>% broom::tidy(by_class = FALSE) %>% mutate(simj)
 
-write_rds(confmatrix, here("js-robust/3gran_change_5D/confmatrix.rds"))
+write_rds(confmatrix, here(paste0("js-robust/2gran_change_4D/confmatrix_", scen, ".rds")))
 
 
 

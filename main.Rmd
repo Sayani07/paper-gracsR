@@ -341,13 +341,22 @@ Depending on the distance measure utilized for the study, the cluster characteri
 
 # Validation
 
-To evaluate clustering approaches, we create data designs that replicate prototype behaviours that might be seen in electricity data contexts. We spiked several features in the data to see where one method works better than the other and where they might give us the same outcome or the effect of missing data and trends on the proposed methods. A continuous measured variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with $2$, $3$ and $5$ levels respectively. Categories of $g1$, $g2$ and $g3$ are represented by ${g10,g11}$, ${g20, g21, g22}$ and ${g30, g31, g32, g32, g34}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$. Each categories of $g1$, $g2$ and $g3$ could be assumed to be from same distribution, few from one and others from separate distributions, or all from different distributions, resulting in distinct data designs. We created independent replications $(R = \{50, 200, 500\})$ of all data designs to see if our proposed clustering approaches can detect distinct designs in various groups for small, medium and large number of series. A sample size of $T=\{300, 500, 2000\}$ is used in all designs to test small, medium and large sized series. For all data designs, the data type is set to "continuous," and a gaussian and non-Gaussian setup is assumed. The code for creating these designs can be found in the Supplementary section (link to github repo). The results for $T=300$ and $R=50$. The rest of the results could be found in the supplementary paper.
+To evaluate clustering approaches, we create data designs that replicate prototype behaviours that might be seen in electricity data contexts. We spiked several features in the data to see where one method works better than the other and where they might give us the same outcome or the effect of missing data and trends on the proposed methods. A continuous measured variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with $2$, $3$ and $5$ levels respectively. Categories of $g1$, $g2$ and $g3$ are represented by ${g10,g11}$, ${g20, g21, g22}$ and ${g30, g31, g32, g33, g34}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$. Each categories of $g1$, $g2$ and $g3$ could be assumed to be from same distribution, few from one and others from separate distributions, or all from different distributions, resulting in distinct data designs. We created independent replications $(R = \{50, 200, 500\})$ of all data designs to see if our proposed clustering approaches can detect distinct designs in various groups for small, medium and large number of series. A sample size of $T=\{300, 500, 2000\}$ is used in all designs to test small, medium and large sized series. For all data designs, the data type is set to "continuous," and a gaussian setup for errors is assumed. The code for creating these designs can be found in the Supplementary section (link to github repo). The results for $T=300$ and $R=50$. The rest of the results could be found in the supplementary paper.
+
+
+## Data generating processes
+
+An ARMA (p,q) process is used to generate series, where $p$ and $q$ are selected at random such that the series is stationary. The various designs on $g1$, $g2$, and $g3$ are introduced by adding matching designs to this series' innovations. The innovations are considered to have a normal distribution, although they follow the same pattern as the designs. To eliminate the effect of starting values, the first 500 observations in each series are discarded.
+
 
 ## Data designs  
 
 **Three signifiant granularities**
 
-Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1).
+<!-- Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1). -->
+
+Consider the scenario when all three granularities $g1$, $g2$, and $g3$ are responsible for distinguishing the designs. That means that for at least one among the to-be-grouped designs, the pattern for each of $g1$, $g2$, and $g3$ will change. We consider null instances to represent no variation in distribution across categories, i.e., all categories have the same distribution N(0,1).
+
 
 | granularity 	|  Alternate design 	|
 |---	|---	|
@@ -495,23 +504,21 @@ designs:
 
 
 
-
-
 <!-- When we move from the linear to the cyclic world of temporal granularities, we can see patterns across different categories of the granularities which gets lost in the linear representation. Populations are modeled by a collection of these cyclic granularities. Each cyclic granularity might or might not have patterns across its categories. Each cluster is characterized by similar patterns across one or more of these cyclic granularities. -->
 
 
-A small example is given to setup the problem.
+<!-- A small example is given to setup the problem. -->
 
-We constructed the simulation parameters to represent common patterns in electricity data. 50, 200 and 500 time series were chosen for different simulation designs with different granularities and patterns changing across different granularities.
-The data type is fixed to be "continuous".We generated independent replications of all combinations of the simulation parameters.
+<!-- We constructed the simulation parameters to represent common patterns in electricity data. 50, 200 and 500 time series were chosen for different simulation designs with different granularities and patterns changing across different granularities. -->
+<!-- The data type is fixed to be "continuous".We generated independent replications of all combinations of the simulation parameters. -->
 
-Consider a continuous time series variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with 2, 3 and 5 levels respectively. Categories of g1, g2 and g3 are represented by ${0,1}$, ${0, 1, 2}$ and ${0, 1, 2, 3, 4}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by $\{0, 1, 2, \dots, 6\}$ or $\{Mon, Tue, \dots, Sun\}$.
+<!-- Consider a continuous time series variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with 2, 3 and 5 levels respectively. Categories of g1, g2 and g3 are represented by ${0,1}$, ${0, 1, 2}$ and ${0, 1, 2, 3, 4}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by $\{0, 1, 2, \dots, 6\}$ or $\{Mon, Tue, \dots, Sun\}$. -->
 
 <!-- Consider the case where distribution of $y$ would vary across levels of $g1$ and g2$ but will not vary across levels of $g3$ as described in Figure .Figure \ref shows four designs where $g3$ acts as a nuisance variable, and $g1$ and $g2$ varies in both  Design 2 and 3, and $g2$ varies in all designs. -->
 
 
-Consider a case where distribution of $y$ would vary across levels of $g2$
-for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities.
+<!-- Consider a case where distribution of $y$ would vary across levels of $g2$ -->
+<!-- for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities. -->
 
 
 ```{r change-var, echo=FALSE}
@@ -642,14 +649,17 @@ A subset of many possible designs are shown in Figure \ref{fig: plot-linear }. F
 
 ## Results
 
-- confusion matrix could be used for showing results if proper labeling is used
+All the methods were fitted to each data designs and results are reported through confusion matrices. With increasing difference between categories, it gets easier for the methods to correctly distinguish the designs. For difference=1, the performances are pretty bad for js-robust methods and wpd method. The performance starts getting better with increasing difference and get worse with increasing number of replications. Length of series do not show to have any effect on the performance of the methods. It does not depend on if time series is ar or arma.
 
-- write about features that we have spiked into the data set
-- write about you incorporated noise
-- What is the additional structure you can incorporate that will lead to failing of method1 and method2?
-- And both gives the same result? Basically say when method 1 works better than method 2 and vice versa!
 
--
+<!-- - confusion matrix could be used for showing results if proper labeling is used -->
+
+<!-- - write about features that we have spiked into the data set -->
+<!-- - write about you incorporated noise -->
+<!-- - What is the additional structure you can incorporate that will lead to failing of method1 and method2? -->
+<!-- - And both gives the same result? Basically say when method 1 works better than method 2 and vice versa! -->
+
+<!-- - -->
 
 
 

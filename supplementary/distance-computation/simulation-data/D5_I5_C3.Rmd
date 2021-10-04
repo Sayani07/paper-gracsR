@@ -34,13 +34,18 @@ library(gravitas)
 
 ```{r change-var, echo=TRUE}
 t = 300
-n <- seq(0, n, 1)
+n <- seq(0, t, 1)
 g1 <- n %%2
 g2 <- n %%3
 g3 <- n %%5
+# mu1= c(0, 2)
+# mu2 = c(7, 5, 1)
+# mu3 = c(1, 2, 5, 3, 1)
+
 mu1= c(0, 2)
-mu2 = c(7, 5, 1)
-mu3 = c(1, 2, 5, 3, 1)
+mu2 = c(5, 1, 0)
+mu3 = c(0, 3, 7, 1, 0)
+
 ```
 
 Three circular granularities g1, g2 and g3 are considered with levels 2, 3 and 5 respectively. Many time series with `r t` observations are created using the five designs below, each of which is iterated five times. We anticipate to have 3 clusters, each with five time series conforming to the same design, once we execute the clustering. 
@@ -111,13 +116,16 @@ data_bind
 }
 
 t = 300
-mu1= c(0, 2)
-mu2 = c(7, 5, 1)
-mu3 = c(1, 2, 5, 3, 1)
+# mu1= c(0, 2)
+# mu2 = c(7, 5, 1)
+# mu3 = c(1, 2, 5, 3, 1)
 
+
+mu1= c(0, 2)
+mu2 = c(5, 1, 0)
+mu3 = c(0, 3, 7, 1, 0)
 
 data_bind <- generate_design(t, mu1, mu2, mu3)
-
 data_bind
 
 ```
