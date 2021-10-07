@@ -180,12 +180,14 @@ elec %>%
 
 ## ---- elec-raw-all
 
-sm_50 <- elec %>% 
-  distinct(customer_id) %>% 
-  slice(1:50)
+sm_50 <- elec_ts %>% 
+  distinct(customer_id)
+
+set.seed(123)
+sm_50only <- sample(sm_50$customer_id, 50)
 
 elec %>%
-  filter(customer_id %in% sm_50$customer_id) %>% 
+  filter(customer_id %in% sm_50only) %>% 
   tibble() %>% 
   ggplot(aes(x = reading_datetime, 
              y= customer_id), alpha = 0.5) 
@@ -193,12 +195,13 @@ elec %>%
 
 
 ##----raw-50
+set.seed(123)
 sm_50 <- elec_ts %>%
   as_tibble() %>% 
   distinct(customer_id) %>%
   slice_sample(n = 50)
 
-elec_ts %>%
+p1 <- elec_ts %>%
   filter(customer_id %in% sm_50$customer_id) %>%
   tibble() %>%
   ggplot(aes(
@@ -212,3 +215,6 @@ elec_ts %>%
   theme(strip.text.x = element_blank()) +
   xlab("Time [30m]") +
   ylab("electricity demand in kwh")
+
+
+ggsave("figs/raw_plot_cust.png")

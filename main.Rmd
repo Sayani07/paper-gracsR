@@ -341,7 +341,7 @@ Depending on the distance measure utilized for the study, the cluster characteri
 
 # Validation
 
-To evaluate clustering approaches, we create data designs that replicate prototype behaviours that might be seen in electricity data contexts. We spiked several features in the data to see where one method works better than the other and where they might give us the same outcome or the effect of missing data and trends on the proposed methods. A continuous measured variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with $2$, $3$ and $5$ levels respectively. Categories of $g1$, $g2$ and $g3$ are represented by ${g10,g11}$, ${g20, g21, g22}$ and ${g30, g31, g32, g33, g34}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$. Each categories of $g1$, $g2$ and $g3$ could be assumed to be from same distribution, few from one and others from separate distributions, or all from different distributions, resulting in distinct data designs. We created independent replications $(R = \{50, 200, 500\})$ of all data designs to see if our proposed clustering approaches can detect distinct designs in various groups for small, medium and large number of series. A sample size of $T=\{300, 500, 2000\}$ is used in all designs to test small, medium and large sized series. For all data designs, the data type is set to "continuous," and a gaussian setup for errors is assumed. The code for creating these designs can be found in the Supplementary section (link to github repo). The results for $T=300$ and $R=50$. The rest of the results could be found in the supplementary paper.
+To evaluate clustering approaches, we create data designs that replicate prototype behaviors that might be seen in electricity data contexts. We spiked several features in the data to see where one method works better than the other and where they might give us the same outcome or the effect of missing data and trends on the proposed methods. A continuous measured variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with $2$, $3$ and $5$ levels respectively. Categories of $g1$, $g2$ and $g3$ are represented by ${g10,g11}$, ${g20, g21, g22}$ and ${g30, g31, g32, g33, g34}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$. Each categories of $g1$, $g2$ and $g3$ could be assumed to be from same distribution, few from one and others from separate distributions, or all from different distributions, resulting in distinct data designs. We created independent replications $(R = \{25, 250, 500\})$ of all data designs to see if our proposed clustering approaches can detect distinct designs in various groups for small, medium and large number of series. A sample size of $T=\{300, 1000, 5000\}$ is used in all designs to test small, medium and large sized series. For all data designs, the data type is set to  be "continuous," and a gaussian setup for errors is assumed. The method could preform differently with different jumps between consecutive categories. So a difference of $diff = {1, 2, 5}$ for corresponding categories are also considered. The code for creating these designs can be found in the Supplementary section (link to github repo). The results for $T=300$ and $R=25$ is shown, that means we have $25$ time series each with length $300$. The rest of the results could be found in the supplementary paper.
 
 
 ## Data generating processes
@@ -355,7 +355,16 @@ An ARMA (p,q) process is used to generate series, where $p$ and $q$ are selected
 
 <!-- Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1). -->
 
-Consider the scenario when all three granularities $g1$, $g2$, and $g3$ are responsible for distinguishing the designs. That means that for at least one among the to-be-grouped designs, the pattern for each of $g1$, $g2$, and $g3$ will change. We consider null instances to represent no variation in distribution across categories, i.e., all categories have the same distribution N(0,1).
+Consider the scenario when all three granularities $g1$, $g2$, and $g3$ are responsible for distinguishing the designs. That means that for at least one among the to-be-grouped designs, the pattern for each of $g1$, $g2$, and $g3$ will change. We consider a _null_ case to represent that categories follow N(0,1) and _alternate_ case to represent different  distributions across categories (as in Table \ref{tab:}) that will lead to different designs (as in Table \ref{tab:}).
+
+
+
+```{r tab-distribution}
+
+# table_mayan <- tibble(granularity  = )
+
+
+```
 
 
 | granularity 	|  Alternate design 	|
@@ -489,18 +498,17 @@ Consider a case where distribution of $y$ would vary across levels of $g2$ for a
 
 **One signifiant granularity**
 
-Consider a case where distribution of $y$ would vary across levels of $g2$
-for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. 
+Consider a case where distribution of $y$ would vary across levels of $g2$ for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. 
 
-**Missing data**
+<!-- **Missing data** -->
 
-**Trend**
+<!-- **Trend** -->
 
-**Outliers**
+<!-- **Outliers** -->
 
-observations:
+<!-- observations: -->
 
-designs:
+<!-- designs: -->
 
 
 
@@ -678,38 +686,52 @@ _5. PETimesData:_ Peak Events time stamps
 
 Only _CustomerData_ and _EUDMData_ are relevant for the clustering goals of this paper. _EUDMData_ contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. `CustomerData` provides demographic data for 78,720 customers most of which are missing and not utilized for the purpose of this paper. To meet the requirements for anonymity preservation, the energy patterns could not be identified at the individual level, but rather by the geographical location of their residence information about their Local Government Area.
 
-### Raw data
+### Characteristics of raw data
+
+In Figure \ref{fig:raw-data-50}, the time series of energy consumption is plotted along the y-axis against time from past to future for $50$ sampled households. Each of these series correspond to a single customer. For each customer, the energy consumption is available at fine temporal resolution (every 30 minutes) for a long period of time (~ 2 years) resulting in 27,000 (median) observations for each customer. Some customers' electricity use may be unavailable owing to power outages or improper recording, resulting in implied missing numbers in the database. For this data set it was found that out of 13735 customers in total, 8685 customers do not have any implicit missing observations, while the rest 5050 customers had missing values. With further exploration, it was found that there is no structure in the missingness, that is missing observations can occur at any time point (see Appendix). Moreover, the data for these customers are characterized by unequal length, different start and end dates.
+Since our proposed methods consider probability distribution instead of raw data, both of these characteristics would not pose any threat to our methodology unless of course there is any structure or systematic patterns in them.
 
 
+\noindent It can be expected that energy consumption vary substantially between customers, which is a reflection of their varied  behavior owing to differences in profession, family size, geographical or physical characteristics. Since the linear time series plot has too many measurements all squeezed in this linear representation, it hinders us to discern any repetitive behavioral pattern for even one customers (let alone many customers together). In most cases, electricity data will have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior.
 
-### Missing Data
 
-Electricity usage for some customers may become unavailable due to power outage or not recording their usage properly, thus resulting in implicit missing values in the database. It is interesting to explore where missing-ness occurs or if there is a relationship between the underlying missing patterns. We use the R package `tsibble` to do this. 
+\noindent The aim of this section is to illustrate that the proposed methodology can be used to understand repetitive behavior for several customers together.
 
-```{r, out.width="100%"}
+
+```{r raw-data-50, out.width = "100%", fig.cap="The raw data for 50 households are shown. It looks like there is a lot of missing values and unequal length of time series along with asynchronous periods for which data is observed. No insightful behavioral pattern could be discerned from this view other than when the customer is not at home."}
+
+knitr::include_graphics("figs/raw_plot_cust.png") # look at smart-meter.R for the code
+```
+
+
+<!-- ### Missing Data -->
+
+<!-- Electricity usage for some customers may become unavailable due to power outage or not recording their usage properly, thus resulting in implicit missing values in the database. It is interesting to explore where missing-ness occurs or if there is a relationship between the underlying missing patterns. We use the R package `tsibble` to do this.  -->
+
+```{r missing-data, out.width="100%", eval = FALSE}
 include_graphics("figs/missing-data.png")
 ```
 
 
-- if there is any systematic missing patterns in the data
-- this missing plot can go in the supplementary
-- how to add missing values (should be added in data pre-processing)
-- instance learning
-- types of summary techniques to use (
-generally multivariate means and sd are used, I can't use that in a time series context, you can show across different granularity?
-within-group sum of squares and between-group sum of squares
+<!-- - if there is any systematic missing patterns in the data -->
+<!-- - this missing plot can go in the supplementary -->
+<!-- - how to add missing values (should be added in data pre-processing) -->
+<!-- - instance learning -->
+<!-- - types of summary techniques to use ( -->
+<!-- generally multivariate means and sd are used, I can't use that in a time series context, you can show across different granularity? -->
+<!-- within-group sum of squares and between-group sum of squares -->
 
-)
+<!-- ) -->
 
-13735 customers in elec_ts
-8685 customers in elec_nogap
-5050 customers in count_na_df
+<!-- 13735 customers in elec_ts -->
+<!-- 8685 customers in elec_nogap -->
+<!-- 5050 customers in count_na_df -->
 
-Then is the graph of missing observations even interesting.
-You can show two graphs, one to show that missingness do not have a pattern
-another to show even if no missing, they start and end at different times. (A sample of 50 customers). 
+<!-- Then is the graph of missing observations even interesting. -->
+<!-- You can show two graphs, one to show that missingness do not have a pattern -->
+<!-- another to show even if no missing, they start and end at different times. (A sample of 50 customers).  -->
 
-\noindent A dataset of 100 SGSC homes has been used to lay out the structure to be used for analyzing the big dataset. The smaller dataset contains half-hourly kwh values form 2012 to 2014 and has asynchronous time series distributed evenly over the observation period (Figure \ref{fig:elec-raw}), similar to the bigger data set. Figure \ref{fig:count-gaps} can be used to interpret missingness in the data, where the customers are arranged from maximum to minimum missing. It looks like data is most missing before 2013 and for a particular date in 2014.
+<!-- \noindent A dataset of 100 SGSC homes has been used to lay out the structure to be used for analyzing the big dataset. The smaller dataset contains half-hourly kwh values form 2012 to 2014 and has asynchronous time series distributed evenly over the observation period (Figure \ref{fig:elec-raw}), similar to the bigger data set. Figure \ref{fig:count-gaps} can be used to interpret missingness in the data, where the customers are arranged from maximum to minimum missing. It looks like data is most missing before 2013 and for a particular date in 2014. -->
 
 
 
@@ -725,6 +747,340 @@ empty_as_na <- function(x){
  <!-- - Handling autocorrelation: Autocorrelation in the time series is likely to get removed from considering probability distributions and cyclic granularities in the clustering algorithm. -->
 
 <!-- At this stage, we need to define the aim of clustering as there could be various aims of clustering like between-cluster separation, within cluster homogeneity: low distances, within-cluster homogeneous distributional shape, good representation of data by centroids, little loss of information, high density without cluster gaps, uniform cluster sizes, stability and others. Finally, how distinct they are and how can we summarize the main features of the cluster would be discussed here. -->
+
+
+
+## Prototype application
+
+A clean data set is obtained by carefully choosing customers which shows similar shapes across one or more cyclic granularity. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one.
+
+Fig \ref{fig:}, \ref{fig:} and \ref{fig:} shows the distribution of 24 customers across hour-of-day, month-of-year and wknd-wday respectively. Every row in \ref{fig:} shows different shapes across hour-of-day and across columns show similar shapes for each row. We use our methodology to see if the customers are allocated to same group have similar shapes across one or more significant granularity.
+
+
+```{r data-pick}
+
+quantile_prob_graph <- c(0.25, 0.5, 0.75)
+
+wkndwday <- read_rds(here("data/dist_gran_wkndwday_356cust_robust.rds")) %>% broom::tidy()
+
+moy <- read_rds(here("data/dist_gran_moy_356cust.rds")) %>% broom::tidy()
+
+hod <- read_rds(here("data/dist_gran_hod_356cust_robust.rds")) %>% broom::tidy()
+
+distance <- wkndwday %>% 
+  left_join(moy, by = c("item1", "item2")) %>% 
+  left_join(hod, by = c("item1", "item2")) %>% 
+  rename("wkndwday" ="distance.x",
+         "moy" = "distance.y",
+         "hod" = "distance") %>%
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2))) 
+
+total_distance <- distance %>% 
+  mutate(total = hod)
+  #mutate(total = wkndwday/2 + moy/12 + hod/24) 
+
+  
+# 8454221 10420689
+data_pick_one <- total_distance %>% filter(item1 %in% 
+                            c(8454221)) %>% group_by(item1) %>% arrange(total) %>% head(5) %>% 
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+data_pick_ch <-  total_distance %>% filter(item1 %in% 
+                            c(9393696)) %>% group_by(item1) %>% arrange(total) %>% head(5) %>% 
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+
+
+#11013154  8181071 11048034
+data_pick_two <- total_distance %>% filter(item1 %in% 
+                            c(8181071)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>% 
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+
+data_pick_three <- total_distance %>% filter(item1 %in% 
+                            c(11013154)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>% 
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+# data_pick_three <- total_distance %>% filter(item1 %in%
+#                             c(11013154)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>%
+#   mutate(item1 = as.integer(as.character(item1)),
+#          item2 = as.integer(as.character(item2)))
+
+# 8653709
+data_pick_four <- total_distance %>% filter(item1 %in%
+                            c(8184707)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>%
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+
+# c(11013154, 8495194, 8627007,10109182,10677705,8952846)
+
+data_pick_cust <- bind_rows(
+unique(c(data_pick_one$item1,data_pick_one$item2)) %>% as_tibble(),    unique(c(data_pick_two$item1,data_pick_two$item2)) %>% as_tibble(), 
+c(11013154, 9345642, 8328008, 8636035,8627007,8454235) %>% as_tibble(),
+unique(c(data_pick_four$item1,data_pick_four$item2)) %>% as_tibble(),
+.id = "design")
+
+
+
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))%>%
+  filter(customer_id %in% data_pick_cust$value) %>% 
+  gracsr::scale_gran( method = "robust", response = "general_supply_kwh")
+```
+
+
+<!-- # ```{r} -->
+<!-- # data_pick %>% ggplot() + geom_line(aes(x=reading_datetime, y = general_supply_kwh)) + -->
+<!-- #   facet_wrap(~customer_id, ncol= 2) +  -->
+<!-- # ``` -->
+
+
+
+
+```{r clustering}
+filtered_distance <- distance %>% filter(item1 %in% data_pick_cust$value) %>% 
+  filter(item2 %in% data_pick_cust$value)
+
+
+total_distance <- filtered_distance %>% 
+mutate(total = wkndwday/2 + moy/12 + hod/24) 
+#mutate(total = hod) 
+
+total_distance_wide <- total_distance %>% pivot_wider(-c(2:5), 
+                               names_from = item2,
+                               values_from = total)
+#total_distance_wide$`11013154` <- NA
+
+rownames(total_distance_wide) <- total_distance_wide$item1
+
+mds_data <- total_distance_wide %>% 
+  mutate_all(~replace(., is.na(.), 0)) %>%
+   tibble::rownames_to_column() %>%  
+   select(-item1) %>% 
+   pivot_longer(-rowname) %>% 
+   pivot_wider(names_from=rowname, values_from=value) 
+
+rownames(mds_data) <- total_distance_wide$item1
+
+# group <- mds_data[-1] %>% clust_gran(kopt=4)
+# 
+
+df <- mds_data[-1] %>% as.matrix()
+DM <- matrix(0, ncol(mds_data), ncol(mds_data))
+DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)]
+
+f = as.dist(DM)
+
+#f %>% hclust %>% cutree(k=4)
+
+
+first_lot <- mds_data %>% names()
+# because distance matrix is such  that 1:23 appears in columns and 2:24 appears in rows such that 1st customer is missing from row and last customer is missing from variables
+id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
+
+group <- f %>% hclust (method = "ward.D") %>% cutree(k=4)
+
+cluster_result <- bind_cols(id = id, group = group) 
+
+mds  = cmdscale(f)
+rownames(mds) = id
+colnames(mds) = c("mds1", "mds2")
+
+ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result$group), 
+       aes(x = mds1, y = mds2, color = as.factor(group))) +
+  geom_point() +
+  geom_text(aes(label = id))
+
+# cluster_result %>% filter(group==1)
+# cluster_result %>% filter(group==2)
+# cluster_result %>% filter(group==3)
+# cluster_result %>% filter(group==4)
+
+  #x = ~mds1.hod, y = ~ mds2.hod, text = ~customer_id
+```
+```{r heatmap-hod}
+data_heatmap_hod <- quantile_gran(data_pick,
+                                  "hour_day", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
+  
+data_heatmap_hod$category <- factor(data_heatmap_hod$category, levels = 0:23)
+
+```
+
+```{r data-heatmap-hod}
+data_heatmap_hod %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+```
+
+
+
+```{r data-heatmap-hod-group}
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id"))
+
+data_heatmap_hod_group <- quantile_gran(data_group,
+                                  gran1="hour_day",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+  
+data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
+
+data_heatmap_hod_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group))) +
+  geom_line(aes(y = `50%`, group=group)) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  scale_x_discrete(breaks = seq(1, 24, 3))+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+```
+
+  
+```{r data-heatmap-moy}
+
+data_heatmap_moy <- quantile_gran(data_pick, "month_year", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
+  
+data_heatmap_moy$category <- factor(data_heatmap_moy$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+
+data_heatmap_moy %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+```
+
+
+```{r data-heatmap-moy-group}
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id"))
+
+data_heatmap_moy_group <- quantile_gran(data_group,
+                                  gran1="month_year",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+data_heatmap_moy_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group))) +
+  geom_line(aes(y = `50%`, group=group)) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+```
+
+
+
+```{r data-heatmap-wkndwday}
+
+data_heatmap_wkndwday <- quantile_gran(data_pick, "wknd_wday", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
+  
+data_heatmap_wkndwday$category <- factor(data_heatmap_wkndwday$category, levels = c("Weekday", "Weekend"))
+
+
+data_heatmap_wkndwday %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("wknd_wday") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+
+```
+
+```{r data-heatmap-wkndwday-group}
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id"))
+
+data_heatmap_wkndwday_group <- quantile_gran(data_group,
+                                  gran1="wknd_wday",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$category, levels = c("Weekday", "Weekend"))
+
+
+data_heatmap_wkndwday_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group))) +
+  geom_line(aes(y = `50%`, group=group)) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 4) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("wknd_wday") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+```
+
+
+
+
 
 ### Cluster validation
 

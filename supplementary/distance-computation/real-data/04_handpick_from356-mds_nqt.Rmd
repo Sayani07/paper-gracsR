@@ -1,5 +1,5 @@
 ---
-title: "Selecting similar behaving group of customers to check clustering methodology"
+title: "Selecting similar behaving group of customers to check nqt clustering methodology"
 output: html_document
 ---
 
@@ -44,11 +44,11 @@ library(ggpubr)
 
 quantile_prob_graph <- c(0.25, 0.5, 0.75)
 
-wkndwday <- read_rds("../../../data/dist_gran_wkndwday_356cust_robust.rds") %>% broom::tidy() 
+wkndwday <- read_rds("../../../data/dist_gran_wkndwday_356cust_nqt.rds") %>% broom::tidy() 
 
-moy <- read_rds("../../../data/dist_gran_moy_356cust.rds") %>% broom::tidy()
+moy <- read_rds("../../../data/dist_gran_moy_356cust_nqt.rds") %>% broom::tidy()
 
-hod <- read_rds("../../../data/dist_gran_hod_356cust_robust.rds") %>% broom::tidy()
+hod <- read_rds("../../../data/dist_gran_hod_356cust_nqt.rds") %>% broom::tidy()
 
 distance <- wkndwday %>% 
   left_join(moy, by = c("item1", "item2")) %>% 

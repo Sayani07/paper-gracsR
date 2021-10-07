@@ -21,7 +21,7 @@ library(here)
 #number of iterations corresponding to
 niter <- c(5) #number of series you are clustering
 nT <-  c(300) # length of the time series
-mean_diff <- c(1,2) # difference between consecutive categories
+mean_diff <- c(1,2,5) # difference between consecutive categories
 
 time_series <- c("ar1", "arma22")
 
@@ -31,7 +31,7 @@ simtable <- expand.grid(mean_diff = mean_diff,
                         nT = nT)
 
 #scen<-as.numeric(commandArgs()[[6]]) # If running batch job uncomment this
-scen <- 2
+scen <- 3
 
 simj<-simtable[scen,] #Extract row of table
 mean_diffj <- simj$mean_diff

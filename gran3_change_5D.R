@@ -14,7 +14,7 @@ library(here)
 # niter
 #seed_len = seq(12345, 12350, 1)
 # number of iterations corresponding to
-niter <- c(5, 50, 100) #number of series you are clustering
+niter <- c(5, 50) #number of series you are clustering
 nT <-  c(300, 1000, 5000) # length of the time series
 mean_diff <- c(1, 2, 5) # difference between consecutive categories
 

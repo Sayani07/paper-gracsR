@@ -13,5 +13,11 @@ gran1 = "month_year"
 
 #elec <- elec %>% filter(customer_id %in% c(8143599, 8147121, 8159803, 10542667))
 
-distance_data_robust <- elec %>% scale_gran(method = "robust") %>% dist_gran(gran1)
-write_rds(distance_data_robust, here::here("data/dist_gran_moy_356cust.rds"))
+# Code for wkndwday
+# distance_data_robust <- elec %>% scale_gran(method = "robust") %>% dist_gran(gran1)
+# 
+# write_rds(distance_data_robust, here::here("data/dist_gran_moy_356cust.rds"))
+
+distance_data_nqt <- elec %>% scale_gran(method = "nqt") %>% dist_gran(gran1)
+
+write_rds(distance_data_nqt, here::here("data/dist_gran_moy_356cust_nqt.rds"))

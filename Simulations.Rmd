@@ -259,7 +259,6 @@ Fig \ref{fig:}, \ref{fig:} and \ref{fig:} shows the distribution of 24 customers
 We use our methodology to see if the customers are allocated to same group have similar shapes across one or more granularity.
 
 
-
 ```{r data-pick}
 
 quantile_prob_graph <- c(0.25, 0.5, 0.75)
@@ -315,12 +314,19 @@ data_pick_four <- total_distance %>% filter(item1 %in%
          item2 = as.integer(as.character(item2)))
 
 
+data_pick_five <- total_distance %>% filter(item1 %in%
+                            c(8253276)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>%
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+
+
 # c(11013154, 8495194, 8627007,10109182,10677705,8952846)
 
 data_pick_cust <- bind_rows(
 unique(c(data_pick_one$item1,data_pick_one$item2)) %>% as_tibble(),    unique(c(data_pick_two$item1,data_pick_two$item2)) %>% as_tibble(), 
 c(11013154, 9345642, 8328008, 8636035,8627007,8454235) %>% as_tibble(),
 unique(c(data_pick_four$item1,data_pick_four$item2)) %>% as_tibble(),
+unique(c(data_pick_five$item1,data_pick_five$item2)) %>% as_tibble(),
 .id = "design")
 
 
@@ -447,7 +453,7 @@ first_lot <- mds_data %>% names()
 # because distance matrix is such  that 1:23 appears in columns and 2:24 appears in rows such that 1st customer is missing from row and last customer is missing from variables
 id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
 
-group <- f %>% hclust (method = "ward.D") %>% cutree(k=4)
+group <- f %>% hclust (method = "ward.D") %>% cutree(k=5)
 
 cluster_result <- bind_cols(id = id, group = group) 
 
@@ -680,6 +686,12 @@ parcoord <- GGally::ggparcoord(data_pcp ,
   xlab("") +
   ylab("wpd") 
 
+
+```
+
+```{r}
+parcoord
+
 ```
 
 ```{r}
@@ -822,4 +834,281 @@ data_heatmap_wkndwday_group %>%
   theme(plot.margin = margin(0, 0, 0, 0, "cm") )
 
 ```
+```{r pcp-distance-computation}
 
+elec_600_wpd %>% left_join(cluster_result_wpd, by = c("customer_id" = "id"))
+
+
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 3:ncol(data_pcp),
+                   groupColumn = "group",
+                   showPoints = FALSE, 
+                   alphaLines = 0.8,
+                   order = "allClass",
+                   scale = "globalminmax"
+) + ggplot2::theme_bw() +
+  #scale_color_brewer(palette = "Dark2") + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd") 
+
+```
+
+## Clustering 396 customers
+
+
+```{r clustering-all}
+filtered_distance <- distance %>%
+  filter(!(item1 %in% c(8196183, 8508008, 8680538))) %>% 
+  filter(!(item2 %in% c(8196183, 8508008, 8680538)))
+
+total_distance <- filtered_distance %>% 
+mutate(total = wkndwday/2 + moy/12 + hod/24) 
+#mutate(total = hod) 
+# wkndwday/2
+
+total_distance_wide <- total_distance %>% pivot_wider(-c(2:5), 
+                               names_from = item2,
+                               values_from = total)
+#total_distance_wide$`11013154` <- NA
+
+rownames(total_distance_wide) <- total_distance_wide$item1
+
+mds_data <- total_distance_wide %>% 
+  mutate_all(~replace(., is.na(.), 0)) %>%
+   tibble::rownames_to_column() %>%  
+   select(-item1) %>% 
+   pivot_longer(-rowname) %>% 
+   pivot_wider(names_from=rowname, values_from=value) 
+
+rownames(mds_data) <- total_distance_wide$item1
+
+# group <- mds_data[-1] %>% clust_gran(kopt=4)
+# 
+
+df <- mds_data[-1] %>% as.matrix()
+DM <- matrix(0, ncol(mds_data), ncol(mds_data))
+DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)] # distance metric
+```
+
+```{r koptimal}
+# choosing optimal number of clusters
+   # koptimal = fpc::nselectboot(DM,
+   #                              B = 50,
+   #                              method = "ward.D",
+   #                              clustermethod = fpc::disthclustCBI,
+   #                              classification = "averagedist",
+   #                              krange = 5:20)
+   #  kopt = koptimal$kopt
+```
+
+
+```{r group-all}
+
+f = as.dist(DM)
+
+#f %>% hclust %>% cutree(k=4)
+
+
+first_lot <- mds_data %>% names()
+# because distance matrix is such  that 1:23 appears in columns and 2:24 appears in rows such that 1st customer is missing from row and last customer is missing from variables
+id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
+
+group <- f %>% hclust (method = "ward.D") %>% cutree(k=12)
+
+cluster_result <- bind_cols(id = id, group = group) 
+
+mds  = cmdscale(f)
+rownames(mds) = id
+colnames(mds) = c("mds1", "mds2")
+
+# ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result$group), 
+#        aes(x = mds1, y = mds2, color = as.factor(group))) +
+#   geom_point() +
+#   geom_text(aes(label = id))
+
+# cluster_result %>% filter(group==1)
+# cluster_result %>% filter(group==2)
+# cluster_result %>% filter(group==3)
+# cluster_result %>% filter(group==4)
+
+# cluster_result %>% filter(group==9)
+# cluster_result %>% filter(group==19)
+
+  #x = ~mds1.hod, y = ~ mds2.hod, text = ~customer_id
+```
+
+
+```{r data-heatmap-hod-group}
+
+# for entire data
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))%>%
+    filter(!(customer_id %in% c(8196183, 8508008, 8680538))) %>% 
+  gracsr::scale_gran( method = "robust", response = "general_supply_kwh")
+
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id"))
+
+data_heatmap_hod_group <- quantile_gran(data_group,
+                                  gran1="hour_day",
+                                  quantile_prob_val = c(0.1, 0.25, 0.5, 0.75, 0.9),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+  
+data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
+
+data_heatmap_hod_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group))) +
+    geom_ribbon(aes(ymin = `10%`, 
+                  ymax = `90%`, group=group, fill = as.factor(group)), alpha = 0.5) + 
+  geom_line(aes(y = `50%`, group=group)) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 3) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  scale_x_discrete(breaks = seq(1, 24, 3))+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+```
+
+
+```{r data-heatmap-moy-group}
+
+data_heatmap_moy_group <- quantile_gran(data_group,
+                                  gran1="month_year",
+                                  quantile_prob_val = c(0.1, 0.25, 0.5, 0.75, 0.9),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+data_heatmap_moy_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group))) +  geom_ribbon(aes(ymin = `10%`, 
+                  ymax = `90%`, group=group, fill = as.factor(group)), alpha = 0.5) + 
+  geom_line(aes(y = `50%`, group=group)) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 3) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+```
+
+
+
+```{r data-heatmap-wkndwday-group}
+
+data_heatmap_wkndwday_group <- quantile_gran(data_group,
+                                  gran1="wknd_wday",
+                                  quantile_prob_val = c(0.1, 0.25, 0.5, 0.75, 0.9),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$category, levels = c("Weekday", "Weekend"))
+
+
+data_heatmap_wkndwday_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group))) +
+    geom_ribbon(aes(ymin = `10%`, 
+                  ymax = `90%`, group=group, fill = as.factor(group)), alpha = 0.5) + 
+  geom_line(aes(y = `50%`, group=group)) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 4) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("wknd_wday") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+
+```
+```{r}
+
+elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
+
+elec356 <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))
+
+# %>%
+#     filter(!(customer_id %in% c(8196183, 8508008, 8680538))) %>% 
+#   gracsr::scale_gran( method = "robust", response = "general_supply_kwh")
+
+
+elec_pick <- elec_600_wpd %>% 
+  filter(elec356 %in% elec356) %>% 
+     filter(!(customer_id %in% c(8196183, 8508008, 8680538)))
+
+elec_pick_wide <- elec_pick %>% pivot_wider(-c(1, 2), names_from = "x_variable", values_from = wpd)
+
+
+# robust_scale <-  function(x){
+#   (x - stats::median(x))/(stats::IQR(x))
+# }
+
+#scaled_var <- apply(elec_pick_wide[-c(1)], 2, robust_scale) %>% as_tibble()
+
+scaled_var <- elec_pick_wide
+
+f <- elec_pick_wide[-1] %>% dist() 
+
+
+group <- f%>% hclust (method = "ward.D") %>% cutree(k=12)
+
+
+cluster_result_wpd <- bind_cols(id = elec_pick_wide$customer_id, group = group) 
+
+mds  = cmdscale(f)
+rownames(mds) = id
+colnames(mds) = c("mds1", "mds2")
+
+ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result_wpd$group), 
+       aes(x = mds1, y = mds2, color = as.factor(group))) +
+  geom_point() +
+  geom_text(aes(label = id))
+
+
+data_pcp <- scaled_var %>% 
+  #bind_cols(customer_id =  elec_pick_wide$customer_id) %>%
+  left_join(cluster_result_wpd , by = c("customer_id" = "id")) %>% 
+  select(customer_id, group, everything()) %>% 
+  mutate(group = as.factor(group))
+
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 3:ncol(data_pcp),
+                   groupColumn = "group",
+                   showPoints = FALSE, 
+                   alphaLines = 0.8,
+                   order = "anyClass",
+                   scale = "globalminmax"
+) + ggplot2::theme_bw() +
+  scale_color_brewer(palette = "Dark2") + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd") 
+
+
+```
+
+```{r}
+parcoord
+
+```
