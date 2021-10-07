@@ -750,7 +750,7 @@ empty_as_na <- function(x){
 
 
 
-## Prototype application
+## Prototype selection
 
 <!-- A clean data set is obtained by carefully choosing customers which shows similar shapes across one or more cyclic granularity. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one. -->
 
@@ -934,7 +934,10 @@ data_heatmap_hod$category <- factor(data_heatmap_hod$category, levels = 0:23)
 
 ```
 
-```{r data-heatmap-hod, fig.cap="The distribution of electricity demand for the selected 24 customers across hour-of-day. The median is represented by a line and shaded region represents the area between 25^{th} and 75^{th} percentile. Each row represents a distinct shape of daily load, and all customers in the same row have similar daily profile. If they are represented by the same color, it means that they are in the same group as suggested by our proposed clustering algorithm."}
+```{r data-heatmap-hod, fig.cap="The distribution of electricity demand for the selected 24 customers across hour-of-day. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. According to our instance selection method, each row represnts a distinct shape of daily load, and all customers in the same row should have similar daily profile.After clustering these consumers, all customers with the same colour represent the same group. Except for customer id 8269176, there is unanimity across design and groups. Even though their daily form resembles Group 2, our clustering approach places them in Group 3 (which is design 4 in our case). Because our method uses hod, moy, and wkndwday, there may be some mismatches depending on only one variable."}
+
+legend_title <- "group"
+
 
 data_heatmap_hod %>% 
   mutate(customer_id = as.character(customer_id)) %>% 
@@ -963,10 +966,36 @@ data_heatmap_hod %>%
   #theme() strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
   theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +
   scale_x_discrete(breaks = seq(0,23, 4)) +
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  xlab("group")
+  scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+  xlab("hour-of-day")
+```
+```{r data-heatmap-moy, fig.cap = "The distribution of electricity demand for the selected 24 customers across month-of-year. The median is represented by a line and shaded region represents the area between 25^{th} and 75^{th} percentile. The clustering leads to customers with similar shape across month-of-year with some exceptions. This is natural in a clus"}
+
+data_heatmap_moy <- quantile_gran(data_pick, "month_year", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
+  
+data_heatmap_moy$category <- factor(data_heatmap_moy$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+
+data_heatmap_moy %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
 ```
 
+## Characterising clusters
 
 ```{r data-heatmap-hod-group, fig.cap="The distribution of electricity demand for the clusters across hour-of-day. The median is represented by a line and the shaded region represents the area between 25^{th} and 75^{th} percentile. The first cluster is characterised by high comsumption in early morning hours and late night hours. The second cluster should be the most common type of daily profile characterised by a smaller morning and higher evening peak. The third cluster corresponds to two equal peaks and the last one corresponds to only distinct evening peaks."}
 
@@ -1012,11 +1041,11 @@ data_heatmap_hod_group %>%
   scale_x_discrete(breaks = seq(1, 24, 3))+ 
   #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
   theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
-  scale_fill_manual(values = c("#0072B2", "#E69F00","#D55E00", "#009E73"))+
-  #scale_color_manual(values = c("#0072B2", "#E69F00","#D55E00", "#009E73"))+
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))+
   theme(legend.position = "bottom")
 
-# "#E69F00", "#009E73","#0072B2", "#D55E00"
+# 
 
 # 
 # data_pick_cust <- data_pick_cust %>% mutate(value = as.character(value))
@@ -1024,31 +1053,15 @@ data_heatmap_hod_group %>%
 # data_pick_cust %>% left_join(cluster_result, by = c("value" = "id")) %>% group_by(group)
 ```
 
+Characterization of clusters is the final stage of a cluster analysis.
+However, if we are convinced that we have identified a collection of clusters that can be distinguished from one another, we should intend to characterise them more formally, both statistically and qualitatively. We quantify them by producing statistics for each variable. We may look at the findings in graphs, and enhance our qualitative descriptions of the groupings.
+
+We discover 4 qualitative clusters of varying shapes in the distribution of all consumers in a group. Group-1 includes consumers who work 9-5, get up and conduct morning activities from 7-10am, and then depart. Then they return home in the evening to cook supper and perform other activities, giving the evening a greater peak than the morning. Group 2 is the group that rushes out of the house in the morning to get to work. They only return at night and do all activities at night, so there is no morning peak. The third one has a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls. Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening peaks. All of this may be validated with further information about the customer. 
+
+
+
+
   
-```{r data-heatmap-moy, fig.cap = "The distribution of electricity demand for the selected 24 customers across month-of-year. The median is represented by a line and shaded region represents the area between 25^{th} and 75^{th} percentile. The clustering leads to customers with similar shape across month-of-year with some exceptions. This is natural in a clus"}
-
-data_heatmap_moy <- quantile_gran(data_pick, "month_year", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
-  left_join(data_pick_cust, by = c("customer_id"="value"))
-  
-data_heatmap_moy$category <- factor(data_heatmap_moy$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-
-
-data_heatmap_moy %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, group=customer_id), fill = "lightblue") +
-  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
-  facet_wrap(design~customer_id, 
-             scales = "free_y", 
-             labeller = "label_value",
-             ncol = 6) +
-    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
-```
 
 
 ```{r data-heatmap-moy-group}
