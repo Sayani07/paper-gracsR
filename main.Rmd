@@ -689,10 +689,10 @@ Only _CustomerData_ and _EUDMData_ are relevant for the clustering goals of this
 ### Characteristics of raw data
 
 In Figure \ref{fig:raw-data-50}, the time series of energy consumption is plotted along the y-axis against time from past to future for $50$ sampled households. Each of these series correspond to a single customer. For each customer, the energy consumption is available at fine temporal resolution (every 30 minutes) for a long period of time (~ 2 years) resulting in 27,000 (median) observations for each customer. Some customers' electricity use may be unavailable owing to power outages or improper recording, resulting in implied missing numbers in the database. For this data set it was found that out of 13735 customers in total, 8685 customers do not have any implicit missing observations, while the rest 5050 customers had missing values. With further exploration, it was found that there is no structure in the missingness, that is missing observations can occur at any time point (see Appendix). Moreover, the data for these customers are characterized by unequal length, different start and end dates.
-Since our proposed methods consider probability distribution instead of raw data, both of these characteristics would not pose any threat to our methodology unless of course there is any structure or systematic patterns in them.
+Since our proposed methods consider probability distribution instead of raw data, both of these characteristics would not pose any threat to our methodology unless of course there is any structure or systematic patterns in them.  
 
 
-\noindent It can be expected that energy consumption vary substantially between customers, which is a reflection of their varied  behavior owing to differences in profession, family size, geographical or physical characteristics. Since the linear time series plot has too many measurements all squeezed in this linear representation, it hinders us to discern any repetitive behavioral pattern for even one customers (let alone many customers together). In most cases, electricity data will have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior.
+\noindent It can be expected that energy consumption vary substantially between customers, which is a reflection of their varied  behavior owing to differences in profession, family size, geographical or physical characteristics. Since the linear time series plot has too many measurements all squeezed in this linear representation, it hinders us to discern any repetitive behavioral pattern for even one customers (let alone many customers together). In most cases, electricity data will have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior.  
 
 
 \noindent The aim of this section is to illustrate that the proposed methodology can be used to understand repetitive behavior for several customers together.
@@ -752,9 +752,21 @@ empty_as_na <- function(x){
 
 ## Prototype application
 
-A clean data set is obtained by carefully choosing customers which shows similar shapes across one or more cyclic granularity. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one.
+<!-- A clean data set is obtained by carefully choosing customers which shows similar shapes across one or more cyclic granularity. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one. -->
 
-Fig \ref{fig:}, \ref{fig:} and \ref{fig:} shows the distribution of 24 customers across hour-of-day, month-of-year and wknd-wday respectively. Every row in \ref{fig:} shows different shapes across hour-of-day and across columns show similar shapes for each row. We use our methodology to see if the customers are allocated to same group have similar shapes across one or more significant granularity.
+
+First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of 600 customers. Then we removed customers for which any of the hod, moy and wkndwday is a clash. We further removed customers for which the deciles of the energy consumption is of the same value. Finally, we are left with 356 customers from which we wanted to do instance selection. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one to classify customers who have similar behavior across all significant granularities. Next we select 4 customers which are far apart from each other and 6 customers which are lying closest in distance to each of these 4 customers. These selection was done using the granularity hod. When we use our methodologies, it is based on all significant granularities and not only hod, but if hod is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers. This is process is similar to instance-wise classfication methods.By this instancewise discriminative learning, instances can reasonably distribute in the representation space, which reveals their similarities. In
+order to further improve visual representations, we propose a
+dual-level progressive similar instance selection (DPSIS) method
+to build a bridge from instance to class by selecting similar
+instances (neighbors) for each instance (anchor) and treating the
+anchor and its neighbors as the same class.
+
+
+
+
+Fig \ref{fig:data-heatmap-hod}, \ref{fig:} and \ref{fig:} shows the distribution of 24 customers across hour-of-day, month-of-year and wknd-wday respectively. Every row in \ref{fig:} shows different shapes across hour-of-day and across columns show similar shapes for each row. We use our methodology to see if the customers are allocated to same group have similar shapes across one or more significant granularity.
+
 
 
 ```{r data-pick}
@@ -783,7 +795,10 @@ total_distance <- distance %>%
   
 # 8454221 10420689
 data_pick_one <- total_distance %>% filter(item1 %in% 
-                            c(8454221)) %>% group_by(item1) %>% arrange(total) %>% head(5) %>% 
+                            c(8454221)) %>% 
+  #group_by(item1) %>%
+  arrange(total) %>% 
+  head(5) %>% 
   mutate(item1 = as.integer(as.character(item1)),
          item2 = as.integer(as.character(item2)))
 
@@ -802,7 +817,9 @@ data_pick_two <- total_distance %>% filter(item1 %in%
 
 
 data_pick_three <- total_distance %>% filter(item1 %in% 
-                            c(11013154)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>% 
+                            c(11013154)) %>%
+  #group_by(item1) %>%
+  arrange(total) %>% head(5)%>% 
   mutate(item1 = as.integer(as.character(item1)),
          item2 = as.integer(as.character(item2)))
 
@@ -813,7 +830,9 @@ data_pick_three <- total_distance %>% filter(item1 %in%
 
 # 8653709
 data_pick_four <- total_distance %>% filter(item1 %in%
-                            c(8184707)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>%
+                            c(8184707)) %>% 
+  #group_by(item1) %>% 
+  arrange(total) %>% head(5)%>%
   mutate(item1 = as.integer(as.character(item1)),
          item2 = as.integer(as.character(item2)))
 
@@ -826,11 +845,13 @@ c(11013154, 9345642, 8328008, 8636035,8627007,8454235) %>% as_tibble(),
 unique(c(data_pick_four$item1,data_pick_four$item2)) %>% as_tibble(),
 .id = "design")
 
-
+data_pick_cust$design <- paste("design", data_pick_cust$design, sep = "-")
 
 data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))%>%
   filter(customer_id %in% data_pick_cust$value) %>% 
   gracsr::scale_gran( method = "robust", response = "general_supply_kwh")
+
+
 ```
 
 
@@ -838,8 +859,6 @@ data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))%>%
 <!-- # data_pick %>% ggplot() + geom_line(aes(x=reading_datetime, y = general_supply_kwh)) + -->
 <!-- #   facet_wrap(~customer_id, ncol= 2) +  -->
 <!-- # ``` -->
-
-
 
 
 ```{r clustering}
@@ -891,10 +910,10 @@ mds  = cmdscale(f)
 rownames(mds) = id
 colnames(mds) = c("mds1", "mds2")
 
-ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result$group), 
-       aes(x = mds1, y = mds2, color = as.factor(group))) +
-  geom_point() +
-  geom_text(aes(label = id))
+# ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result$group), 
+#        aes(x = mds1, y = mds2, color = as.factor(group))) +
+#   geom_point() +
+#   geom_text(aes(label = id))
 
 # cluster_result %>% filter(group==1)
 # cluster_result %>% filter(group==2)
@@ -904,35 +923,52 @@ ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result$group),
   #x = ~mds1.hod, y = ~ mds2.hod, text = ~customer_id
 ```
 ```{r heatmap-hod}
+
 data_heatmap_hod <- quantile_gran(data_pick,
                                   "hour_day", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
   pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
   left_join(data_pick_cust, by = c("customer_id"="value"))
   
+#data_heatmap_hod$customer_id = factor(data_heatmap_hod$customer_id, levels = data_pick_cust$value)
 data_heatmap_hod$category <- factor(data_heatmap_hod$category, levels = 0:23)
 
 ```
 
-```{r data-heatmap-hod}
+```{r data-heatmap-hod, fig.cap="The distribution of electricity demand for the selected 24 customers across hour-of-day. The median is represented by a line and shaded region represents the area between 25^{th} and 75^{th} percentile. Each row represents a distinct shape of daily load, and all customers in the same row have similar daily profile. If they are represented by the same color, it means that they are in the same group as suggested by our proposed clustering algorithm."}
+
 data_heatmap_hod %>% 
   mutate(customer_id = as.character(customer_id)) %>% 
   left_join(cluster_result, by = c("customer_id" = "id")) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, group=customer_id), fill = "lightblue") +
-  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+                  ymax = `75%`,
+                  group=customer_id,
+                  fill = as.factor(group)),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=customer_id, 
+                color = as.factor(group)), size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y", 
              labeller = "label_value",
              ncol = 6) +
-    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)")  + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+    theme_bw() +
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") +
+  ylab("demand (in Kwh)")  + 
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ 
+  #theme() strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +
+  scale_x_discrete(breaks = seq(0,23, 4)) +
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+  xlab("group")
 ```
 
 
-
-```{r data-heatmap-hod-group}
+```{r data-heatmap-hod-group, fig.cap="The distribution of electricity demand for the clusters across hour-of-day. The median is represented by a line and the shaded region represents the area between 25^{th} and 75^{th} percentile. The first cluster is characterised by high comsumption in early morning hours and late night hours. The second cluster should be the most common type of daily profile characterised by a smaller morning and higher evening peak. The third cluster corresponds to two equal peaks and the last one corresponds to only distinct evening peaks."}
 
 data_group <- data_pick %>% 
   mutate(customer_id = as.character(customer_id)) %>% 
@@ -947,24 +983,49 @@ data_heatmap_hod_group <- quantile_gran(data_group,
   
 data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
 
+# data_heatmap_hod_group <- data_heatmap_hod_group %>%
+#   mutate(group = case_when(group==1 ~"Group 2",
+#                            group==2 ~"Group 4",
+#                            group==3 ~"Group 1",
+#                            group==4 ~"Group 3"))
+
+# data_heatmap_hod_group$group <- factor(data_heatmap_hod_group$group, levels = c("Group 1", "Group 2", "Group 3", "Group 4"))
+
+data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
+
 data_heatmap_hod_group %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, group=group, fill = as.factor(group))) +
-  geom_line(aes(y = `50%`, group=group)) +
+                  ymax = `75%`,
+                  group=group,
+                  fill = as.factor(group)),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=group, 
+                color = as.factor(group)), size = 1)+
   facet_wrap(~group, 
-             scales = "free_y", 
-             labeller = "label_value",
-             nrow = 4) +
-    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
-  scale_x_discrete(breaks = seq(1, 24, 3))+ theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+             scales = "free_y",  nrow = 4) + 
+              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") + 
+  theme_bw() + 
+  theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  scale_x_discrete(breaks = seq(1, 24, 3))+ 
+  #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
+  scale_fill_manual(values = c("#0072B2", "#E69F00","#D55E00", "#009E73"))+
+  #scale_color_manual(values = c("#0072B2", "#E69F00","#D55E00", "#009E73"))+
+  theme(legend.position = "bottom")
 
+# "#E69F00", "#009E73","#0072B2", "#D55E00"
+
+# 
+# data_pick_cust <- data_pick_cust %>% mutate(value = as.character(value))
+# 
+# data_pick_cust %>% left_join(cluster_result, by = c("value" = "id")) %>% group_by(group)
 ```
 
   
-```{r data-heatmap-moy}
+```{r data-heatmap-moy, fig.cap = "The distribution of electricity demand for the selected 24 customers across month-of-year. The median is represented by a line and shaded region represents the area between 25^{th} and 75^{th} percentile. The clustering leads to customers with similar shape across month-of-year with some exceptions. This is natural in a clus"}
 
 data_heatmap_moy <- quantile_gran(data_pick, "month_year", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
   pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
@@ -1018,6 +1079,8 @@ data_heatmap_moy_group %>%
   theme(plot.margin = margin(0, 0, 0, 0, "cm") )
 
 ```
+The clusters across month-of-year shows that cluster 2 uses electricity in summer.
+
 
 
 
