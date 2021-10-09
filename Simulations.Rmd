@@ -495,7 +495,7 @@ data_heatmap_hod %>%
 
 
 
-```{r data-heatmap-hod-group}
+```{r data-heatmap-hod-group2}
 
 data_group <- data_pick %>% 
   mutate(customer_id = as.character(customer_id)) %>% 
@@ -691,7 +691,6 @@ parcoord <- GGally::ggparcoord(data_pcp ,
 
 ```{r}
 parcoord
-
 ```
 
 ```{r}
@@ -734,7 +733,7 @@ data_heatmap_hod_group %>%
                   ymax = `75%`, group=group, fill = as.factor(group))) +
   geom_line(aes(y = `50%`, group=group)) +
   facet_wrap(~group, 
-             scales = "free_y", 
+             #scales = "free_y", 
              labeller = "label_value",
              nrow = 4) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
@@ -780,7 +779,7 @@ data_heatmap_moy_group %>%
                   ymax = `75%`, group=group, fill = as.factor(group))) +
   geom_line(aes(y = `50%`, group=group)) +
   facet_wrap(~group, 
-             scales = "free_y", 
+             #scales = "free_y", 
              labeller = "label_value",
              nrow = 4) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(
@@ -983,7 +982,7 @@ data_heatmap_hod_group %>%
 ```
 
 
-```{r data-heatmap-moy-group}
+```{r data-heatmap-moy-group2}
 
 data_heatmap_moy_group <- quantile_gran(data_group,
                                   gran1="month_year",
@@ -1011,7 +1010,7 @@ data_heatmap_moy_group %>%
 
 
 
-```{r data-heatmap-wkndwday-group}
+```{r data-heatmap-wkndwday-group2}
 
 data_heatmap_wkndwday_group <- quantile_gran(data_group,
                                   gran1="wknd_wday",

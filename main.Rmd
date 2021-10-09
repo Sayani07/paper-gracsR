@@ -61,6 +61,7 @@ library(here)
 library(tsibble)
 library(knitr)
 library(patchwork)
+library(GGally)
 ```
 
 ```{r external, include = FALSE, cache = FALSE}
@@ -1000,7 +1001,14 @@ data_heatmap_moy %>%
   xlab("month-of-year") +  theme(axis.text.x = element_text(size=5))
 ```
 
-## Characterising clusters
+##  js-based clustering
+
+
+The distribution of electricity demand for the selected 24 customers across hour-of-day is shown in \ref{fig:data-heatmap-hod-new}. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. According to our prototype selection method, each row represents a distinct shape of daily load, and all customers in the same row should have similar daily profile.After clustering these consumers, all customers with the same colour represent the same group. Except for customer id 8269176, there is unanimity across design and groups. Even though their daily form resembles Group 2, our clustering approach places them in Group 3 (which is design 4 in our case). Because our method uses hod, moy, and wkndwday, there may be some mismatches depending on only one variable.
+
+
+\noindent The distribution of electricity demand for the selected 24 customers across month-of-year is shown in Figure \ref{fig:data-heatmap-moy}. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Intriguingly, customer id 8269176 appears to be in the appropriate group (Group 3) because its monthly profile is more similar to Group 3 than Design 4. So, while our clustering approach failed to place the customer in the correct hour-of-day group, it did so for month-of-year. When contrasting the moy to hod profile, there are greater behavioural differences across customers within a group.
+
 
 ```{r data-heatmap-hod-group}
 
@@ -1038,7 +1046,7 @@ hod_group <- data_heatmap_hod_group %>%
                 group=group, 
                 color = as.factor(group)), size = 1)+
   facet_wrap(~group, 
-             scales = "free_y",  
+             #scales = "free_y",  
              nrow = 4) + 
               #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
@@ -1100,7 +1108,7 @@ moy_group <- data_heatmap_moy_group %>%
                   ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
   geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
   facet_wrap(~group, 
-             scales = "free_y", 
+             #scales = "free_y", 
              labeller = "label_value",
              nrow = 4) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
@@ -1117,8 +1125,6 @@ moy_group <- data_heatmap_moy_group %>%
   theme(panel.spacing =unit(0, "lines")) + 
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
 ```
-
-
 
 
 ```{r data-heatmap-wkndwday}
@@ -1176,7 +1182,7 @@ wkndwday_group <- data_heatmap_wkndwday_group %>%
                   ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
   geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
   facet_wrap(~group, 
-             scales = "free_y", 
+             #scales = "free_y", 
              labeller = "label_value",
              nrow = 4)+
     #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) 
@@ -1203,174 +1209,258 @@ combined + plot_layout(guides = "collect")
 
 ```
 
+##  wpd-based clustering
 
 
-### Cluster validation
 
-**Internal cluster validation** uses the internal information of the clustering process to evaluate the goodness of a clustering structure without reference to external information. It can be also used for estimating the number of clusters and the appropriate clustering algorithm without any external data.  
+```{r ggpairs, fig.cap = "The ggpairs plot of electricity demand against the three granularities hod, moy and wkndwday are shown. The correlation between any two granularities is not so high so as to pose a threat to the clustering methodology."}
 
-Generally most of the indices used for internal clustering validation combine compactness and separation measures.
+elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
 
-<!-- _Distinction, repeatability, and robustness metrics_ -->
+elec_pick <- elec_600_wpd %>% 
+  filter(customer_id %in% data_pick_cust$value)
 
-We will also determine if any identified clusters or patterns are indeed statistically meaningful in the sense that they actually exist and are not a random allocation. Hence, the robustness of this methodology is tested through simulations. This section will contain the data structure and detailed methodology to be employed for the cluster analysis. The cluster validation indexes like average silhouette width (ASW) is to be employed here to check how homogeneous these clusters are.
+elec_pick_wide <- elec_pick %>% pivot_wider(-c(1, 2), names_from = "x_variable", values_from = wpd)
 
-**External cluster validation** consists in comparing the results of a cluster analysis to an externally known result, such as externally provided class labels. It measures the extent to which cluster labels match externally supplied class labels. Since we know the “true” cluster number in advance, this approach is mainly used for selecting the right clustering algorithm for a specific data set.  
+```
 
-**Relative cluster validation** evaluates the clustering structure by varying different parameter values for the same algorithm (e.g.,: varying the number of clusters k). It’s generally used for determining the optimal number of clusters.  
 
-Interval validation includes
-_Compactness or cluster cohesion:_ Measures how close are the objects within the same cluster. A lower within-cluster variation is an indicator of a good compactness (i.e., a good clustering). The different indices for evaluating the compactness of clusters are base on distance measures such as the cluster-wise within average/median distances between observations.
 
-_Separation:_ Measures how well-separated a cluster is from other clusters. The indices used as separation measures include:
-distances between cluster centers
-the pairwise minimum distances between objects in different clusters
 
-_Connectivity:_ corresponds to what extent items are placed in the same cluster as their nearest neighbors in the data space. The connectivity has a value between 0 and infinity and should be minimized.
+```{r, fig.cap=" A ggpairsplot and parallel coordinate plot are used to depict each of the 24 customers. The ggpairs plot four distinct clusters across the month-of-year, which are less prominent across the hour-of-day and wknd-wday. The parallel coordinate plot ranks the variables in order of importance, indicating that the month-of-year is the most important in identifying clusters, whereas wkdn-wday is the least significant and has the least variability among the three variables." }
 
+# robust_scale <-  function(x){
+#   (x - stats::median(x))/(stats::IQR(x))
+# }
 
-## Clustering results for 100 customers
+#scaled_var <- apply(elec_pick_wide[-c(1)], 2, robust_scale) %>% as_tibble()
 
-## Clustering results for 5K customers
+scaled_var <- elec_pick_wide
 
-<!-- The robustness of this clustering method is provided through practical explanation of the formed clusters, visualizing how they relate to any weather, socio-economic or geographical conditions.  -->
-<!-- Furthermore, we ensure that a cross-validation algorithm is employed leading to robust clusters.  -->
-<!-- We will present how matching other data like geography, census and weather would help us in validating our clustering approach. -->
+f <- elec_pick_wide[-1] %>% dist() 
 
-<!-- ### Geography -->
 
-<!-- We will present how mapping the customers to their respective LGA's and reflect on the clusters obtained in the earlier section. The data is at SA2 and LGA levels. However, some of the LGAs in NSW changed between 2011 and 2016 and hence there would not be a one-to-one correspondence between the LGAs. -->
+group <- f%>% hclust (method = "ward.D") %>% cutree(k=4)
 
-<!-- ### Census -->
 
-<!-- We will present how mapping the customers to their respective income and population level reflect on the clusters obtained in the earlier section. The [ABS TableBuilder](https://www.abs.gov.au/websitedbs/censushome.nsf/home/tablebuilder) has census data from 2011 and 2016.  -->
+cluster_result_wpd <- bind_cols(id = elec_pick_wide$customer_id, group = group) 
 
-<!-- ### Weather -->
+mds  = cmdscale(f)
+rownames(mds) = id
+colnames(mds) = c("mds1", "mds2")
 
-<!-- Weather, notably temperature (and humidity) can be the main driver(s) for energy usage.  In NSW many households have electric heaters so their use can impact winter energy use and air-conditioners can impact summer energy use. Relevant weather data could be obtained from the [Bureau of Meteorology](www.bom.gov.au). Some weather stations have 30 minute (sometimes even smaller interval) weather data. Potentially, there could be lag effects of weather on energy usage which should be considered. -->
+# ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result_wpd$group), 
+#        aes(x = mds1, y = mds2, color = as.factor(group))) +
+#   geom_point() +
+#   geom_text(aes(label = id))
 
-## Software implementation
 
-The implementation for our framework is available in the R package [`gracsr`](https://github.com/Sayani07/gracsr) for ease of use in other applications.
+data_pcp <- scaled_var %>% 
+  #bind_cols(customer_id =  elec_pick_wide$customer_id) %>%
+  left_join(cluster_result_wpd , by = c("customer_id" = "id")) %>% 
+  select(customer_id, group, everything()) %>% 
+  mutate(group = as.factor(group))
 
-## Discussion
 
-This section will cover some drawback of this clustering method and potential extensions of this work.
+pairsplot <- ggpairs(data_pcp, 
+                     columns = 3:5,
+                     aes(fill=group, color = group), alpha = 0.5) +
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))
 
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 3:ncol(data_pcp),
+                   groupColumn = "group",
+                   showPoints = FALSE, 
+                   alphaLines = 0.8,
+                   order = "anyClass",
+                   scale = "globalminmax"
+) + ggplot2::theme_bw() +
+  scale_color_brewer(palette = "Dark2") + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd")  +   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))
+pairsplot
+```
 
-<!-- <Earlier write up> -->
-<!-- ## Introduction -->
+```{r}
+parcoord
+```
 
 
-<!-- <!-- Description of data available --> -->
-<!-- The Smart Grid, Smart City (SGSC) project, which rolled out Australia's first commercial-scale smart grid was implemented across eight local government areas in New South Wales (NSW). Data from more than 13,000 household electricity smart meters is obtained as part of that project. It provides half-hourly energy usage and demographic data for Australia, as well as detailed information on appliance use, climate, retail and distributor product offers, and other related factors. The trials were based in Newcastle, New South Wales, but also covered areas in Sydney CBD, Newington, Ku-Ring-Gai, and the rural township of Scone. The load time series is asynchronous as it is observed for these households for unequal time lengths and consists of missing observations. -->
+```{r data-heatmap-hod-group-wpd}
 
-<!-- The massive amount of data generated in such projects could be overwhelming for analysis. Electricity utilities can utilize the consumption patterns of customers to develop targeted tariffs for individual groups and alleviate the problem of volatility in production by capitalizing on the flexibility of consumers. Beyea (2010) has pointed out, there has been little discussion or exploration of the full potential of these data bases and their benefits can reach beyond the original intentions for collecting these data. Thus, there is a scope to investigate and analyze these data in various ways for a greater understanding of consumption patterns and how they correlate with other economic, physical or geographical factors. In this work, we are interested to see how we can utilize this dataset to group different customers with similar periodic behavior. Towards this goal, this chapter aims to: (a) describe the contents of the data set in SGSC database that we can utilize, and (b) propose a clustering algorithm to group customers with similar periodic behaviors. The distance metric introduced in Chapter 2 will be the inputs for this cluster analysis. One of the advantages of using our  -->
-<!-- approach is that the technique is based on probability distributions instead of raw data. Many clustering approaches are limited by the type of noisy, patchy, and unequal time-series common in residential data sets. Since the distance measure considered is based on differences in probability distribution of time series, it is likely to be less sensitive to missing or noisy data. -->
+cluster_result_wpd$id <- as.character(cluster_result_wpd$id)
 
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
 
+data_heatmap_hod_group <- quantile_gran(data_group,
+                                  gran1="hour_day",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
 
-<!-- The following contributions are made through the following chapter: -->
+  
+data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
 
-<!--  * Present a cluster analysis of SGSC dataset to group households with similar periodic behavior -->
-<!--  * Cluster validation by relating to external data -->
-
-
-
-
-
-
-<!-- ## Introduction -->
-
-
-<!-- In Australia, the federal government and fourteen partners, electricity distribution and transmission companies, technology companies, universities and CSIRO, invested AUD 490 million in the Smart Grid Smart City (SGSC) field trial. One of the largest commercial-scale smart grid technology assessment projects worldwide, SGSC is implemented across eight local government areas in New South Wales (NSW), covering 30,000 dwellings since 2009. -->
-<!-- The SGSC database is publicly available through the Information Clearing House (ICH) (Ausgrid 2014). It is a massive database covering most physical aspects of the smart grid, as well as, aspects of users’ demographics. -->
-
-
-<!-- Customer Sale and Half-Hour Power Consumption -->
-<!-- and Generation Datasets -->
-
-<!-- This is a big portion of the data from about 5900 households who accepted a -->
-<!-- product out of about 24,000 offers made to the target population. Spatial resolution -->
-<!-- down to anonymous individual dwellings [Customer Sales: Households: -->
-<!-- Customer_Key] is also given based on {[Postcode], [Local Government Area], or -->
-<!-- [Suburb Name]}. In order to make these datasets easily understandable, here we -->
-<!-- present a new narrative approach to explain the available data fields and their -->
-<!-- interdependencies in a brief yet logical and memorisable way as follows: -->
-
-<!-- The [Half-Hour Consumption and Generation] data provide kWh readings of -->
-<!-- the actual flow of energy. This includes the electricity supply imported from the -->
-<!-- grid [General Supply] which is the main source of energy under any of the applied -->
-<!-- tariffs, import during off-peak or for a control load [Off Peak], gross or net values of -->
-
-
-<!-- domestic (often solar) electricity that is exported back to the grid [Generation]. The -->
-<!-- [Peak Events] data field gives the details of every event [Event Key] including its -->
-<!-- [Type], [Date], [Start Time], and [End Time]. Accordingly, the entire sequence of -->
-<!-- user demand responses to any of the cost-reflective products is available in the -->
-<!-- dataset to evaluate the project objectives as previously discussed. -->
-
-
-
-<!-- Electricity smart meter technology is increasingly being deployed in residential and commercial buildings. For example, in the state of Victoria, Australia, it is a state government policy that all households have a smart meter fitted (Victoria State Government, 2015), which has resulted in 97% of the approximately 2.1 million households in Victoria having a smart meter installed in their home. These smart meters collect energy usage information at half-hourly intervals, resulting in over 35 billion half-hourly observations per year across all households in the state. Clustering electricity consumption patterns can enable electricity utilities to develop targeted tariffs for individual groups alleviating the problem of volatility in production by capitalizing on the flexibility of consumers. Clustering households using only smart meter consumption data should provide value in a societal setting by combining the findings and external data like weather conditions, socio-economic or other demographic factors of those households. -->
-
-<!-- <!-- Description of data available --> -->
-<!-- Data from more than 13,000 household electricity smart meters is obtained as part of the Smart Grid Smart City (SGSC) project (2010-2014). It provides one of the few linked sets of customer time of use (half-hour increments) and demographic data for Australia, as well as detailed information on appliance use, climate, retail and distributor product offers, and other related factors. The trials were based in Newcastle, New South Wales, but also covered areas in Sydney CBD, Newington, Ku-Ring-Gai, and the rural township of Scone. This data set includes electricity use interval readings for each customer for every 30 minutes and demographic data for Australia, as well as detailed information on appliance use, climate, peak events; peak events response and retail and distributor product offers. The load time series is asynchronous as it is observed for these households for unequal time lengths and consists of missing observations. -->
-
-
-<!-- <!-- Background literature and shortcomings --> -->
-<!-- The foundation for this study is Tureczek2017-pb, which conducts a systematic review of the current state of the art in smart meter data analytics. The paper evaluates approximately 2100 unique peer-reviewed papers and presents three main findings related to clustering methods, data and cluster validation. None of the 34 selected papers which focus on clustering consumption are based on Australian smart meter data. The clustering is frequently applied directly to the raw data without investigating time series features like auto correlation and periodicity. The application of smart meter data to cluster electricity consumption using K-Means is ubiquitous. But the omission of the time series structure or correlation in the analysis while employing K-Means leads to inefficient clusters. Principal Component Analysis or Self-Organizing Maps removes correlation structures and transitions the data to a reduced feature space, but it comes at a cost of interpretability of the final results. @Tureczek2018-ha has shown that the clever transformation of data before K-Means clustering can improve performance and enable K-Means. However, it does not explain the cluster composition by combining it with external data. We propose the following for the study of the Australian smart meter data. -->
-
-<!-- Analysis for more than 13,000 household -->
-<!-- electricity smart meters are included in this chapter. The following contributions are made through the following chapter: -->
-
-<!-- - Presenting a cluster analysis of Australian residential electricity consumption data. -->
-
-<!-- - Transformation and extraction of input data features enabling K-Means to account for other time series features in the clustering. This can easily be extended to include other data structures. -->
-
-<!-- - Cluster validation by relating to external data -->
-
-
-<!-- ## Preliminary exploratoration -->
-
-<!-- This section familiarizes the 13,000 SGSC households through visualization and provide a detailed layout of data structures (like missing observations) and also the external data that needs to be utilized for validating the clustering process. -->
-
-<!-- ## Common load clustering techniques of smart meter data -->
-
-<!-- This section will discuss some literature on clustering techniques that were applied to smart meter customers in the past. -->
-
-<!-- ## The proposed load-clustering technique -->
-
-<!-- We employ a cluster analysis technique to obtain pockets of households showing similar periodic behavior by grouping probability distributions across a cyclic granularity. This clustering algorithm is adopted to remove or appropriately adjust for auto correlation and unequal length in the data. The method could be further extended by clustering probability distributions conditional on one or more cyclic granularities. Further, we elaborate on the effect of missing data and how it is handled in the clustering process. -->
-
-<!-- ### Methodology, results, and discussions -->
-
-<!-- This will contain the data structure and detailed methodology to be employed for the cluster analysis. -->
-
-<!-- ### Distinction, repeatability, and robustness metrics -->
-
-<!-- This section will cover the homogeneity and heterogeneity of the clusters, how distinct they are and summarize the main features of the cluster. -->
-
-<!-- <!-- ## Comparison with traditional load clustering methods --> -->
-
-<!-- <!-- This section will cover the homogeneity and heterogeneity of the clusters, how distinct they are and summarize the main features of the cluster. --> -->
-
-
-<!-- ## Combining findings with external data -->
-
-<!-- We will also determine if any identified clusters or patterns are indeed statistically meaningful in the sense that they actually exist and are not a random allocation. We aim to do this by providing a practical explanation of the formed clusters, visualizing how they relate to any weather, socio-economic or geographical conditions. Furthermore, we ensure that a cross-validation algorithm is employed leading to robust clusters.  -->
-<!-- We will present how matching other data sources might help us in validating our clustering approach. -->
-
-<!-- ### Geography -->
-
-<!-- We will present how mapping the customers to their respective LGA's and reflect on the clusters obtained in the earlier section. -->
-
-<!-- ### Census -->
-
-<!-- We will present how mapping the customers to their respective income and population level reflect on the clusters obtained in the earlier section. -->
-
-
-<!-- ## Conclusion -->
+# data_heatmap_hod_group <- data_heatmap_hod_group %>%
+#   mutate(group = case_when(group==1 ~"Group 2",
+#                            group==2 ~"Group 4",
+#                            group==3 ~"Group 1",
+#                            group==4 ~"Group 3"))
+
+# data_heatmap_hod_group$group <- factor(data_heatmap_hod_group$group, levels = c("Group 1", "Group 2", "Group 3", "Group 4"))
+
+data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
+
+hod_group_wpd <- data_heatmap_hod_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=group,
+                  fill = as.factor(group), alpha = 0.5),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=group, 
+                color = as.factor(group)), size = 1)+
+  facet_wrap(~group, 
+             #scales = "free_y",  
+             nrow = 4) + 
+              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
+  ylab("demand (in Kwh)") + 
+  theme_bw() +
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  scale_x_discrete(breaks = seq(1, 24, 3))+ 
+  #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
+   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+  theme(legend.position = "bottom") 
+
+# 
+
+# 
+# data_pick_cust <- data_pick_cust %>% mutate(value = as.character(value))
+# 
+# data_pick_cust %>% left_join(cluster_result, by = c("value" = "id")) %>% group_by(group)
+```
+
+
+```{r data-heatmap-moy-group-wpd}
+
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
+
+data_heatmap_moy_group <- quantile_gran(data_group,
+                                  gran1="month_year",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+
+data_heatmap_moy_group$group <- paste("group", data_heatmap_moy_group$group, sep = "-")
+
+
+moy_group_wpd <- data_heatmap_moy_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             #scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
+  ylab("demand (in Kwh)") +
+  theme_bw() +
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + 
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
+   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+  theme(legend.position = "bottom") +
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
+```
+
+
+
+
+```{r data-heatmap-wkndwday-group-new2-wpd}
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
+
+data_heatmap_wkndwday_group <- quantile_gran(data_group,
+                                  gran1="wknd_wday",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$category, levels = c("Weekday", "Weekend"))
+
+data_heatmap_wkndwday_group$group <- paste("group", data_heatmap_wkndwday_group$group, sep = "-")
+
+
+wkndwday_group_wpd <- data_heatmap_wkndwday_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             #scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4)+
+    #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) 
+    xlab("wknd-wday") + 
+  ylab("demand (in Kwh)") +
+  theme_bw() +
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + 
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
+   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+  theme(legend.position = "bottom") +
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
+```
+
+
+```{r combined-wpd, fig.cap="The distribution of electricity demand for the clusters across hour-of-day. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Each cluster is characterised by unique shape across the granularity it is plotted against. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters. This fact we will be re-established when we see the importance of each granularity throough the parallel coordinate plot."}
+
+combined <- hod_group_wpd + moy_group_wpd + wkndwday_group_wpd & theme(legend.position = "bottom")
+combined + plot_layout(guides = "collect")
+
+```
+
+\noindent We discover 4 qualitative clusters of varying shapes in the distribution of all consumers in the first panel of Figure \ref{fig:combined}. Group-1 includes consumers who work 9-5, get up and conduct morning activities from 7-10am, and then depart. Then they return home in the evening to cook supper and perform other activities, giving the evening a greater peak than the morning. Group 2 is the group that rushes out of the house in the morning to get to work. They only return at night and do all activities at night, so there is no morning peak. The third one has a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls. Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. All of this may be validated with further information about the customer. 
+
+\noindent The second panel of Figure \ref{fig:combined} shows that month-of-year qualitative clusters are not as distinguishable as hour-of-day. Group 2 is the most distinct and uses the most power during the summer, possibly owing to the use of air conditioners. Group 4 has a flat profile, indicating no significant month-to-month changes. Groups 1 and 3 have heaters on in the winter but consume less energy in the summer. Since gas is not available in all of NSW LGAs, it is possible that customers' heater usage is recorded in electricity rather than gas.
+
+\noindent The third panel of Figure \ref{fig:combined} shows that the wknd-wday groups exhibit no significant changes across clusters, indicating that they may be a nuisance variable for these consumers.
+
+\noindent The plotting scales are not displayed since we want to emphasise comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behaviour may be quite similar to a customer with high usage. That places them in the same group.
+
+
+# Discussion
 
 <!-- This section will cover some drawback of this clustering method and potential extensions of this work. -->
 
