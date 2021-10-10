@@ -18,3 +18,5 @@ tsibble
 knitr
 patchwork
 GGally
+viridisLite
+viridis

@@ -83,6 +83,21 @@ theme_validation <- function() {
     )
 }
 
+
+theme_characterisation <- function() {
+theme_bw() + 
+      theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) +  + theme_bw() +
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+  theme(panel.spacing =unit(0, "lines")) + 
+    theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))+
+  theme(legend.position = "bottom")
+}
 ```
 
 
@@ -790,10 +805,9 @@ The use of our methodology is illustrated on smart meter energy usage for a samp
 
 <!-- Only _CustomerData_ and _EUDMData_ are relevant for the clustering goals of this paper. _EUDMData_ contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. `CustomerData` provides demographic data for 78,720 customers most of which are missing and not utilized for the purpose of this paper. To meet the requirements for anonymity preservation, the energy patterns could not be identified at the individual level, but rather by the geographical location of their residence information about their Local Government Area. -->
 
-## Characteristics of raw data
+<!-- ## Characteristics of raw data -->
 
-In Figure \ref{fig:raw-data-50}, the time series of energy consumption is plotted along the y-axis against time from past to future for $50$ sampled households. Each of these series correspond to a single customer. For each customer, the energy consumption is available at fine temporal resolution (every 30 minutes) for a long period of time (~ 2 years) resulting in 27,000 (median) observations for each customer. Some customers' electricity use may be unavailable owing to power outages or improper recording, resulting in implied missing numbers in the database. For this data set it was found that out of 13735 customers in total, 8685 customers do not have any implicit missing observations, while the rest 5050 customers had missing values. With further exploration, it was found that there is no structure in the missingness, that is missing observations can occur at any time point (see Appendix). Moreover, the data for these customers are characterized by unequal length, different start and end dates.
-Since our proposed methods consider probability distribution instead of raw data, both of these characteristics would not pose any threat to our methodology unless of course there is any structure or systematic patterns in them.  
+In Figure \ref{fig:raw-data-50}, the time series of energy consumption is plotted along the y-axis against time from past to future for $50$ sampled households. Each of these series correspond to a single customer. For each customer, the energy consumption is available at fine temporal resolution (every 30 minutes) for a long period of time (~ 2 years) resulting in 27,000 (median) observations for each customer. Some customers' electricity use may be unavailable owing to power outages or improper recording, resulting in implied missing numbers in the database. For this data set it was found that out of 13,735 customers in total, 8,685 customers do not have any implicit missing observations, while the rest 5,050 customers had missing values. With further exploration, it was found that there is no structure in the missing-ness, that is missing observations can occur at any time point (see Appendix). Moreover, the data for these customers are characterized by unequal length, different start and end dates. Since our proposed methods consider probability distribution instead of raw data, both of these characteristics would not pose any threat to our methodology unless of course there is any structure or systematic patterns in them.  
 
 
 \noindent It can be expected that energy consumption vary substantially between customers, which is a reflection of their varied  behavior owing to differences in profession, family size, geographical or physical characteristics. Since the linear time series plot has too many measurements all squeezed in this linear representation, it hinders us to discern any repetitive behavioral pattern for even one customers (let alone many customers together). In most cases, electricity data will have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior.    
@@ -858,7 +872,10 @@ empty_as_na <- function(x){
 
 \noindent The aim of this section is to illustrate that the proposed methodology can be used to understand repetitive behavior for several customers together.  
 
-First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of 600 customers. Then we removed customers for which any of the hod, moy and wkndwday is a clash. We further removed customers for which the deciles of the energy consumption is of the same value. Finally, we are left with 356 customers from which we wanted to do instance selection. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one to classify customers who have similar behavior across all significant granularities. Next we select 4 customers which are far apart from each other and 6 customers which are lying closest in distance to each of these 4 customers. These selection was done using the granularity hod. When we use our methodologies, it is based on all significant granularities and not only hod, but if hod is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers. This procedure is analogous to instance-wise classfication methods. Instances may be distributed in the representation space in a reasonable manner, revealing their similarities, using this instance wise discriminative learning. A dual-level progressive similar instance selection (DPSIS) approach could also be used that selects similar instances (neighbours) for each instance (anchor) and treats the anchor and its neighbours as the same class.
+First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. Then we removed customers for which any of the hod (hour-of-day), moy (month-of-year) and wkndwday (weeknd/weekday) is a clash. We further removed customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study. Finally, we are left with $356$ customers from which we wanted to do instance selection. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one to classify customers who have similar behavior across all significant granularities. Next we select $4$ customers which are far apart from each other and $5$ customers which are lying closest in distance to each of these $4$ customers. These selection was done using the granularity $hod$. When we use our methodologies, it is based on all significant granularities and not only hod, but if $hod$ is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers. This procedure is analogous to instance-wise classfication methods that selects similar instances (neighbours) for each instance (anchor) and treats the anchor and its neighbours as the same class.
+
+<!-- . Instances may be distributed in the representation space in a reasonable manner, revealing their similarities, using this instance wise discriminative learning. A dual-level progressive similar instance selection (DPSIS) approach could also be used -->
+
 
 <!-- Fig \ref{fig:data-heatmap-hod}, \ref{fig:} and \ref{fig:} shows the distribution of 24 customers across hour-of-day, month-of-year and wknd-wday respectively. Every row in \ref{fig:} shows different shapes across hour-of-day and across columns show similar shapes for each row. We use our methodology to see if the customers are allocated to same group have similar shapes across one or more significant granularity. -->
 
@@ -1263,45 +1280,71 @@ p1 <- data_heatmap_wkndwday %>%
 
 ```
 
-```{r data-heatmap-wkndwday-group-new}
-data_group <- data_pick %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
+```{r data-heatmap-wkndwday-group}
+data_group <- data_pick %>%
+  mutate(customer_id = as.character(customer_id)) %>%
   left_join(cluster_result, by = c("customer_id" = "id"))
 
-data_heatmap_wkndwday_group <- quantile_gran(data_group,
-                                  gran1="wknd_wday",
-                                  quantile_prob_val = c(0.25, 0.5, 0.75),
-                                  group="group") %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+# data_heatmap_wkndwday_group <- quantile_gran(data_group,
+#                                   gran1="wknd_wday",
+#                                   quantile_prob_val = c(0.25, 0.5, 0.75),
+#                                   group="group") %>%
+#   pivot_wider(names_from = quantiles, values_from = quantiles_values)
+# 
+# data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$category, levels = c("Weekday", "Weekend"))
+# 
+# data_heatmap_wkndwday_group$group <- paste("group", data_heatmap_wkndwday_group$group, sep = "-")
+# 
+# 
+# wkndwday_group <- data_heatmap_wkndwday_group %>%
+#   ggplot(aes(x = category)) +
+#   geom_ribbon(aes(ymin = `25%`,
+#                   ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+#   geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+#   facet_wrap(~group,
+#              #scales = "free_y",
+#              labeller = "label_value",
+#              nrow = 4)+
+#     #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0)))
+#     xlab("wknd-wday") +
+#   ylab("demand (in Kwh)") +
+#   theme_bw() +
+#    theme(axis.title.y=element_blank(),
+#         axis.text.y=element_blank(),
+#         axis.ticks.y=element_blank()) +
+#   theme(panel.spacing =unit(0, "lines")) +
+#   theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
+#    scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+#   scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+#   theme(legend.position = "bottom") +
+#   theme(panel.spacing =unit(0, "lines")) +
+#   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
 
-data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$category, levels = c("Weekday", "Weekend"))
 
-data_heatmap_wkndwday_group$group <- paste("group", data_heatmap_wkndwday_group$group, sep = "-")
-
-
-wkndwday_group <- data_heatmap_wkndwday_group %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
-  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
-  facet_wrap(~group, 
-             #scales = "free_y", 
+wkndwday_group <- data_group %>% create_gran("wknd_wday") %>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  lvplot::geom_lv(aes(fill = as.factor(group))) +
+  #geom_boxplot(aes(fill = as.factor(group))) +
+  #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
+#geom_boxplot(aes(fill = as.factor(group))) +
+  #scale_fill_lv() +
+ xlab("wknd-wday") + 
+  ylab("demand (in Kwh)") +
+   facet_wrap(~group, 
+             scales = "free_y", 
              labeller = "label_value",
              nrow = 4)+
-    #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) 
-    xlab("wknd-wday") + 
-  ylab("demand (in Kwh)") +
   theme_bw() +
    theme(axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()) + 
   theme(panel.spacing =unit(0, "lines")) + 
   theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
   scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
   theme(legend.position = "bottom") +
   theme(panel.spacing =unit(0, "lines")) + 
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
+
 ```
 
 
@@ -1364,11 +1407,17 @@ data_pcp <- scaled_var %>%
   select(customer_id, group, everything()) %>% 
   mutate(group = as.factor(group))
 
-
+library(viridis)
 pairsplot <- ggpairs(data_pcp, 
                      columns = 3:5,
                      aes(fill=group, color = group), alpha = 0.5) +
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))
+  scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) +
+  theme_light()
+  
+  
+  # 
+  # scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))
 
 parcoord <- GGally::ggparcoord(data_pcp ,
                    columns = 3:ncol(data_pcp),
@@ -1377,15 +1426,15 @@ parcoord <- GGally::ggparcoord(data_pcp ,
                    alphaLines = 0.8,
                    order = "anyClass",
                    scale = "globalminmax"
-) + ggplot2::theme_bw() +
-  scale_color_brewer(palette = "Dark2") + 
+) + 
   ggplot2::theme(
     plot.title = ggplot2::element_text(size=10)
   )+
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
   theme(legend.position = "bottom") +
   xlab("") +
-  ylab("wpd")  +   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))
+  ylab("wpd") + scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) + theme_light()
 pairsplot
 ```
 
@@ -1445,9 +1494,8 @@ hod_group_wpd <- data_heatmap_hod_group %>%
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
   scale_x_discrete(breaks = seq(1, 24, 3))+ 
   #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
-   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"))+ scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) + theme_light() 
   theme(legend.position = "bottom") 
 
 # 
@@ -1495,8 +1543,8 @@ moy_group_wpd <- data_heatmap_moy_group %>%
         axis.ticks.y=element_blank()) + 
   theme(panel.spacing =unit(0, "lines")) + 
   theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) + theme_light() + 
   theme(legend.position = "bottom") +
   theme(panel.spacing =unit(0, "lines")) + 
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
@@ -1538,9 +1586,8 @@ wkndwday_group_wpd <- data_heatmap_wkndwday_group %>%
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()) + 
   theme(panel.spacing =unit(0, "lines")) + 
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"))+ scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) + theme_light() + 
   theme(legend.position = "bottom") +
   theme(panel.spacing =unit(0, "lines")) + 
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
