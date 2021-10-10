@@ -342,47 +342,51 @@ Depending on the distance measure utilized for the study, the cluster characteri
 
 # Validation
 
-To evaluate clustering approaches, we create data designs that replicate prototype behaviors that might be seen in electricity data contexts. We spiked several features in the data to see where one method works better than the other and where they might give us the same outcome or the effect of missing data and trends on the proposed methods. A continuous measured variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with $2$, $3$ and $5$ levels respectively. Categories of $g1$, $g2$ and $g3$ are represented by ${g10,g11}$, ${g20, g21, g22}$ and ${g30, g31, g32, g33, g34}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$. Each categories of $g1$, $g2$ and $g3$ could be assumed to be from same distribution, few from one and others from separate distributions, or all from different distributions, resulting in distinct data designs. We created independent replications $(R = \{25, 250, 500\})$ of all data designs to see if our proposed clustering approaches can detect distinct designs in various groups for small, medium and large number of series. A sample size of $T=\{300, 1000, 5000\}$ is used in all designs to test small, medium and large sized series. For all data designs, the data type is set to  be "continuous," and a gaussian setup for errors is assumed. The method could preform differently with different jumps between consecutive categories. So a difference of $diff = {1, 2, 5}$ for corresponding categories are also considered. The code for creating these designs can be found in the Supplementary section (link to github repo). The results for $T=300$ and $R=25$ is shown, that means we have $25$ time series each with length $300$. The rest of the results could be found in the supplementary paper.
+To validate the clustering approaches, we create data designs that replicate prototype behaviors that might be seen in electricity data contexts. We spiked several features in the data to see where one method works better than the other and where they might give us the same outcome or the effect of missing data <!---and trends--> on the proposed methods. A continuous measured variable $y$ of length $T$ indexed by ${0, 1, \dots T-1}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with $2$, $3$ and $5$ levels respectively. Categories of $g1$, $g2$ and $g3$ are represented by ${g10,g11}$, ${g20, g21, g22}$ and ${g30, g31, g32, g33, g34}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$. We created independent replications $R = \{25, 250, 500\}$ of all data designs to see if our proposed clustering approaches can detect distinct designs in various groups for small, medium and large number of series. A sample size of $T=\{300, 1000, 5000\}$ is used in all designs to test small, medium and large sized series. The method could preform differently with different jumps between consecutive categories. So a difference of $diff = \{1, 2, 5\}$ for corresponding categories are also considered. The code for creating these designs can be found in the Supplementary section (link to github repo). The results for $T=300$ and $R=25$ is shown, that means we have $25$ time series each with length $300$. The rest of the results could be found in the supplementary paper.
 
 
 ## Data generating processes
 
-An ARMA (p,q) process is used to generate series, where $p$ and $q$ are selected at random such that the series is stationary. The various designs on $g1$, $g2$, and $g3$ are introduced by adding matching designs to this series' innovations. The innovations are considered to have a normal distribution, although they follow the same pattern as the designs. To eliminate the effect of starting values, the first 500 observations in each series are discarded.
+<!-- An ARMA (p,q) process is used to generate series, where $p$ and $q$ are selected at random such that the series is stationary. The various designs on $g1$, $g2$, and $g3$ are introduced by adding matching designs to this series' innovations. The innovations are considered to have a normal distribution, although they follow the same pattern as the designs. To eliminate the effect of starting values, the first 500 observations in each series are discarded. -->
+
+Each of the categories $g10,g11$, $g20, g21, g22$, and $g30, g31, g32, g33, g34$ might be assumed to come from the same distribution, a subset of them from the same distribution, a subset of them from separate distributions, or all from different distributions, resulting in various data designs. As the methods ignores the linear progression of time, there is little value in adding time dependency in the data generating process. Time series data include basic properties such as trend, seasonality, and auto-correlation, and it is reasonable to construct a time series using these features. However, when examining distributions across categories of cyclic granularities, these time series features are lost or addressed independently by considering all seasonal fluctuations. Because the time span during which an entity is observed in order to ascertain its behavior is very short, it is assumed that the time series will remain stationary throughout the observation period. The data type is set to "continuous," and the setup is assumed to be gaussian. For example, in a null design, all categories are considered to be normal (0,1). The mean of the subsequent categories are incremented or decremented from this distribution based on the mean difference between them in non-null designs.
+
+
+<!-- An ARMA (p,q) process is used to generate series, where $p$ and $q$ are selected at random such that the series is stationary. The various designs on $g1$, $g2$, and $g3$ are introduced by adding matching designs to this series' innovations. The innovations are considered to have a normal distribution, although they follow the same pattern as the designs. To eliminate the effect of starting values, the first 500 observations in each series are discarded. -->
 
 
 ## Data designs  
+
+### Individual granularities
+
 
 **Three signifiant granularities**
 
 <!-- Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1). -->
 
-Consider the scenario when all three granularities $g1$, $g2$, and $g3$ are responsible for distinguishing the designs. That means that for at least one among the to-be-grouped designs, the pattern for each of $g1$, $g2$, and $g3$ will change. We consider a _null_ case to represent that categories follow N(0,1) and _alternate_ case to represent different  distributions across categories (as in Table \ref{tab:}) that will lead to different designs (as in Table \ref{tab:}).
-
+Consider the scenario when all three granularities $g1$, $g2$, and $g3$ are responsible for distinguishing the designs. That means that for at least one among the to-be-grouped designs, the pattern for each of $g1$, $g2$, and $g3$ will change. We consider different distributions across categories (as in Table \ref{tab:tab-distribution}) that will lead to different designs (as in Table \ref{tab:tab-design}). Figure \ref{fig:plot-3gran} shows the linear and cyclic representation of the simulated variable under these five designs. For the consequent data designs, only graphical representations will be provided. 
 
 
 ```{r tab-distribution}
+granularity = c("g1", "g2", "g3")
+alternate_design =  c("g10 ~ N(0, 1), g11 ~ N(2, 1)",
+                      "g21 ~ N(2, 1), g22 ~ N(1, 1), g23 ~ N(0, 1)",
+                      "g31 ~ N(0, 1), g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1), g35 ~ N(0, 1)")
 
-# table_mayan <- tibble(granularity  = )
+tab_dist <- tibble::tibble(granularity = granularity, `alternate distribution` = alternate_design)
 
-
+knitr::kable(tab_dist, caption = "Alternate distributions of different categories if they deviate from null.")
 ```
 
-
-| granularity 	|  Alternate design 	|
-|---	|---	|
-| g1 	| g10 ~ N(0, 1), g11 ~ N(2, 1) 	|
-| g2 	| g21 ~ N(2, 1), g22 ~ N(1, 1), g23 ~ N(0, 1) 	|
-| g3 	| g31 ~ N(0, 1), g32 ~ N(1, 1), <br><br>g33 ~ N(2, 1), g34 ~ N(1, 1), g35 ~ N(0, 1) 	|
-
-A combination of these null and alternate distributions are considered when building the designs as in the table \ref{tab:tab-design}. Figure \ref{#fig:plot-linear-3change} shows the linear and cyclic representation of $y$ under these five designs.
+<!-- A combination of these null and alternate distributions are considered when building the designs as in the table \ref{tab:tab-design}.  -->
 
 
 ```{r tab-design}
 design = c("design-1", "design-2", "design-3", "design-4", "design5")
-g1 = c("null", "vary", "null", "null", "vary")
-g2 = c("null", "null", "vary", "null", "vary")
-g3 = c("null", "null", "null", "vary", "vary")
-table <- tibble(design, g1, g2, g3) %>% kable()
+g1 = c("null", "alternate", "null", "null", "alternate")
+g2 = c("null", "null", "alternate", "null", "alternate")
+g3 = c("null", "null", "null", "alternate", "alternate")
+table <- tibble(design, g1, g2, g3) %>% kable(caption = "5 different designs resulting from considering different distributions across categories.")
 table
 
 ```
@@ -439,7 +443,7 @@ data_bind <- generate_design(t, mu1, mu2, mu3)
 
 ```
 
-```{r plot-linear-change , out.width="100%", fig.cap="The linear and cyclic representation of the time series variable y. It is not possible to comprehend these patterns across cyclic granularities g1, g2 and g3 or group similar series just by looking at the linear plots."}
+```{r plot-3gran , out.width="100%", fig.cap="The linear (left) and cyclic (right) representation of the measured variable is shown. In this scenario, all of $g1$, $g2$ and $g3$ changes across at least one design. Also, it is not possible to comprehend these patterns across cyclic granularities or group similar series just by looking at the linear plots."}
 
 # plot_linear_data <- function(data){
 # ggplot(data,
@@ -495,21 +499,108 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alp
 
 **Two significant granularities**
 
-Consider a case where distribution of $y$ would vary across levels of $g2$ for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities.
+This is the case where one granularity will remain the same across all designs.
+We consider the case where the distribution of $y$ would vary across levels of $g2$ for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities.
 
 **One signifiant granularity**
 
-Consider a case where distribution of $y$ would vary across levels of $g2$ for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. 
+Here only one granularity is responsible for distinguishing the designs. Designs change significantly only for the granularity $g2$. Figure \ref{fig:plot-1gran} shows this.
 
-<!-- **Missing data** -->
 
-<!-- **Trend** -->
+```{r}
+generate_design <- function(t, mu21, mu22, mu23){
+  
+t <- seq(0, t, 1)
+g1 <- t %%2
+g2 <- t %%3
+g3 <- t %%5
 
-<!-- **Outliers** -->
+# null design
+g1_dnull <- rep( rep(0, each = length(unique(g1))), length.out= length(t))
+g2_dnull <- rep( rep(0, each = length(unique(g2))), length.out= length(t))
+g3_dnull <- rep( rep(0, each = length(unique(g3))), length.out= length(t))
+ 
+# mean changing across categories in varying ways
 
-<!-- observations: -->
+g1_dvary <- rep(0, length.out= length(t))
+g21_dvary <- rep(mu21, length.out= length(t))
+g22_dvary <- rep(mu22, length.out= length(t))
+g23_dvary <- rep(mu23, length.out= length(t))
+g3_dvary <- rep(0, length.out= length(t))
 
-<!-- designs: -->
+design1 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dnull)
+design2 = distributional::dist_normal(g1_dnull + g21_dvary + g3_dnull)
+design3 = distributional::dist_normal(g1_dnull + g22_dvary + g3_dnull)
+design4 = distributional::dist_normal(g1_dnull + g23_dvary + g3_dnull)
+
+data_bind <- tibble::tibble(
+index = t,
+g1 = g1,
+g2 = g2,
+g3 = g3,
+design1 = distributional::generate(design1, times = 1) %>% unlist(),
+design2 = distributional::generate(design2, times = 1) %>% unlist(),
+design3 = distributional::generate(design3, times = 1) %>% unlist(),
+design4 = distributional::generate(design4, times = 1) %>% unlist(),
+#design5 = distributional::generate(design5, times = 1) %>% unlist()
+) %>% 
+  pivot_longer(-c(1, 2, 3, 4), names_to = "design", values_to = "sim_data")
+
+data_bind
+}
+
+mu21= c(2, 0, 0)
+mu22 = c(0, 2, 0)
+mu23 = c(0, 0, 2)
+mu3 = c(0, 0, 0, 0, 0)
+data_bind <- generate_design(t, mu21, mu22, mu23)
+
+data_bind
+
+```
+
+
+
+```{r plot-gran, out.width="100%"}
+
+p1 <- ggplot(data_bind,
+             aes(x = index, y = sim_data)) + 
+  geom_line() +
+  xlab("index")+
+  facet_wrap(~design, scales = "free_y",ncol =1) +
+  theme_validation()
+
+p2 <- ggplot(data_bind,
+             aes(x = as.factor(g1), y = sim_data)) + 
+  geom_boxplot(alpha =0.5) + xlab("g1") + 
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  theme_validation()
+
+
+
+p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") + ylab("")+
+  theme_validation()
+
+p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alpha =0.5) +
+  xlab("g3") + theme_bw()+
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, colosr = "blue")+ ylab("")+
+  theme_validation()
+
+
+(p1 + (p2 + p3 + p4)) *
+  theme_validation() + plot_layout(widths = c(2, 1))
+
+```
 
 
 
@@ -528,6 +619,9 @@ Consider a case where distribution of $y$ would vary across levels of $g2$ for a
 
 <!-- Consider a case where distribution of $y$ would vary across levels of $g2$ -->
 <!-- for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities. -->
+
+
+
 
 
 ```{r change-var, echo=FALSE}
@@ -594,7 +688,8 @@ data_bind <- generate_design(t, mu21, mu22, mu23)
 ```
 
 
-```{r plot-linear , out.width="100%", fig.cap="The linear and cyclic representation of the time series variable y. It is not possible to comprehend these patterns across cyclic granularities g1, g2 and g3 or group similar series just by looking at the linear plots."}
+```{r plot-2gran, out.width="100%", fig.cap = "The linear (left) and cyclic (right) representation of the measured variable is shown. In this scenario, $g1$, $g2$ would change across atleast one design but $g3$ change remains same across all design. Thus $g3$ is not an important variable to distinguish these designs."}
+
 
 # plot_linear_data <- function(data){
 # ggplot(data,
@@ -650,6 +745,12 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alp
 A subset of many possible designs are shown in Figure \ref{fig: plot-linear }. For the parameter space (XXX unique  combinations shown in table YYY), 100, 500 independent replications of all possible combination of simulation parameters were generated. The clustering methodologies were run all these unique combinations and subsets of these to verify if the methodologies work as expected.
 
 
+### Interaction of granularities
+
+When two granularities of interest interact, the connection between a granularity and the measured variable is determined by the value of the other interacting granularity. This happens when the effects of the two granularities on the measured variable are not additive. Consider a case with just two interacting granularities $g1$ and $g3$ of interest. As opposed to the last case, where we could play with the distribution of $(2+5)$ categories, with interaction we can play with the distribution of $(2*5)$ combination of categories.
+
+
+
 | Granularity type                                                   	| # Significant 	| # Replications 	|
 |--------------------------------------------------------------------	|---------------	|----------------	|
 | **Individual**  <br><br># obs: 300, 500, 2000  <br># clusters: 6/7 	| 1/2/3         	| 25, 100, 200   	|
@@ -675,17 +776,19 @@ All the methods were fitted to each data designs and results are reported throug
 
 # Application
 
+The use of our methodology is illustrated on smart meter energy usage for a sample of customers from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) which was available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee) and Data61 CSIRO. It  contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. It also provides demographic data for these customers most of which are missing and not utilized for the purpose of this paper. To maintain anonymity, the energy patterns could not be recognised at the person level, but rather by the geographical location of their dwelling and information about their Local Government Area.
 
-## Data source
 
-The entire data is procured from CSIRO. A subset of this data is also available from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) is available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee). It consists of the following data sets. 
-_1. CustomerData:_ 78720 customers with 62 variables about them 
-_2. EUDMData:_ 300 billion half-hourly consumption level data  
-_3. OffersData:_ Method of contact to customer to join SGSC customer trial, either door-to-door (D2D) or via Telesales  
-_4. PEResponseData:_ Peak Events response customer wise  
-_5. PETimesData:_ Peak Events time stamps  
+<!-- ## Data source -->
 
-Only _CustomerData_ and _EUDMData_ are relevant for the clustering goals of this paper. _EUDMData_ contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. `CustomerData` provides demographic data for 78,720 customers most of which are missing and not utilized for the purpose of this paper. To meet the requirements for anonymity preservation, the energy patterns could not be identified at the individual level, but rather by the geographical location of their residence information about their Local Government Area.
+<!-- The entire data is procured from CSIRO. A subset of this data is also available from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) is available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee). It consists of the following data sets.  -->
+<!-- _1. CustomerData:_ 78720 customers with 62 variables about them  -->
+<!-- _2. EUDMData:_ 300 billion half-hourly consumption level data   -->
+<!-- _3. OffersData:_ Method of contact to customer to join SGSC customer trial, either door-to-door (D2D) or via Telesales   -->
+<!-- _4. PEResponseData:_ Peak Events response customer wise   -->
+<!-- _5. PETimesData:_ Peak Events time stamps   -->
+
+<!-- Only _CustomerData_ and _EUDMData_ are relevant for the clustering goals of this paper. _EUDMData_ contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. `CustomerData` provides demographic data for 78,720 customers most of which are missing and not utilized for the purpose of this paper. To meet the requirements for anonymity preservation, the energy patterns could not be identified at the individual level, but rather by the geographical location of their residence information about their Local Government Area. -->
 
 ## Characteristics of raw data
 

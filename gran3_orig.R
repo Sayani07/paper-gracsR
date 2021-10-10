@@ -10,37 +10,38 @@ library(here)
 
 
 # fix parameters
- 
+
 # niter
 #seed_len = seq(12345, 12350, 1)
 # number of iterations corresponding to
-# niter <- c(5, 50) #number of series you are clustering
-# nT <-  c(300, 1000, 5000) # length of the time series
-# mean_diff <- c(1, 2, 5) # difference between consecutive categories
+niter <- c(5, 50, 100) #number of series you are clustering
+nT <-  c(300, 1000, 5000) # length of the time series
+mean_diff <- c(1, 2, 5) # difference between consecutive categories
 
 # number of iterations corresponding to
-niter <- c(50) #number of series you are clustering
-nT <-  c(300) # length of the time series
-mean_diff <- c(1) # difference between consecutive categories
+# niter <- c(5) #number of series you are clustering
+# nT <-  c(300, 1000, 5000) # length of the time series
+# mean_diff <- c(1) # difference between consecutive categories
 
-time_series <- c("ar1", "arma22")
+#time_series <- c("ar1", "arma22")
 
 simtable <- expand.grid(mean_diff = mean_diff,
                         niter = niter,
-                        time_series = time_series, 
+                        #time_series = time_series, 
                         nT = nT)
 
+# parallel::mclapply(seq_len(nrow(simtable)), function(scen){
+
 #scen<-as.numeric(commandArgs()[[6]]) # If running batch job uncomment this
-scen <- 16
+scen <- 27
+
 
 simj<-simtable[scen,] #Extract row of table
 mean_diffj <- simj$mean_diff
 niterj <- simj$niter
 nTj <- simj$nT
-time_seriesj <- simj$time_series
+# time_seriesj <- simj$time_series
 #seed_lenj <- simj$seed_len
-
-
 
 generate_design <- function(n = 300, #length of time series
                             mu11 = 0,
@@ -121,24 +122,25 @@ generate_design <- function(n = 300, #length of time series
   
   # ar 0.1 ma 0.3
   # list(ar = c(0.8897, -0.4858), ma = c(-0.2279, 0.2488))
+  # 
+  # if(time_seriesj=="arma22"){
+  #   ts_data <- arima.sim(n=n, list(ar = c(0.8897, -0.4858), ma = c(-0.2279, 0.2488)),
+  #                        
+  nd_time = innov_data %>% mutate(ts = g1_dist + g2_dist + g3_dist)
+  # }
+  # else
+  # {
+  #   ts_data <- arima.sim(n=n, list(ar = c(0.3), ma = c(0)),
+  #                        innov =  innov_data$g1_dist + 
+  #                          innov_data$g2_dist +
+  #                          innov_data$g3_dist)
+  # }
+  # 
   
-  if(time_seriesj=="arma22"){
-    ts_data <- arima.sim(n=n, list(ar = c(0.8897, -0.4858), ma = c(-0.2279, 0.2488)),
-                         innov =  innov_data$g1_dist + 
-                           innov_data$g2_dist +
-                           innov_data$g3_dist)
-  }
-  else
-  {
-    ts_data <- arima.sim(n=n, list(ar = c(0.3), ma = c(0)),
-                         innov =  innov_data$g1_dist + 
-                           innov_data$g2_dist +
-                           innov_data$g3_dist)
-  }
+  nd_time
   
-  
-  nd_time <- innov_data %>% bind_cols(ts = as.numeric(ts_data))
-  nd_time[-c(1:500),] %>% mutate(index = index - 500)
+  # %>% bind_cols(ts = as.numeric(ts_data))
+  # nd_time[-c(1:500),] %>% mutate(index = index - 500)
   
   # 500 burning observations considered
 }
@@ -147,19 +149,19 @@ generate_design <- function(n = 300, #length of time series
 
 
 set.seed(123)
-  
+
 ##----bind-designs for many iterations
 bind_data_iter <- map(seq_len(niterj), 
                       function(x){
-  #set.seed(seed_len[x])  
-  design1 <- generate_design(n=nTj) # null design
-  design2 <- generate_design(n=nTj,mu12=mean_diffj)
-  design3 <- generate_design(n=nTj,mu22=mean_diffj, mu23 =2*mean_diffj)
-  design4 <- generate_design(n=nTj,mu32 = mean_diffj,mu33 = 2*mean_diffj,mu34 = mean_diffj)
-  design5 <- generate_design(n=nTj,mu12=mean_diffj, mu22=mean_diffj, mu23 =2*mean_diffj, mu32 = mean_diffj,mu33 = 2*mean_diffj, mu34 = mean_diffj)
-  
-  bind_design <- bind_rows(design1, design2, design3, design4, design5, .id = "design")
-}) %>% bind_rows(.id = "seed_id") %>% 
+                        #set.seed(seed_len[x])  
+                        design1 <- generate_design(n=nTj) # null design
+                        design2 <- generate_design(n=nTj,mu12=mean_diffj)
+                        design3 <- generate_design(n=nTj,mu22=mean_diffj, mu23 =2*mean_diffj)
+                        design4 <- generate_design(n=nTj,mu32 = mean_diffj,mu33 = 2*mean_diffj,mu34 = mean_diffj)
+                        design5 <- generate_design(n=nTj,mu12=mean_diffj, mu22=mean_diffj, mu23 =2*mean_diffj, mu32 = mean_diffj,mu33 = 2*mean_diffj, mu34 = mean_diffj)
+                        
+                        bind_design <- bind_rows(design1, design2, design3, design4, design5, .id = "design")
+                      }) %>% bind_rows(.id = "seed_id") %>% 
   mutate(customer_id = paste(design,seed_id, sep ="-"))
 
 
@@ -273,7 +275,7 @@ write_rds(pred_ref_table, here(paste0("js-robust/3gran_change_5D/pred_ref_table_
 confmatrix <- xtab %>% broom::tidy(by_class = FALSE) %>% mutate(simj)
 
 write_rds(confmatrix, here(paste0("js-robust/3gran_change_5D/confmatrix_", scen, ".rds")))
-
-
+# 
+# }, mc.cores = parallel::detectCores() - 1, mc.preschedule = FALSE, mc.set.seed = FALSE)
 
 
