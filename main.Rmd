@@ -108,26 +108,61 @@ theme_bw() +
 
 
 <!-- significance of load clustering -->
-Large spatio-temporal data sets, both open and administrative, offer up a world of possibilities for energy and social science research. <!--Beyea (2010) has pointed out, there has been little exploration of the full potential of these data bases and their benefits can reach beyond the original intentions for collecting these data.--> One such data sets for Australia is the Smart Grid, Smart City (SGSC) project (2010–2014) available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee) and Data61 CSIRO. The project provides half-hourly data from over 13,000 household electricity smart meters for nearly two years. <!---The massive amount of data generated in such projects could be overwhelming for analysis.--> Raw data of load time series can quickly become overwhelming and hard to interpret, necessitating high level representation as load profiles via load clustering. Electricity utilities can utilize the smart meter usage patterns to develop targeted tariffs for individual groups and alleviate the problem of volatility in production by capitalizing on the flexibility of consumers. 
+Large spatio-temporal data sets, both from open and administrative sources, offer up a world of possibilities for research. <!--Beyea (2010) has pointed out, there has been little exploration of the full potential of these data bases and their benefits can reach beyond the original intentions for collecting these data.--> One such data sets for Australia is the Smart Grid, Smart City (SGSC) project (2010–2014) available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee)<!--and Data61 CSIRO-->. The project provides half-hourly data of over 13,000 household electricity smart meters distributed unevenly from October 2011 to March 2014. <!---The massive amount of data generated in such projects could be overwhelming for analysis.--> Raw data of these asynchronous time series can quickly become overwhelming and hard to interpret, requiring summarizing the large number of customers into pockets of similar energy behavior. Electricity utilities can utilize the smart meter usage patterns to develop targeted tariffs for individual groups and alleviate the problem of volatility in production by capitalizing on the flexibility of consumers. 
 
 <!-- Sources of variation in large data sets -->
-The enormous quantity of data provides for greater individual level clarity and analysis. However, due to the growing variety of consumers, larger data sets include greater uncertainty about consumer behavior. Households are distributed geographically, and have different demographic properties such as the existence of solar panels, central heating or air conditioning. Multiple temporal dependencies define the behavioral patterns, which vary from customer to customer. Some families, for example, use a dryer to dry their clothing, while others hang them to dry on a line. This may be reflected in their weekly profile. They may have monthly variations where some customers are more prone to use air conditioners or heaters than others despite the existence of comparable electrical equipment and being subjected to similar weather conditions. The variations in behavior may occur on a regular basis, with some consumers being night owls and others being morning larks. Day-off habits may vary depending on whether consumers choose to remain at home or engage in outdoor activities. These recorded time series are asynchronous, with varying time lengths for different houses and missing observations. This huge amount of noisy, patchy, and unequal time-series common in residential smart meter data combined with the different causes of variation in their energy behavior makes the problem of effectively segmenting consumers with comparable consumption a particularly intriguing one.
+<!-- The enormous quantity of data provides for greater individual level clarity and analysis. However, -->
+<!-- due to the growing variety of consumers,  -->
+
+\noindent Larger data sets include greater uncertainty about customer behavior due to growing variety of customers. Households are distributed geographically, and have different demographic properties such as the existence of solar panels, central heating or air conditioning. Multiple temporal dependencies define the behavioral patterns, which vary from customer to customer. Some families, for example, use a dryer to dry their clothing, while others hang them to dry on a line. This may be reflected in their weekly profile. They may have monthly variations where some customers are more prone to use air conditioners or heaters than others despite the existence of comparable electrical equipment and being subjected to similar weather conditions. The variations in behavior may occur on a regular basis, with some consumers being night owls and others being morning larks. Day-off energy usage may vary depending on whether consumers choose to remain at home or engage in outdoor activities. These various causes of variations in energy behavior, ranging from age, lifestyle, and family composition to building characteristics, weather, presence of various electrical equipments and others, make the problem of effectively segmenting consumers into similar energy behavior a particularly intriguing one. 
+
+<!-- unsupervised clustering -->
+\noindent This problem becomes more difficult when there is no other information on the customers besides their time series of energy usage. It is likely that such additional information is not available in order to protect the customers' confidentiality. Furthermore, it is not guaranteed that energy providers would always update customer profiles, such as property characteristics, in a timely manner whenever they change.
+So this study does not attempt to explain why consumption differs. Instead, the work looks at how much energy-use heterogeneity can be uncovered in smart meter data and what are some of the most typical electricity use patterns by simply using the time series. 
+
+
+<!-- This work -->
+This is similar to a stochastic approach (@Motlagh2019-yj) to clustering, which proposes interpreting electricity demand as a random process and extracting time-series characteristics, or a model of the series, to enable unsupervised clustering. Unsupervised clustering is only as good as the features that are extracted/selected or the distance metrics that were utilized. Well-designed additional features may collect characteristics that default features cannot. Based on the underlying structure of the temporal data, this article offers new distance metric and features for clustering and applies them to actual smart-meter data. Firstly, the distance metric is based on probability distribution, which in our knowledge is the first attempt to cluster smart meter data using probability distributions. These recorded time series are asynchronous, with varying time lengths for different houses and missing observations. Taking probability distributions helps to deal with such data, while helping with dimension reduction in one hand but not losing too much information due to aggregation. Secondly, we recognise that most clustering algorithms only provide hourly energy profiles during the day, but this approach provides a wider approach to the issue, seeking to group consumers with similar shapes over all important cyclic granularities. Since cyclic granularities are considered instead of linear granularities, clustering would group customers that have similar repetitive behavior across more than one cyclic granularities across which patterns are expected to be significant. 
+
+
+
+<!-- lit review -->
+_Related work_
+
+A typical clustering technique includes the following steps: (a) establishing distance (dissimilarity) and similarity through feature or model extraction and selection; and (b) selecting the clustering algorithm design. Distance measures could be time-domain based or frequency-domain (fast Fourier transform). A model-based clustering works by transforming the series into other other objects such as structure or set of parameters which can be more easily characterised and clustered (@Motlagh2019-yj). [@chicco2010renyi] addresses information theory-based clustering such as Shannon or Renyi entropy and its variations. The essential temporal characteristics of the curves are defined or extracted using feature-based clustering. @Tureczek2017-pb conducted a systematic study of over $2100$ peer-reviewed papers on smart meter data analytics. None of the $34$ articles chosen for their emphasis use Australian smart meter data. The most often used algorithm is K-Means. Using K-Means without considering time series structure or correlation results in inefficient clusters. Principal Component Analysis (PCA) or Self-Organizing Maps (SOM) eliminate correlation patterns and decrease feature space, but lose interpretability. To reduce dimensionality, several studies use principal component analysis or factor analysis to pre-process smart-meter data before clustering (@Ndiaye2011-pf). Other algorithms utilised in the literature include k-means variants, hierarchical approaches, and greedy k-medoids. Time series data, such as smart metre data, are not well-suited to any of the techniques mentioned in @Tureczek2017-pb. Only one study [@ozawa2016determining] identified time series characteristics using Fourier transformation, which converts data from time to frequency and then uses K-Means to cluster by greatest frequency .
+
+
+
+<!-- Most clustering algorithms offer only daily energy profiles throughout the hours of the day, but we suggest a broader approach to the problem, aiming to group consumers with similar shapes across all significant cyclic granularities -->
+
+
+
+
+
+<!-- There are two reasons why any additional consumer level data would not be available. Customer profiles, like property features, vary over time and are not always updated in a timely manner by energy suppliers. Also such data might not be available when the anonymity of the customers are of utmost importance.  -->
+
+
+
+<!-- Segmenting unlabeled time series patterns has received little attention in the literature. This is a situation when there is no additional information on the socio-economic charactertistics, property types or family size of the customers. There are two reasons why any additional consumer level data would not be available. Customer profiles, like property features, vary over time and are not always updated in a timely manner by energy suppliers. Also such data might not be available when the anonymity of the customers are of utmost importance. So this study does not explain why consumption differs. Instead, this work investigates how much energy usage heterogeneity can be found in smart meter data and what some of the most common electricity use patterns are. -->
+
+
+
+<!-- These recorded time series are asynchronous, with varying time lengths for different houses and missing observations. -->
+
+
+
+<!-- An aggregation approach to reduce the data size is not exactly ideal when dealing with highly heterogeneous profiles -->
+
 
 
 <!-- lit review and limitations if any -->
 <!-- _Common load clustering techniques of smart meter data_ -->
 
-A lot of work has been done in the literature on clustering customers by their load characeristics. The key to structured aggregation is to summarize big data of large number of customers into manageable subsets of similar load curves. Customers should be clustered uniquely, with behaviors represented with distinctive profile patterns. Approaches could be deterministic or stochastic. Deterministic approaches are hard to generalize due to the need for detailed knowledge of occupancy, appliances, and their time of use. In contrast, stochastic load analysis does not require extensive data
-collection other than the time series itself [13,14]. This technique
-suggests viewing load as a random process, where extracting time-series features, or a model of the series, facilitates unsupervised clustering. Any standard clustering methodology consists of the following steps: (a) defining distance (dissimilarity) and similarity mostly through feature extraction and selection; and (b) choosing the clustering algorithm design.
-Popular distance measures could be time-domain based or frequency-domain (fast Fourier transform). Any model based extraction works by transforming the series into other other objects such as structure or set of parameters which can be more easily characterised and clustered. A type of clustering based on information theory such as Shannon or Renyi entropy and their variants are addressed in [42].In contrast to models, a feature-based extraction is used to explicitly define or automatically extract the curves’ key time features, for instance by application of PCA on the daily curves. @Tureczek2017-pb presented a systematic review of the current state of the art in smart meter data analytics, which evaluates approximately 2100 peer-reviewed papers and summarizes the main findings. None of the $34$ selected papers which focus on clustering consumption are based on Australian smart meter data.
-The algorithm most ubiquitously employed is K-Means. But the omission of the time series structure or correlation in the analysis while employing K-Means leads to inefficient clusters. Principal Component Analysis or Self-Organizing Maps removes correlation structures and transitions the data to a reduced feature space, but it comes at a cost of interpretability of the final results. Some papers present pre-processing of the smart-meter data before clustering through principal component analysis or factor analysis for dimensionality reduction or self-organizing maps for 2-Dimensional representation of the data (@Ndiaye2011-pf). Other algorithms used in the literature include k-means variations, hierarchical methods and k-medoids based on a greedy algorithm have been designed to select typical periods in the time series.
+<!-- A lot of work has been done in the literature on clustering customers by their load characeristics. Customers should be clustered uniquely, with behaviors represented with distinctive profile patterns. Approaches could be deterministic or stochastic. Deterministic approaches are hard to generalize due to the need for detailed knowledge of occupancy, appliances, and their time of use. In contrast, stochastic load analysis does not require extensive data collection other than the time series itself [13,14]. This technique -->
+<!-- suggests viewing load as a random process, where extracting time-series features, or a model of the series, facilitates unsupervised clustering. Any standard clustering methodology consists of the following steps: (a) defining distance (dissimilarity) and similarity mostly through feature extraction and selection; and (b) choosing the clustering algorithm design. -->
+<!-- Popular distance measures could be time-domain based or frequency-domain (fast Fourier transform). Any model based extraction works by transforming the series into other other objects such as structure or set of parameters which can be more easily characterised and clustered. A type of clustering based on information theory such as Shannon or Renyi entropy and their variants are addressed in [42].In contrast to models, a feature-based extraction is used to explicitly define or automatically extract the curves’ key time features, for instance by application of PCA on the daily curves. @Tureczek2017-pb presented a systematic review of the current state of the art in smart meter data analytics, which evaluates approximately 2100 peer-reviewed papers and summarizes the main findings. None of the $34$ selected papers which focus on clustering consumption are based on Australian smart meter data. -->
+<!-- The algorithm most ubiquitously employed is K-Means. But the omission of the time series structure or correlation in the analysis while employing K-Means leads to inefficient clusters. Principal Component Analysis or Self-Organizing Maps removes correlation structures and transitions the data to a reduced feature space, but it comes at a cost of interpretability of the final results. Some papers present pre-processing of the smart-meter data before clustering through principal component analysis or factor analysis for dimensionality reduction or self-organizing maps for 2-Dimensional representation of the data (@Ndiaye2011-pf). Other algorithms used in the literature include k-means variations, hierarchical methods and k-medoids based on a greedy algorithm have been designed to select typical periods in the time series. -->
 
-
-
-<!--  The time-domain based feature extraction techniques, such as principal component analysis (PCA), detect key features of daily curves and reasonably link them to -->
-<!-- distinctive demand behaviours [28,29]. For instance, PCA can help -->
-<!-- reduce diurnal dimensions, e.g., 48 half-hourly power measurements, down to a few orthogonal components. Methods such as fast Fourier transform are used to reveal frequencies that highlight recurrent daily and annual load variations [27]. -->
 
 
 
@@ -161,7 +196,9 @@ The algorithm most ubiquitously employed is K-Means. But the omission of the tim
 
 <!-- The basic idea behind the clustering algorithm based on distribution is that the data, generated from the same distribution, belongs to the same cluster if there exists several distributions in the original data.  -->
 
-Segmenting unlabeled time series patterns has received little attention in the literaturee. This is a situation when there is no additional information on the socio-economic charactertistics, property types or family size of the customers. There are two reasons why any additional consumer level data would not be available. Customer profiles, like property features, vary over time and are not always updated in a timely manner by energy suppliers. Also such data might not be available when the anonymity of the customers are of utmost importance. So this study does not explain why consumption differs. Instead, this work investigates how much energy usage heterogeneity can be found in smart meter data and what some of the most common electricity use patterns are.
+<!-- Segmenting unlabeled time series patterns has received little attention in the literature. This is a situation when there is no additional information on the socio-economic charactertistics, property types or family size of the customers. There are two reasons why any additional consumer level data would not be available. Customer profiles, like property features, vary over time and are not always updated in a timely manner by energy suppliers. Also such data might not be available when the anonymity of the customers are of utmost importance. So this study does not explain why consumption differs. Instead, this work investigates how much energy usage heterogeneity can be found in smart meter data and what some of the most common electricity use patterns are. -->
+
+
 
 <!-- lit review and limitations if any -->
 <!-- _Common load clustering techniques of smart meter data_ -->
@@ -172,25 +209,8 @@ Segmenting unlabeled time series patterns has received little attention in the l
 
 
 
-
-
-
-
 <!-- our approach and contribution -->
 <!-- probability distribution AND cyclic granularities -->
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 <!-- Large data sets -->
@@ -210,30 +230,27 @@ Segmenting unlabeled time series patterns has received little attention in the l
 
 
 
+<!-- \noindent The massive amount of data generated in such projects could be overwhelming for analysis. Electricity utilities can utilize the consumption patterns of customers to develop targeted tariffs for individual groups and alleviate the problem of volatility in production by capitalizing on the flexibility of consumers. Beyea (2010) has pointed out, there has been little discussion or exploration of the full potential of these data bases and their benefits can reach beyond the original intentions for collecting these data. Thus, there is a scope to investigate and analyze these data in various ways for a greater understanding of consumption patterns and how they correlate with other economic, physical or geographical factors. In this work, we are interested to see how we can utilize this dataset to group different customers with similar periodic behavior.  -->
 
-\noindent The massive amount of data generated in such projects could be overwhelming for analysis. Electricity utilities can utilize the consumption patterns of customers to develop targeted tariffs for individual groups and alleviate the problem of volatility in production by capitalizing on the flexibility of consumers. Beyea (2010) has pointed out, there has been little discussion or exploration of the full potential of these data bases and their benefits can reach beyond the original intentions for collecting these data. Thus, there is a scope to investigate and analyze these data in various ways for a greater understanding of consumption patterns and how they correlate with other economic, physical or geographical factors. In this work, we are interested to see how we can utilize this dataset to group different customers with similar periodic behavior. 
-Towards this goal, this chapter aims to: (a) describe the contents of the data set in SGSC database that we can utilize, and (b) propose a clustering algorithm to group customers with similar periodic behaviors. The distance metric introduced in Chapter 2 will be the inputs for this cluster analysis. One of the advantages of using our 
-approach is that the technique is based on probability distributions instead of raw data. Many clustering approaches are limited by the type of noisy, patchy, and unequal time-series common in residential data sets. Since the distance measure considered is based on differences in probability distribution of time series, it is likely to be less sensitive to missing or noisy data.
+<!-- Towards this goal, this chapter aims to: (a) describe the contents of the data set in SGSC database that we can utilize, and (b) propose a clustering algorithm to group customers with similar periodic behaviors. The distance metric introduced in Chapter 2 will be the inputs for this cluster analysis. One of the advantages of using our  -->
+<!-- approach is that the technique is based on probability distributions instead of raw data. Many clustering approaches are limited by the type of noisy, patchy, and unequal time-series common in residential data sets. Since the distance measure considered is based on differences in probability distribution of time series, it is likely to be less sensitive to missing or noisy data. -->
 
-_Themes_
+<!-- _Themes_ -->
 
-- Dimension reduction: If each $P_{i, j, k}$ be considered to be a point in the space, key $i$ would have $mp$ dimensions as opposed to $n_i$ dimensions in case of considering raw data. Hence for a large number of observations ($n_i>>mp$), this approach benefits by transitioning to a lower dimension.
- 
- - Avoid loss of information due to aggregation: This approach ensures key characteristic information of the data is not lost due to averaging or aggregation measures in an attempt to transition to a lower dimension. Hence, this approach could be thought to somehow balance the drawback of considering raw data or aggregated data.
+<!-- - Dimension reduction: If each $P_{i, j, k}$ be considered to be a point in the space, key $i$ would have $mp$ dimensions as opposed to $n_i$ dimensions in case of considering raw data. Hence for a large number of observations ($n_i>>mp$), this approach benefits by transitioning to a lower dimension. -->
 
-- Robustness to outliers: This approach could be adapted to be robust to outliers and extreme behaviors by trimming the tails of the probability distributions.
+<!--  - Avoid loss of information due to aggregation: This approach ensures key characteristic information of the data is not lost due to averaging or aggregation measures in an attempt to transition to a lower dimension. Hence, this approach could be thought to somehow balance the drawback of considering raw data or aggregated data. -->
 
-- Non-synchronized observed time periods: Considering probability distribution would imply the clustering process can handle keys that are observed over periods of time that are overlapping but don't necessarily coincide.
+<!-- - Robustness to outliers: This approach could be adapted to be robust to outliers and extreme behaviors by trimming the tails of the probability distributions. -->
 
-- Similar periodic behavior: Since cyclic granularities are considered instead of linear granularities, clustering would group keys that have similar behavior across these cyclic granularities. This implies they will be grouped according to their periodic behavior and not on the linear stretch of time over which they are observed.
+<!-- - Non-synchronized observed time periods: Considering probability distribution would imply the clustering process can handle keys that are observed over periods of time that are overlapping but don't necessarily coincide. -->
 
+<!-- - Similar periodic behavior: Since cyclic granularities are considered instead of linear granularities, clustering would group keys that have similar behavior across these cyclic granularities. This implies they will be grouped according to their periodic behavior and not on the linear stretch of time over which they are observed. -->
 
+<!-- The following contributions are made through the following chapter: -->
 
-
-The following contributions are made through the following chapter:
-
- * Present a cluster analysis of SGSC dataset to group households with similar periodic behavior
- * Cluster validation by relating to external data
+<!--  * Present a cluster analysis of SGSC dataset to group households with similar periodic behavior -->
+<!--  * Cluster validation by relating to external data -->
 
 
 <!-- Electricity smart meter technology is increasingly being deployed in residential and commercial buildings. For example, in the state of Victoria, Australia, it is a state government policy that all households have a smart meter fitted (Victoria State Government, 2015), which has resulted in 97% of the approximately 2.1 million households in Victoria having a smart meter installed in their home. These smart meters collect energy usage information at half-hourly intervals, resulting in over 35 billion half-hourly observations per year across all households in the state. Clustering electricity consumption patterns can enable electricity utilities to develop targeted tariffs for individual groups alleviating the problem of volatility in production by capitalizing on the flexibility of consumers. -->
@@ -276,8 +293,10 @@ The following contributions are made through the following chapter:
 <!-- This section familiarizes the 13,000 SGSC households through visualization and provide a detailed layout of data structures (like missing observations/number of customers/number of observations) and also the external data that needs to be utilized for validating the clustering process. The [ABS TableBuilder](https://www.abs.gov.au/websitedbs/censushome.nsf/home/tablebuilder) has census data from 2011 and 2016. The data is at SA2 and LGA levels. However, some of the LGA in NSW changed between 2011 and 2016 and hence there would not be a one-to-one correspondence between the LGAs. Weather, notably temperature (and humidity) can be the main driver(s) for energy usage. In NSW many households have electric heaters so their use can impact winter energy use and air-conditioners can impact summer energy use. Relevant weather data could be obtained from the [Bureau of Meteorology](www.bom.gov.au). Some weather stations have 30 minute (sometimes even smaller interval) weather data. Potentially, there could be lag effects of weather on energy usage which should be considered. -->
 
 
+The remainder of the paper is organized as follows: Section&nbsp;\ref{sec:methodology} provides the clustering methodology introducing the features and distance metrics.
+Section&nbsp;\ref{sec:validation} shows data designs to validate our methods and draw comparisons against several methods. Section&nbsp;\ref{sec:application} discusses the application of the method to a subset of the real data. Finally, we summarize our results and discuss possible future directions in Section&nbsp;\ref{sec:discussion}.
 
-# Clustering methodology
+# Clustering methodology {#sec:methodology}
 
 
 <!-- In contrast to models, a feature-based strategy is used to explicitly define or automatically extract the curves’ key time features, for instance by application of PCA on the daily curves [ -->
@@ -457,7 +476,7 @@ Depending on the distance measure utilized for the study, the cluster characteri
 
 
 
-# Validation
+# Validation {#sec:validation}
 
 To validate the clustering approaches, we create data designs that replicate prototype behaviors that might be seen in electricity data contexts. We spiked several features in the data to see where one method works better than the other and where they might give us the same outcome or the effect of missing data <!---and trends--> on the proposed methods. A continuous measured variable $y$ of length $T$ indexed by $\{0, 1, \dots T-1\}$. Three circular granularities $g1$, $g2$ and $g3$ are considered with $2$, $3$ and $5$ levels respectively. Categories of $g1$, $g2$ and $g3$ are represented by ${g10,g11}$, ${g20, g21, g22}$ and ${g30, g31, g32, g33, g34}$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by ${0, 1, 2, \dots, 6}$ or ${Mon, Tue, \dots, Sun}$. We created independent replications $R = \{25, 250, 500\}$ of all data designs to see if our proposed clustering approaches can detect distinct designs in various groups for small, medium and large number of series. A sample size of $T=\{300, 1000, 5000\}$ is used in all designs to test small, medium and large sized series. The method could preform differently with different jumps between consecutive categories. So a mean difference of $diff = \{1, 2, 5\}$ for corresponding categories are also considered. The code for creating these designs can be found in the Supplementary section (link to github repo). The results for $T=300$ and $R=25$ is shown, that means we have $25$ time series each with length $300$. The rest of the results could be found in the supplementary paper.
 
@@ -1145,7 +1164,7 @@ table %>% kable()
 
 
 
-# Application
+# Application {#sec:application}
 
 The use of our methodology is illustrated on smart meter energy usage for a sample of customers from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) which was available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee) and Data61 CSIRO. It  contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. It also provides demographic data for these customers most of which are missing and not utilized for the purpose of this paper. To maintain anonymity, the energy patterns could not be recognised at the person level, but rather by the geographical location of their dwelling and information about their Local Government Area.
 
@@ -1966,7 +1985,7 @@ combined + plot_layout(guides = "collect")
 \noindent The plotting scales are not displayed since we want to emphasise comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behaviour may be quite similar to a customer with high usage. That places them in the same group.
 
 
-# Discussion
+# Discussion {#sec:discussion}
 
 <!-- This section will cover some drawback of this clustering method and potential extensions of this work. -->
 
