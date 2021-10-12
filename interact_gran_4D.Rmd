@@ -1,16 +1,17 @@
 ---
-title: "Clustering four designs"
+  title: "Clustering four designs"
 output:
   bookdown::pdf_book:
-    MonashEBSTemplates::workingpaper:
-    #base_format: rticles::asa_article
-    fig_height: 8
-    fig_width: 12
-    fig_caption: yes
-    dev: "pdf"
-    keep_tex: yes
+  MonashEBSTemplates::workingpaper:
+  #base_format: rticles::asa_article
+  fig_height: 8
+fig_width: 12
+fig_caption: yes
+dev: "pdf"
+keep_tex: yes
 ---
-
+  
+  
 ```{r setup, include=FALSE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(knitr)
@@ -24,7 +25,7 @@ read_chunk(here::here("old/simdata01.R"))
 set.seed(9999)
 nx_val = 2 # number of x-axis levels
 nfacet_val = 3 # number of facet levels
-w1_val = 3 # increment in mean
+w1_val = 1 # increment in mean
 w2_val = 0 # increment in sd
 mean_val = 0 # mean of normal distribution of starting combination
 sd_val = 1 # sd of normal distribution of starting combination
@@ -42,7 +43,7 @@ quantile_prob_val = seq(0.1, 0.9, 0.1)
 ## nobs per combination is 50
 
 ```{r nobs50, echo = TRUE}
-ntimes_val = 50 # nobs per combination 
+ntimes_val = 1000 # nobs per combination 
 ```
 
 
@@ -58,12 +59,14 @@ ntimes_val = 50 # nobs per combination
 ```{r plot50}
 (p1 + p_null)/( p2 + p_varf)/(p3 + p_varx)/(p4 + p_varall)
 
+
+p_null/p_varf/p_varx/p_varall
 ```
 
 # Clustering on simulated datasets
 
 ```{r, echo=TRUE}
-sample_seed <-  seq(1, 100, 1)
+sample_seed <-  seq(1, 5, 1)
 ```
 
 _DGP: Generate 10 time series from each designs_ 
@@ -86,36 +89,36 @@ Each cluster represents data sets from a separate design
 
 ```{r}
 change_index_data <- function(ntimes_val = NULL,
-                         nx_val = NULL,
-                         nfacet_val = NULL,
-                         sim_function = sim_varx_normal){
-
+                              nx_val = NULL,
+                              nfacet_val = NULL,
+                              sim_function = sim_varx_normal){
+  
   data <- sim_panel(
     nx = nx_val, nfacet =  nfacet_val,
     ntimes = ntimes_val,
     # sim_dist = sim_varx_normal(2, 3, 5, 10, 5, -1.5)
     sim_dist = sim_function(nx_val, nfacet_val, mean_val, sd_val, w1_val, w2_val)
   ) %>% unnest(data)
-
-
+  
+  
   index_new <- map(seq_len(ntimes_val), function(i){
     map((seq_len(nx_val*nfacet_val)), function(j)
     {
       value = i + (j-1)*ntimes_val
     })
   }) %>% unlist()
-
+  
   data_new = data %>%
     ungroup() %>%
     mutate(index_old = row_number(),
            index_new = index_new)
-
+  
   y = data_new[match(index_new, data_new$index_old),]
-
+  
   y <- y %>%
     mutate(time = row_number()) %>%
     select(-c(index_old, index_new))
-
+  
   return(y)
 }
 ```
@@ -124,50 +127,62 @@ change_index_data <- function(ntimes_val = NULL,
 ```{r data-make}
 data_null <- map(sample_seed, function(seed){
   set.seed(sample_seed[seed])
-  change_index_data(5, 2, 3, sim_null_normal) %>%
-    compute_quantiles(quantile_prob_val)
+  change_index_data(5, 2, 3, sim_null_normal) 
 }) %>%
   bind_rows(.id = "seed_id") %>%
   mutate(data_type = "data_null")
 
-
 data_varf <- map(sample_seed, function(seed){
   set.seed(sample_seed[seed])
-  change_index_data(5, 2, 3, sim_varf_normal)%>%
-    compute_quantiles(quantile_prob_val)
+  change_index_data(5, 2, 3, sim_varf_normal)
 }) %>%
   bind_rows(.id = "seed_id") %>%
   mutate(data_type = "data_varf")
 
 data_varx <- map(sample_seed, function(seed){
   set.seed(sample_seed[seed])
-  change_index_data(5, 2, 3, sim_varx_normal)%>%
-    compute_quantiles(quantile_prob_val)
+  change_index_data(5, 2, 3, sim_varx_normal)
 }) %>%
   bind_rows(.id = "seed_id") %>%
   mutate(data_type = "data_varx")
 
 data_varall <- map(sample_seed, function(seed){
   set.seed(sample_seed[seed])
-  change_index_data(5, 2, 3, sim_varall_normal)%>%
-    compute_quantiles(quantile_prob_val)
+  change_index_data(5, 2, 3, sim_varall_normal)
 }) %>%
   bind_rows(.id = "seed_id") %>%
   mutate(data_type = "data_varall")
 
 data_q <- bind_rows(data_null,
-                      data_varf,
-                      data_varx,
-                      data_varall) %>%
+                    data_varf,
+                    data_varx,
+                    data_varall) %>%
   mutate(seed_id = sprintf("%02d", 
-                              as.numeric(seed_id))) %>% 
+                           as.numeric(seed_id))) %>% 
   mutate(unique_data = paste(data_type, seed_id, sep = "-"))
 
 data_q$data_type <- factor(data_q$data_type,
-                                    levels = c("data_null" , "data_varf",
-                                               "data_varx","data_varall"))
+                           levels = c("data_null" , "data_varf",
+                                      "data_varx","data_varall"))
 
 ```
+
+
+
+```{r}
+data_clust <- data_q %>% tsibble::as_tsibble(key = unique_data, index = time)
+  
+library(gracsr)
+data_clust %>% scale_gran(method="nqt", response = "sim_data") 
+
+
+
+%>%
+  dist_gran(gran1="id_facet", gran2 = "id_x") %>% 
+  dist_gran(clust_gran(kopt=4)
+
+```
+
 
 
 
@@ -241,10 +256,10 @@ all_data_cluster <- cbind(dist_mat_format, groups) %>%
 
 
 mds_plot_10 <- ggplot(all_data_cluster,
-       aes(x = Dim.1,
-           y = Dim.2,
-       color = groups,
-       label = rownames(mds))) +
+                      aes(x = Dim.1,
+                          y = Dim.2,
+                          color = groups,
+                          label = rownames(mds))) +
   geom_point(size = 0.5) +
   geom_text(check_overlap = TRUE)  +
   theme_classic()+
@@ -271,7 +286,7 @@ data2 <- cbind(dist_mat_format, groups)
 
 heatmap_final <- bind_cols(serial_data = rownames(data2) %>%
                              as_tibble(),
-          group = data2$groups) %>%
+                           group = data2$groups) %>%
   left_join(heatmap_raw, by = c("value" = "unique_data")) %>% select(-id_facet, - id_x, - data_type1) %>% 
   arrange(D, category, group)
 
@@ -279,9 +294,9 @@ heatmap_final <- bind_cols(serial_data = rownames(data2) %>%
 #heatmap_final$data_type <- factor(heatmap_final$data_type,
 #                                    levels = c("data_null" , "data_varf",
 #                                               "data_varx","data_varall"))
-  
+
 #heatmap_final$category <- reorder(heatmap_final$category, heatmap_final$data_type)
-  
+
 ggplot(heatmap_final,
        aes(x= reorder(value, data_type), y = as.factor(D))) +
   geom_tile(aes(fill = sim_data_quantile)) +
@@ -290,7 +305,7 @@ ggplot(heatmap_final,
   theme(axis.text.x = element_text(angle = 90)) +
   ylab("Deciles") +
   xlab("data sets")
- 
+
 
 ```
 
@@ -306,8 +321,8 @@ seq_data = tibble(groups, name = names(groups)) %>%
             by = c("name" = "unique_data"))
 
 seq_data$data_type <- factor(seq_data$data_type,
-                                    levels = c("data_null" , "data_varf",
-                                               "data_varx","data_varall"))
+                             levels = c("data_null" , "data_varf",
+                                        "data_varx","data_varall"))
 
 v <- cluster.stats(d, as.numeric(seq_data$groups), as.numeric(seq_data$data_type), silhouette = TRUE)
 

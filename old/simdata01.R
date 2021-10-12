@@ -12,6 +12,7 @@ library(kableExtra)
 library(tidyverse)
 library(gravitas)
 library(magrittr)
+
 ## ----designs
 
 sim_null_normal <- function(nxj, nfacetj, mean, sd, w1 = 0, w2=0) {
@@ -73,7 +74,7 @@ sim_panel_null <- sim_panel(
 
 p_null <- sim_panel_null %>%
   ggplot(aes(x = as.factor(id_x), y = sim_data)) +
-  facet_wrap(~id_facet) +
+  facet_wrap(~id_facet, labeller = "label_both") +
   geom_boxplot() +
   ylab("") +
   #ggtitle(paste("(a)", round(null, 2))) +
@@ -82,7 +83,7 @@ p_null <- sim_panel_null %>%
 
 p_varf <- sim_panel_varf %>%
   ggplot(aes(x = as.factor(id_x), y = sim_data)) +
-  facet_wrap(~id_facet) +
+  facet_wrap(~id_facet, labeller = "label_both") +
   geom_boxplot() +
   ylab("") +
   #ggtitle(paste("(b)", round(varf, 2))) +
@@ -91,7 +92,7 @@ p_varf <- sim_panel_varf %>%
 
 p_varx <- sim_panel_varx %>%
   ggplot(aes(x = as.factor(id_x), y = sim_data)) +
-  facet_wrap(~id_facet) +
+  facet_wrap(~id_facet, labeller = "label_both") +
   geom_boxplot()+
   ylab("")  +
   #ggtitle(paste("(c)", round(varx, 2))) +
@@ -100,7 +101,7 @@ p_varx <- sim_panel_varx %>%
 
 p_varall <- sim_panel_varall %>%
   ggplot(aes(x = as.factor(id_x), y = sim_data)) +
-  facet_wrap(~id_facet) +
+  facet_wrap(~id_facet, labeller = "label_both") +
   geom_boxplot() +
   ylab("") +
   #ggtitle(paste("(d)", round(varall, 2))) +

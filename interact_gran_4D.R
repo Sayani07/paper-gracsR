@@ -1,26 +1,10 @@
----
-title: "Clustering four designs"
-output:
-  bookdown::pdf_book:
-    MonashEBSTemplates::workingpaper:
-    #base_format: rticles::asa_article
-    fig_height: 8
-    fig_width: 12
-    fig_caption: yes
-    dev: "pdf"
-    keep_tex: yes
----
 
-```{r setup, include=FALSE, message=FALSE, warning=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(knitr)
 library(here)
 read_chunk(here::here("old/simdata01.R"))
-```
 
 # How the time series plot of the designs look like for different sample sizes?
 
-```{r sim-val, echo = TRUE}
 set.seed(9999)
 nx_val = 2 # number of x-axis levels
 nfacet_val = 3 # number of facet levels
@@ -86,36 +70,36 @@ Each cluster represents data sets from a separate design
 
 ```{r}
 change_index_data <- function(ntimes_val = NULL,
-                         nx_val = NULL,
-                         nfacet_val = NULL,
-                         sim_function = sim_varx_normal){
-
+                              nx_val = NULL,
+                              nfacet_val = NULL,
+                              sim_function = sim_varx_normal){
+  
   data <- sim_panel(
     nx = nx_val, nfacet =  nfacet_val,
     ntimes = ntimes_val,
     # sim_dist = sim_varx_normal(2, 3, 5, 10, 5, -1.5)
     sim_dist = sim_function(nx_val, nfacet_val, mean_val, sd_val, w1_val, w2_val)
   ) %>% unnest(data)
-
-
+  
+  
   index_new <- map(seq_len(ntimes_val), function(i){
     map((seq_len(nx_val*nfacet_val)), function(j)
     {
       value = i + (j-1)*ntimes_val
     })
   }) %>% unlist()
-
+  
   data_new = data %>%
     ungroup() %>%
     mutate(index_old = row_number(),
            index_new = index_new)
-
+  
   y = data_new[match(index_new, data_new$index_old),]
-
+  
   y <- y %>%
     mutate(time = row_number()) %>%
     select(-c(index_old, index_new))
-
+  
   return(y)
 }
 ```
@@ -156,16 +140,16 @@ data_varall <- map(sample_seed, function(seed){
   mutate(data_type = "data_varall")
 
 data_q <- bind_rows(data_null,
-                      data_varf,
-                      data_varx,
-                      data_varall) %>%
+                    data_varf,
+                    data_varx,
+                    data_varall) %>%
   mutate(seed_id = sprintf("%02d", 
-                              as.numeric(seed_id))) %>% 
+                           as.numeric(seed_id))) %>% 
   mutate(unique_data = paste(data_type, seed_id, sep = "-"))
 
 data_q$data_type <- factor(data_q$data_type,
-                                    levels = c("data_null" , "data_varf",
-                                               "data_varx","data_varall"))
+                           levels = c("data_null" , "data_varf",
+                                      "data_varx","data_varall"))
 
 ```
 
@@ -241,10 +225,10 @@ all_data_cluster <- cbind(dist_mat_format, groups) %>%
 
 
 mds_plot_10 <- ggplot(all_data_cluster,
-       aes(x = Dim.1,
-           y = Dim.2,
-       color = groups,
-       label = rownames(mds))) +
+                      aes(x = Dim.1,
+                          y = Dim.2,
+                          color = groups,
+                          label = rownames(mds))) +
   geom_point(size = 0.5) +
   geom_text(check_overlap = TRUE)  +
   theme_classic()+
@@ -271,7 +255,7 @@ data2 <- cbind(dist_mat_format, groups)
 
 heatmap_final <- bind_cols(serial_data = rownames(data2) %>%
                              as_tibble(),
-          group = data2$groups) %>%
+                           group = data2$groups) %>%
   left_join(heatmap_raw, by = c("value" = "unique_data")) %>% select(-id_facet, - id_x, - data_type1) %>% 
   arrange(D, category, group)
 
@@ -279,9 +263,9 @@ heatmap_final <- bind_cols(serial_data = rownames(data2) %>%
 #heatmap_final$data_type <- factor(heatmap_final$data_type,
 #                                    levels = c("data_null" , "data_varf",
 #                                               "data_varx","data_varall"))
-  
+
 #heatmap_final$category <- reorder(heatmap_final$category, heatmap_final$data_type)
-  
+
 ggplot(heatmap_final,
        aes(x= reorder(value, data_type), y = as.factor(D))) +
   geom_tile(aes(fill = sim_data_quantile)) +
@@ -290,7 +274,7 @@ ggplot(heatmap_final,
   theme(axis.text.x = element_text(angle = 90)) +
   ylab("Deciles") +
   xlab("data sets")
- 
+
 
 ```
 
@@ -306,8 +290,8 @@ seq_data = tibble(groups, name = names(groups)) %>%
             by = c("name" = "unique_data"))
 
 seq_data$data_type <- factor(seq_data$data_type,
-                                    levels = c("data_null" , "data_varf",
-                                               "data_varx","data_varall"))
+                             levels = c("data_null" , "data_varf",
+                                        "data_varx","data_varall"))
 
 v <- cluster.stats(d, as.numeric(seq_data$groups), as.numeric(seq_data$data_type), silhouette = TRUE)
 

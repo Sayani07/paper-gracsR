@@ -237,8 +237,6 @@ confmatrix <- xtab %>% broom::tidy(by_class = FALSE) %>% mutate(simj)
 write_rds(confmatrix, here(paste0("js-nqt/3gran_change_5D/confmatrix_", scen, ".rds")))
 
 
-
-
 ##----Robust scaling
 
 dist_mat_g1 <- bind_data_iter_tsibble %>%
