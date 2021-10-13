@@ -63,6 +63,7 @@ library(knitr)
 library(patchwork)
 library(GGally)
 library(distributional)
+library(viridis)
 ```
 
 ```{r external, include = FALSE, cache = FALSE}
@@ -1166,7 +1167,7 @@ table %>% kable()
 
 # Application {#sec:application}
 
-The use of our methodology is illustrated on smart meter energy usage for a sample of customers from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) which was available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee) and Data61 CSIRO. It  contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. It also provides demographic data for these customers most of which are missing and not utilized for the purpose of this paper. To maintain anonymity, the energy patterns could not be recognised at the person level, but rather by the geographical location of their dwelling and information about their Local Government Area.
+The use of our methodology is illustrated on smart meter energy usage for a sample of customers from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) which was available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee) and Data61 CSIRO. It contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. It also provides demographic data for these customers most of which are missing and not utilized for the purpose of this paper. To maintain anonymity, the energy patterns could not be recognised at the person level, but rather by the geographical location of their dwelling and information about their Local Government Area.
 
 
 <!-- ## Data source -->
@@ -1245,9 +1246,16 @@ empty_as_na <- function(x){
 <!-- A clean data set is obtained by carefully choosing customers which shows similar shapes across one or more cyclic granularity. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one. -->
 
 
-\noindent The aim of this section is to illustrate that the proposed methodology can be used to understand repetitive behavior for several customers together.  
+<!-- Why instance selection -->
+In supervised learning, a training set containing previously known information is used to categorize new occurrences. Acceptable classification rates may be obtained by discarding instances which are not helpful for classification; this process is known as instance selection (@olvera2010review). This is similar to subsetting the population along all dimensions of importance such that the sampled data is representative of the main characteristics of the underlying distribution. Instance selection in unsupervised learning has received limited attention in the literature, but could serve as an useful way to sample evaluation data set to measure the performance of a model or method. One such procedure is suggested in @Fan2021-bq that selects similar instances (neighbors) for each instance (anchor) and treats the anchor and its neighbors as the same class. In this section, a similar idea is used to select customers with prototype behaviors
+that serves as evaluation data sets for our proposed methodology.
 
-First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. Then we removed customers for which any of the hod (hour-of-day), moy (month-of-year) and wkndwday (weeknd/weekday) is a clash. We further removed customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study. Finally, we are left with $356$ customers from which we wanted to do instance selection. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one to classify customers who have similar behavior across all significant granularities. Next we select $4$ customers which are far apart from each other and $5$ customers which are lying closest in distance to each of these $4$ customers. These selection was done using the granularity $hod$. When we use our methodologies, it is based on all significant granularities and not only hod, but if $hod$ is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers. This procedure is analogous to instance-wise classfication methods that selects similar instances (neighbours) for each instance (anchor) and treats the anchor and its neighbours as the same class.
+First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. We obtain the $wpd$ for all cyclic granularities considered for these customers and found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weeknd/weekday) are coming out to be significant for most customers. This implies that for most customers, there is some interesting pattern across these three granularities. Potentially this could be done for the entire data set. This step is time consuming and hence has been only run for the $600$ sampled customers. As a second step, we remove customers for which data in any category for the significant granularities are empty. For example, in this data set, if a customer do not have data for an entire month, they have been removed as their monthly behavior could not be studied in that case. Further, we also remove customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study. Finally, we are left with $356$ customers. From this set we select $4$ "anchor" customers which are far apart from each other and $5$ neighboring customers for each of these anchors. These selections were done using the granularity $hod$ space. It is important to note that when we use our proposed methodologies, it is based on all dimesions `hod`, `moy` and `wkndwday`.Fig \ref{fig:} shows the MDS of these 356 customers in a 2D space basis their distance on individual granularities and when all of them are combined. Our methodolgies are run on these $24$ customers, which act as a way to evaluate the proposed methodologies.
+
+
+<!-- However, if `hod` is and not only `hod`, but if `hod` is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers. -->
+
+<!-- from which we wanted to do instance selection. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one to classify customers who have similar behavior across all significant granularities. Next we select $4$ customers which are far apart from each other and $5$ customers which are lying closest in distance to each of these $4$ customers. These selection was done using the granularity $hod$. When we use our methodologies, it is based on all significant granularities and not only hod, but if $hod$ is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers.  -->
 
 <!-- . Instances may be distributed in the representation space in a reasonable manner, revealing their similarities, using this instance wise discriminative learning. A dual-level progressive similar instance selection (DPSIS) approach could also be used -->
 
@@ -1541,7 +1549,7 @@ hod_group <- data_heatmap_hod_group %>%
                 group=group, 
                 color = as.factor(group)), size = 1)+
   facet_wrap(~group, 
-             #scales = "free_y",  
+             scales = "free_y",  
              nrow = 4) + 
               #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
@@ -1603,7 +1611,7 @@ moy_group <- data_heatmap_moy_group %>%
                   ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
   geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
   facet_wrap(~group, 
-             #scales = "free_y", 
+             scales = "free_y", 
              labeller = "label_value",
              nrow = 4) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
@@ -1733,7 +1741,6 @@ combined + plot_layout(guides = "collect")
 ##  wpd-based clustering
 
 
-
 ```{r ggpairs, fig.cap = "The ggpairs plot of electricity demand against the three granularities hod, moy and wkndwday are shown. The correlation between any two granularities is not so high so as to pose a threat to the clustering methodology."}
 
 elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
@@ -1782,7 +1789,7 @@ data_pcp <- scaled_var %>%
   select(customer_id, group, everything()) %>% 
   mutate(group = as.factor(group))
 
-library(viridis)
+
 pairsplot <- ggpairs(data_pcp, 
                      columns = 3:5,
                      aes(fill=group, color = group), alpha = 0.5) +
@@ -1810,10 +1817,9 @@ parcoord <- GGally::ggparcoord(data_pcp ,
   xlab("") +
   ylab("wpd") + scale_fill_viridis_d(direction = -1) +
   scale_color_viridis_d(direction = -1) + theme_light()
-pairsplot
 ```
 
-```{r}
+```{r parcoord, fig.cap = "A parallel coordinate plot with the three significant cyclic granularities used for wpd-based clustering. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that moy is the most important variable in distinguishing the designs followed by hod and wkndwday. It can be observed that cluster 3 and 4 are distinguished by moy while 1 and 2 are distinguished by hod. Here, wkndwday is still acting as the nuisance variable."}
 parcoord
 ```
 
@@ -1856,7 +1862,7 @@ hod_group_wpd <- data_heatmap_hod_group %>%
                 group=group, 
                 color = as.factor(group)), size = 1)+
   facet_wrap(~group, 
-             #scales = "free_y",  
+             scales = "free_y",  
              nrow = 4) + 
               #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
@@ -1907,7 +1913,7 @@ moy_group_wpd <- data_heatmap_moy_group %>%
                   ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
   geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
   facet_wrap(~group, 
-             #scales = "free_y", 
+             scales = "free_y", 
              labeller = "label_value",
              nrow = 4) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
@@ -1950,7 +1956,7 @@ wkndwday_group_wpd <- data_heatmap_wkndwday_group %>%
                   ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
   geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
   facet_wrap(~group, 
-             #scales = "free_y", 
+             scales = "free_y", 
              labeller = "label_value",
              nrow = 4)+
     #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) 

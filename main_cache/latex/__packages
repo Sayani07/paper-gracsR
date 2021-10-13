@@ -18,8 +18,7 @@ tsibble
 knitr
 patchwork
 GGally
-viridisLite
-viridis
-kableExtra
 distributional
 hakear
+viridisLite
+viridis

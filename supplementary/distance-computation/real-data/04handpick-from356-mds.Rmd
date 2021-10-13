@@ -169,8 +169,6 @@ mds_all <- mds_hod %>%
   left_join(mds_total, by = "customer_id") %>% 
   left_join(mds_wpd, by = "customer_id") %>% 
   select(customer_id, everything())
-
-
 ```
 
 
@@ -207,7 +205,7 @@ mds_wpd <- base %>%
 
 subplot(mds_total, mds_hod, mds_moy ,mds_wkndwday, titleX = TRUE) %>%
   layout(showlegend = FALSE) %>%
-  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect") 
+  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect", persistent = TRUE) 
 ```
 
 # Visualize similarity between js and wpd methodologies:
