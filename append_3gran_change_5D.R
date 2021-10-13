@@ -59,7 +59,7 @@ js_nqt <- append_files("js-nqt") %>%
 
 data_all<- bind_rows(wpd, js_robust, js_nqt) %>% 
   #arrange(method, nT, niter, mean_diff) %>% 
-  pivot_wider(c(1:3), names_from = "method", values_from = "estimate")
-
+  pivot_wider(c(1:3), names_from = "method", values_from = "estimate") %>% 
+  mutate(niter = 5*niter) #since there are 5 iterations for each design
 
 write_rds(data_all, "data/append_3gran_change.rds")
