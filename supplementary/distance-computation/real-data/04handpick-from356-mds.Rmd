@@ -205,7 +205,11 @@ mds_wpd <- base %>%
 
 subplot(mds_total, mds_hod, mds_moy ,mds_wkndwday, titleX = TRUE) %>%
   layout(showlegend = FALSE) %>%
-  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect", persistent = TRUE) 
+  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect", persistent = TRUE,
+defaultValues = unique(data_pick$customer_id))
+            
+            
+            # defaultValues = c(8181071, 8184707, 8191495, 8269176, 8328008, 8454221, 8454235,  8598020, 8627007, 8636035, 8653709, 8659512, 8664102, 9345642, 9587992, 9822544, 10257830, 10357256, 10420689, 10582471, 10767756, 10909394, 11006388, 11013154)) 
 ```
 
 # Visualize similarity between js and wpd methodologies:

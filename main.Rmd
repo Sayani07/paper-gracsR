@@ -1250,7 +1250,13 @@ empty_as_na <- function(x){
 In supervised learning, a training set containing previously known information is used to categorize new occurrences. Acceptable classification rates may be obtained by discarding instances which are not helpful for classification; this process is known as instance selection (@olvera2010review). This is similar to subsetting the population along all dimensions of importance such that the sampled data is representative of the main characteristics of the underlying distribution. Instance selection in unsupervised learning has received limited attention in the literature, but could serve as an useful way to sample evaluation data set to measure the performance of a model or method. One such procedure is suggested in @Fan2021-bq that selects similar instances (neighbors) for each instance (anchor) and treats the anchor and its neighbors as the same class. In this section, a similar idea is used to select customers with prototype behaviors
 that serves as evaluation data sets for our proposed methodology.
 
-First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. We obtain the $wpd$ for all cyclic granularities considered for these customers and found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weeknd/weekday) are coming out to be significant for most customers. This implies that for most customers, there is some interesting pattern across these three granularities. Potentially this could be done for the entire data set. This step is time consuming and hence has been only run for the $600$ sampled customers. As a second step, we remove customers for which data in any category for the significant granularities are empty. For example, in this data set, if a customer do not have data for an entire month, they have been removed as their monthly behavior could not be studied in that case. Further, we also remove customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study. Finally, we are left with $356$ customers. From this set we select $4$ "anchor" customers which are far apart from each other and $5$ neighboring customers for each of these anchors. These selections were done using the granularity $hod$ space. It is important to note that when we use our proposed methodologies, it is based on all dimesions `hod`, `moy` and `wkndwday`.Fig \ref{fig:} shows the MDS of these 356 customers in a 2D space basis their distance on individual granularities and when all of them are combined. Our methodolgies are run on these $24$ customers, which act as a way to evaluate the proposed methodologies.
+First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. We obtain the $wpd$ for all cyclic granularities considered for these customers and found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weeknd/weekday) are coming out to be significant for most customers. This implies that for most customers, there is some interesting pattern across these three granularities. Potentially this could be done for the entire data set. This step is time consuming and hence has been only run for the $600$ sampled customers. As a second step, we remove customers for which data in any category for the significant granularities are empty. For example, in this data set, if a customer do not have data for an entire month, they have been removed as their monthly behavior could not be studied in that case. Further, we also remove customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study. Finally, we are left with $356$ customers. From this set we select $4$ "anchor" customers which are far apart from each other and $5$ neighboring customers for each of these anchors. These selections were done using the granularity $hod$ space. It is important to note that when we use our proposed methodologies, it is based on all dimensions `hod`, `moy` and `wkndwday`.Fig \ref{fig:mds} shows the MDS of these 356 customers in a 2D space basis their distance on individual granularities and when all of them are combined. Our methodolgies are run on these $24$ customers, which act as a way to evaluate the proposed methodologies.
+
+
+
+```{r mds, out.width="100%", fig.cap="Instance selection with respect to `hod` such that there are two distinct group and two overlapping groups."}
+knitr::include_graphics("figs/mds_plot.png")
+```
 
 
 <!-- However, if `hod` is and not only `hod`, but if `hod` is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers. -->
@@ -1704,10 +1710,15 @@ data_group <- data_pick %>%
 #   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
 
 
-wkndwday_group <- data_group %>% create_gran("wknd_wday") %>% 
+wkndwday_data<- data_group %>% create_gran("wknd_wday") 
+ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
+
+wkndwday_group <- wkndwday_data%>% 
   ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
-  lvplot::geom_lv(aes(fill = as.factor(group))) +
-  #geom_boxplot(aes(fill = as.factor(group))) +
+  #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
+  geom_boxplot(aes(fill = as.factor(group), color = as.factor(group)),alpha = 0.5)+
+  #geom_boxplot(outlier.shape = NA) + 
+  coord_cartesian(ylim = ylim1*1.05)+
   #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
 #geom_boxplot(aes(fill = as.factor(group))) +
   #scale_fill_lv() +
@@ -1715,7 +1726,7 @@ wkndwday_group <- data_group %>% create_gran("wknd_wday") %>%
   ylab("demand (in Kwh)") +
    facet_wrap(~group, 
              scales = "free_y", 
-             labeller = "label_value",
+             labeller = "label_both",
              nrow = 4)+
   theme_bw() +
    theme(axis.title.y=element_blank(),
@@ -1723,7 +1734,8 @@ wkndwday_group <- data_group %>% create_gran("wknd_wday") %>%
         axis.ticks.y=element_blank()) + 
   theme(panel.spacing =unit(0, "lines")) + 
   theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+  scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
   theme(legend.position = "bottom") +
   theme(panel.spacing =unit(0, "lines")) + 
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
@@ -1949,15 +1961,20 @@ data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$categ
 
 data_heatmap_wkndwday_group$group <- paste("group", data_heatmap_wkndwday_group$group, sep = "-")
 
+wkndwday_data<- data_group %>% create_gran("wknd_wday") 
+ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
 
-wkndwday_group_wpd <- data_heatmap_wkndwday_group %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
-  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+wkndwday_group_wpd <- wkndwday_data%>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh))+
+  geom_boxplot(aes(fill = as.factor(group),color = as.factor(group)),alpha = 0.5) + 
+  coord_cartesian(ylim = ylim1*1.05) +
+  #ggplot(aes(x = category)) + 
+  # geom_ribbon(aes(ymin = `25%`, 
+  #                 ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  # geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
   facet_wrap(~group, 
              scales = "free_y", 
-             labeller = "label_value",
+             labeller = "label_both",
              nrow = 4)+
     #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) 
     xlab("wknd-wday") + 
@@ -1991,7 +2008,13 @@ combined + plot_layout(guides = "collect")
 \noindent The plotting scales are not displayed since we want to emphasise comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behaviour may be quite similar to a customer with high usage. That places them in the same group.
 
 
+## Classifying the 356 customers
+
+
 # Discussion {#sec:discussion}
+
+We propose different clustering methodology for grouping noisy, patchy time series data available at a fine temporal scale. Depending on the aim of clustering, they produce different clustering. The clustering is done based on probability distributions of the time series variable measured across several cyclic granularirties. There is some issue with scaling it up to many customers as anomalies need to be removed before such classification would be useful.
+
 
 <!-- This section will cover some drawback of this clustering method and potential extensions of this work. -->
 
