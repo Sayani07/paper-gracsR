@@ -16,6 +16,7 @@ library(knitr)
 library(patchwork)
 library(caret)
 library(plotly)
+#remotes::install_github("Sayani07/gracsr")
 library(gracsr)
 library(here)
 ```
