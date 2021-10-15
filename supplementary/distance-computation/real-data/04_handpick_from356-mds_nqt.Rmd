@@ -207,7 +207,7 @@ mds_wpd <- base %>%
 cols <- toRGB(RColorBrewer::brewer.pal(5, "Dark2"))
 subplot(mds_total, mds_hod, mds_moy ,mds_wkndwday, titleX = TRUE) %>%
   layout(showlegend = FALSE) %>%
-  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect", persistent = TRUE,defaultValues = data_pick_cust$value, color = cols) 
+  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect", persistent = TRUE) 
 ```
 
 # Visualize similarity between js and wpd methodologies:
