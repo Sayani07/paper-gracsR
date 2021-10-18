@@ -47,6 +47,65 @@ data_356cust_wkndwday <- quantile_gran(data_pick_robust,
                                   quantile_prob_val = seq(0.1, 0.9, 0.1))
 
 
+data_356cust_hod_wide <- data_356cust_hod %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_moy_wide <- data_356cust_moy %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_wkndwday_wide <- data_356cust_wkndwday %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_wide <- left_join(data_356cust_hod_wide,
+                               data_356cust_moy_wide,
+                               data_356cust_wkndwday_wide,
+                               by="customer_id")
+
+save(data_356cust_wide, file="data/data_356cust_wide.rda")
+
+
+data_356cust_pc <- prcomp(data_356cust_wide,
+                          center = FALSE, scale = FALSE, retx = TRUE)
+plot(data_356cust_pc, type="l", npcs=50)
+
+
+library(liminal)
+data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:10])
+limn_tour(data_356cust_pc10, PC1:PC10)
+
+tSNE_fit<-data_356cust_wide%>% 
+  select(-customer_id) %>% 
+  Rtsne()
+
+
+tSNE_fit$Y %>% 
+  as.data.frame() %>% 
+  rename(tSNE1="V1",
+         tSNE2="V2") %>% 
+  mutate(customer_id=as.character(data_356cust_wide$customer_id)) -> tSNE.plot
+
+library(ggplot2)
+ggplot()+
+  geom_point(data=tSNE.plot,
+             aes(x=tSNE1,y=tSNE2,color=customer_id))
+
+
+
++
+  stat_ellipse(data=tSNE.plot,
+               geom="polygon",
+               aes(x=tSNE1,y=tSNE2,
+                   group=customer_id,
+                   fill=customer_id),
+               alpha=0.5,
+               lty="dashed",
+               color="black",
+               key_glyph="blank")+
+  theme_bw()
+
 write_rds(data_356cust_hod, here::here("data/quantile_data_356cust_hod_robust.rds"))
 write_rds(data_356cust_moy,here::here("data/quantile_data_356cust_moy_robust.rds"))
 write_rds(data_356cust_wkndwday, here::here("data/quantile_data_356cust_wkndwday_robust.rds"))

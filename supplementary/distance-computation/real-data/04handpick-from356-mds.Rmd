@@ -170,6 +170,8 @@ mds_all <- mds_hod %>%
   left_join(mds_total, by = "customer_id") %>% 
   left_join(mds_wpd, by = "customer_id") %>% 
   select(customer_id, everything())
+
+write_rds(mds_all, here("data/mds_all.rds"))
 ```
 
 

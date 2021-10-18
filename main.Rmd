@@ -355,19 +355,29 @@ Compute weighted pairwise distances ($wpd$) for all considered granularities for
 
 \noindent Distance between elements is then taken as the euclidean distances between them with the granularities being the variables and $wpd$ being the value under each variable. Since Euclidean distance is chosen, the observations with high values of features ($wpd$ values) will be clustered together. The same holds true for observations with low values of features. Thus this distance matrix would be useful to group customers that have similar significance of patterns across different granularities.
 
+
+
 <!-- Consider a harmony table consisting of many harmonies, each of the form $(A, B)$, such that $A = \{ a_j: j = 1, 2, \dots, J\}$ and $B = \{ b_k: k = 1, 2, \dots, K\}$. Each household consists of a $J*K$ distributions one harmony. We compute the distributional difference -->
 <!-- between $(A, B)$ for the $s^{th}$ household using $wpd_{{s}}(A,B)$. -->
 <!-- $wpd_{{s}}(A,B)$ denotes the normalized weighted-pairwise distributional distances between $(A, B)$ and is a feature which measures distributional difference between harmonies. If we have $H_{N_C}$ harmonies in the harmony table, then for each household we have a vector of $wpd_{{s}}$ of $H_{N_C}$ elements with each element corresponding to one harmony. We aim to have pockets of households showing similar periodic behavior by conidering $wpd$ vlaues for different harmonies and some time series features. The features should also characterize probability distributions of different household. -->
 
 
-<!-- grouping probability distributions across a harmony. This clustering algorithm is adopted to remove or appropriately adjust for auto correlation and unequal length in the data. The method could be further extended by clustering probability distributions conditional on one or more cyclic granularities. The following are some of the advantages of our proposed method. --
+<!-- grouping probability distributions across a harmony. This clustering algorithm is adopted to remove or appropriately adjust for auto correlation and unequal length in the data. The method could be further extended by clustering probability distributions conditional on one or more cyclic granularities. The following are some of the advantages of our proposed method. -->
+
 
 
 - _Pre-processing steps_
 
-    **Handling trend, seasonality, non-stationarity and auto-correlation:** Trend and seasonality are fundamental characteristics of time series data, and it is reasonable to define a time series according to its degree of trend and seasonality. These characteristics of the time series are lost or handled independently by considering probability distributions ( trend is lost) across categories of cyclic granularities (by independently modeling all seasonal fluctuations), and so there is no need to de-trend or de-seasonalize the data before conducting the clustering method. There is no need to omit holiday or weekend patterns for similar reasons.
+<!--Handling trend, seasonality, non-stationarity and auto-correlation:** Trend and seasonality are fundamental characteristics of time series data, and it is reasonable to define a time series according to its degree of trend and seasonality. These characteristics of the time series are lost or handled independently by considering probability distributions ( trend is lost) across categories of cyclic granularities (by independently modeling all seasonal fluctuations), and so there is no need to de-trend or de-seasonalize the data before conducting the clustering method. There is no need to omit holiday or weekend patterns for similar reasons-->
 
-    **Data transformation:** Robust scaling method is used before computing the Inter-category distances and NQT is built-in transformation used for computation of $wpd$, which forms the basis of Intra-category distances.
+
+    **Data transformation:** Both robust scaling method and NQT are used before computing the JS-based distances and NQT is built-in transformation used for computation of $wpd$, which forms the basis of wpd-based distances.
+    
+    
+    Robust scaling would keep the distribution intact
+    
+Normal-Quantile transform will transform the positively and negatively skewed distribution to a similar bell-shaped. From the transformed distribution, it is difficult to understand that raw distribution was of which shape. Also, multimodality gets hidden or magnitude get reversed with NQT. But deciles from the distribution will move in a similar manner as the raw distribution and hence the final distance matrix seem to be unaffected. Hence, this could be used. Also, practically most problems will have a very skewed distribution, it is often helpful to bring them to a normal-like shape before clustering.
+
 
 
 - _Clustering algorithm_
