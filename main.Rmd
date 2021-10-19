@@ -513,7 +513,6 @@ _All signifiant granularities_
 
 Consider the scenario when all three granularities $g1$, $g2$, and $g3$ are responsible for distinguishing the designs. That means that for at least one among the to-be-grouped designs, the pattern for each of $g1$, $g2$, and $g3$ will change. We consider different distributions across categories (as in Table \ref{tab:tab-dist-design}) (top) that will lead to different designs (as in Table \ref{tab:tab-dist-design}) (below). Figure \ref{fig:plot-3gran-new} shows the linear and cyclic representation of the simulated variable under these five designs. For the consequent data designs, only graphical representations will be provided. 
 
-
 ```{r tab-distribution}
 granularity = c("g1", "g2", "g3")
 # alternate_design =  c("g10 ~ N(0, 1), g11 ~ N(2, 1)",
@@ -524,7 +523,7 @@ alternate_design =  c("g11 ~ N(2, 1)",
                       "g21 ~ N(2, 1), g22 ~ N(1, 1)",
                       "g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1)")
 
-tab_dist <- tibble::tibble(granularity = granularity, `alternate distribution` = alternate_design)
+tab_dist <- tibble::tibble(granularity = granularity, `Varying distributions` = alternate_design)
 
 # knitr::kable(tab_dist, caption = "Alternate distributions of different categories if they deviate from null.")
 ```
@@ -533,14 +532,13 @@ tab_dist <- tibble::tibble(granularity = granularity, `alternate distribution` =
 
 
 ```{r tab-design}
-design = c("design-1", "design-2", "design-3", "design-4", "design5")
-g1 = c("null", "alternate", "null", "null", "alternate")
-g2 = c("null", "null", "alternate", "null", "alternate")
-g3 = c("null", "null", "null", "alternate", "alternate")
+design = c("design-1", "design-2", "design-3", "design-4", "design-5")
+g1 = c("fixed", "vary", "fixed", "fixed", "vary")
+g2 = c("fixed", "fixed", "vary", "fixed", "vary")
+g3 = c("fixed", "fixed", "fixed", "vary", "vary")
 table <- tibble(design, g1, g2, g3)
 
-
-# %>% kable(caption = "5 different designs resulting from considering different distributions across categories.")
+#%>% kable(caption = "5 different designs resulting from considering different distributions across categories.")
 ```
 
 
@@ -617,7 +615,7 @@ data_bind <- generate_design(t, mu1, mu2, mu3)
 
 ```
 
-```{r plot-3gran-new, out.width="100%", fig.cap="The linear (left) and cyclic (right) representation of the measured variable is shown. In this scenario, all of $g1$, $g2$ and $g3$ changes across at least one design. Also, it is not possible to comprehend these patterns across cyclic granularities or group similar series just by looking at the linear plots."}
+```{r plot-3gran-new, out.width="100%", fig.cap="The linear (left) and cyclic (right) representation of the measured variable is shown. In this scenario, all of $g1$, $g2$ and $g3$ changes across at least one design. Also, it is not possible to comprehend these patterns across cyclic granularities or group similar series just by looking at the linear plots.", fig.pos="htb"}
 
 # plot_linear_data <- function(data){
 # ggplot(data,
@@ -657,7 +655,7 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alp
   facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
     fun = median,
     geom = 'line',
-    aes(group = 1), size = 0.8, colosr = "blue")+ ylab("")+
+    aes(group = 1), size = 0.8, color = "blue")+ ylab("")+
   theme_validation()
 
 
@@ -764,13 +762,11 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alp
   facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
     fun = median,
     geom = 'line',
-    aes(group = 1), size = 0.8, colosr = "blue")+ ylab("")+
+    aes(group = 1), size = 0.8, color = "blue")+ ylab("")+
   theme_validation()
 
-
-(p1 + (p2 + p3 + p4)) *
-  theme_validation() + plot_layout(widths = c(2, 1))
-
+gran2_change <- (p2 + p3 + p4) *
+  theme_validation()
 ```
 
 
@@ -903,9 +899,8 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alp
     aes(group = 1), size = 0.8, color = "blue")+ ylab("")+
   theme_validation()
 
-
-(p1 + (p2 + p3 + p4)) *
-  theme_validation() + plot_layout(widths = c(2, 1))
+gran1_change <- (p2 + p3 + p4) *
+  theme_validation()
 # 
 # plot_cyclic_data( data_bind %>% filter(design=="design2"))
 # plot_data( data_bind %>% filter(design=="design3"))
@@ -914,6 +909,11 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alp
 ```
 
 A subset of many possible designs are shown in Figure \ref{fig: plot-linear }. For the parameter space (XXX unique  combinations shown in table YYY), 100, 500 independent replications of all possible combination of simulation parameters were generated. The clustering methodologies were run all these unique combinations and subsets of these to verify if the methodologies work as expected.
+
+```{r gran2and1-clubbed, fig.cap=" For the left scenario $g1$, $g2$ would change across atleast one design but $g3$ change remains same across all design. For tthe right one, only $g3$ changes across different designs."}
+#gran2_change  + gran1_change + plot_layout(widths = c(1,1))
+ggpubr::ggarrange(gran1_change, gran2_change, labels = c("a", "b"))
+```
 
 
 ### Interaction of granularities
@@ -1144,7 +1144,9 @@ p4 <- change_index(sim_panel_varall) %>%
   xlab("") 
 
 
-((p1 + p_null)/( p2 + p_varf)/(p3 + p_varx)/(p4 + p_varall)) 
+#((p1 + p_null)/( p2 + p_varf)/(p3 + p_varx)/(p4 + p_varall)) 
+#p_null+ p_varf + p_varx + p_varall
+ggpubr::ggarrange(p_null, p_varf, p_varx, p_varall, labels = c("Design-1", "Design-2", "Design-3", "Design-4"))
 
 ```
 
@@ -1165,7 +1167,7 @@ p4 <- change_index(sim_panel_varall) %>%
 All the methods were fitted to each data designs and results are reported through confusion matrices. With increasing difference between categories, it gets easier for the methods to correctly distinguish the designs. For $mean_diff=1$, the performances are pretty bad for js-robust methods and wpd method for lower nT. Although, with the kind of residential load datasets, a full year of load is the minimal requirement to capture expected variations in winter and summer profiles, for example. It is likely that $nT$ would be at least $1000$ with half-hourly data, even if data is only available just for a month. The performance is promising except when the number of observations for a customer is really small. For smaller difference between categories, it is expected that method js-nqt would preform better than the other two.
 
 
-```{r}
+```{r, eval=FALSE}
 # code in append_3gran_change.R
 table <- read_rds("data/append_3gran_change.rds")
 table %>% kable()
@@ -1296,11 +1298,14 @@ knitr::include_graphics("figs/mds_plot.png")
 
 quantile_prob_graph <- c(0.25, 0.5, 0.75)
 
-wkndwday <- read_rds(here("data/dist_gran_wkndwday_356cust_robust.rds")) %>% broom::tidy()
+wkndwday <- read_rds(here("data/dist_gran_wkndwday_356cust_robust.rds")) 
+#%>% broom::tidy()
 
-moy <- read_rds(here("data/dist_gran_moy_356cust.rds")) %>% broom::tidy()
+moy <- read_rds(here("data/dist_gran_moy_356cust.rds")) 
+#%>% broom::tidy()
 
-hod <- read_rds(here("data/dist_gran_hod_356cust_robust.rds")) %>% broom::tidy()
+hod <- read_rds(here("data/dist_gran_hod_356cust_robust.rds")) 
+#%>% broom::tidy()
 
 distance <- wkndwday %>% 
   left_join(moy, by = c("item1", "item2")) %>% 

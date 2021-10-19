@@ -2,6 +2,10 @@
 # 
 # simtable %>% dplyr::filter(mean_diff==1)
 
+library(tidyverse)
+library(readr)
+
+
 
 folder_name = "js_robust"
 
@@ -63,3 +67,66 @@ data_all<- bind_rows(wpd, js_robust, js_nqt) %>%
   mutate(niter = 5*niter) #since there are 5 iterations for each design
 
 write_rds(data_all, "data/append_3gran_change.rds")
+
+
+
+##----2gran_change_4D
+
+
+
+append_files <- function(folder_name){
+  all_files = list.files(path = paste0(folder_name, "/2gran_change_4D/"), 
+                         pattern = ".rds")
+  
+  names_levels <- map_dfr(all_files, 
+                          function(x){
+                            z = str_split(str_remove(x, ".rds"), "_") %>% 
+                              unlist()
+                            bind_cols(type = z[1],
+                                      index = z[2])
+                          })
+  
+  
+  all_files_path <- paste0(folder_name, "/2gran_change_4D/",
+                           all_files)  
+  
+  
+  all_data <- lapply(1:length(all_files_path), function(x){
+    
+    data = all_files_path %>% magrittr::extract2(x) %>% 
+      readRDS()
+    
+    names = names_levels %>% magrittr::extract(x,)
+    names_rep =   names %>% slice(rep(1:n(), each = nrow(data)))
+    bind_cols(names_rep, data)
+  }) %>% bind_rows() 
+}
+
+wpd <- append_files("wpd") %>% 
+  dplyr::filter(type == "confmatrix", 
+                term == "accuracy") %>% 
+  arrange(mean_diff, nT, niter) %>% 
+  dplyr::select (mean_diff, nT, niter, estimate) %>% mutate(method = "wpd")
+
+
+js_robust <- append_files("js-robust") %>% 
+  dplyr::filter(type == "confmatrix", 
+                term == "accuracy") %>% 
+  arrange(mean_diff, nT, niter) %>% 
+  dplyr::select (mean_diff, nT, niter, estimate) %>% mutate(method = "js_robust")
+
+
+js_nqt <- append_files("js-nqt") %>% 
+  dplyr::filter(type == "confmatrix", 
+                term == "accuracy") %>% 
+  arrange(mean_diff, nT, niter) %>% 
+  dplyr::select (mean_diff, nT, niter, estimate) %>% mutate(method = "js_nqt")
+
+
+
+data_all<- bind_rows(wpd, js_robust, js_nqt) %>% 
+  #arrange(method, nT, niter, mean_diff) %>% 
+  pivot_wider(c(1:3), names_from = "method", values_from = "estimate") %>% 
+  mutate(niter = 5*niter) #since there are 5 iterations for each design
+
+write_rds(data_all, "data/append_2gran_change.rds")

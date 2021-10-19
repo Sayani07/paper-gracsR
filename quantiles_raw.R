@@ -47,9 +47,14 @@ data_pick_robust <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"
 #                                   quantile_prob_val = seq(0.1, 0.9, 0.1))
 # 
 
-data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds")
-data_356cust_moy <- read_rds("data/quantile_data_356cust_moy_robust.rds")
-data_356cust_wkndwday <- read_rds("data/quantile_data_356cust_wkndwday_robust.rds")
+data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds") %>% 
+  filter(quantiles %in% "50%")
+
+data_356cust_moy <- read_rds("data/quantile_data_356cust_moy_robust.rds") %>% 
+  filter(quantiles %in% "50%")
+
+data_356cust_wkndwday <- read_rds("data/quantile_data_356cust_wkndwday_robust.rds") %>% 
+  filter(quantiles %in% "50%")
 
 
 data_356cust_hod_wide <- data_356cust_hod %>%
@@ -65,13 +70,14 @@ data_356cust_wkndwday_wide <- data_356cust_wkndwday %>%
               values_from = "quantiles_values")
 
 data_356cust_wide <- left_join(data_356cust_hod_wide,
-                               data_356cust_moy_wide,
-                               data_356cust_wkndwday_wide,
-                               by="customer_id")
+                               data_356cust_moy_wide, by="customer_id") %>% 
+  left_join(data_356cust_wkndwday_wide,  by="customer_id"
+                              )
 
 save(data_356cust_wide, file="data/data_356cust_wide.rda")
 
 # without scaling
+
 data_356cust_pc <- prcomp(data_356cust_wide[,-1],
                           center = FALSE, scale = FALSE, retx = TRUE)
 
@@ -79,74 +85,26 @@ plot(data_356cust_pc, type="l", npcs=50)
 
 library(liminal)
 data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:10])
-limn_tour(data_356cust_pc10, PC1:PC10)
+limn_tour(data_356cust_pc10, PC1:PC)
 
 sort(abs(data_356cust_pc$rotation[,1]))
 
 abs(data_356cust_pc$rotation[,1]) %>% hist
 #abs(bas6[,1]) %>% hist
 
-# with scaling
+##---- with scaling
 
+# data_356cust_pc <- prcomp(data_356cust_wide[,-1],
+#                           center = FALSE, scale = TRUE, retx = TRUE)
+# 
+# plot(data_356cust_pc, type="l", npcs=50)
+# 
+# library(liminal)
+# data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:10])
+# limn_tour(data_356cust_pc10, PC1:PC10)
+# 
+# sort(abs(data_356cust_pc$rotation[,1]))
 
-data_356cust_pc <- prcomp(data_356cust_wide[,-1],
-                          center = FALSE, scale = TRUE, retx = TRUE)
-
-plot(data_356cust_pc, type="l", npcs=50)
-
-library(liminal)
-data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:10])
-limn_tour(data_356cust_pc10, PC1:PC10)
-
-sort(abs(data_356cust_pc$rotation[,1]))
-
-## spinifex:
-library(spinifex)
-df_ns <- data_356cust_wide[,-1] %>% scale_sd()
-bas6  <- basis_pca(df_ns, 6)
-df_pc6 <- df_ns %*% bas6
-#bas10   <- basis_pca(df_ns, 10)
-#df_pc10 <- df_ns %*% bas10
-#gt_path10 <- save_history(df_pc10, max_bases = 20)
-gt_path6 <- save_history(df_pc6, max_bases = 20)
-
-# Maha dists for color
-#maha <- stats::mahalanobis(df_pc6, colMeans(df_pc6), cov(df_pc6))
-#hist(maha)
-#maha_bin <- data.frame(maha) %>% dplyr::mutate(
-#  maha = maha,
-#  bin = case_when(
-#                  maha > 50L ~ "Large",
-#                  maha > 20L ~ "Medium",
-#                  maha > 10L ~ "Small",
-#                  TRUE ~ "vSmall")
-#)
-
-#Maha dists for color for 6
-
-maha <- stats::mahalanobis(df_pc6, colMeans(df_pc6), cov(df_pc6))
-hist(maha)
-maha_bin <- data.frame(maha) %>% dplyr::mutate(
-  maha = maha,
-  bin = case_when(
-                  maha > 20L ~ "Large",
-                  maha > 10L ~ "Medium",
-                  maha > 5L ~ "Small",
-                  TRUE ~ "vSmall")
-)
-
-maha_bin$bin = factor(maha_bin$bin, levels = c("vSmall", "Small", "Medium", "Large"))
-table(maha_bin$bin)
-
-ggt <- ggtour(gt_path6, angle = .2) +
-  proto_default(aes_args = list(color = maha_bin$bin),
-                identity_args = list(alpha = .5))
-#animate_gganimate(ggt, fps = 4, start_pause = 4, end_pause = 4)
-animate_plotly(ggt, fps=4)
-
-
-  
-quantile()
 
 ##---- t-SNE embeddings
 

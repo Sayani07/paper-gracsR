@@ -193,7 +193,7 @@ p <- (total_plot + wpd_plot)/(hod_plot + moy_plot + wkndwday_plot)
 
 
 
-p* +
+p*theme_characterisation() +
   plot_layout(guides = "collect")
 
 ```
