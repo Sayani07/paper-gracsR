@@ -917,14 +917,12 @@ gran1_change <- (p2 + p3 + p4) *
 ggpubr::ggarrange(gran1_change, gran2_change, labels = c("a", "b"))
 ```
 
-
 ### Interaction of granularities
 
-The earlier method could be extended when two granularities of interest interact and we are interested to group subjects based on the interaction of the two granularities. For example, in application, think about the scenario when customers need to grouped basis their joint behavior across hour-of-day and month-of-year. For simplicity, consider a case with just two interacting granularities $g1$ and $g2$ of interest. As opposed to the last case, where we could play with the distribution of $5$ individual categories, with interaction, we can play with the distribution of $6$ combination of categories. Consider $4$ designs in Figure \ref{fig:} where different distributions are assumed for different combination of categories resulting in different designs.
+The proposed methods could be extended when two granularities of interest interact and we are interested to group subjects based on the interaction of the two granularities. For example, consider a group having a different weekday, weekend behavior in summer months, but not across winter. This type of joint behavior across granularities wknd-wday and month-of-year can be discovered by examining the distribution across combination of categories for different interacting granularities. Hence, in this scenario, we consider combination of categories to be generated from different distributions. For simplicity, consider a case with just two interacting granularities $g1$ and $g2$ of interest. As opposed to the last case, where we could examine distributions across $l_{g_1} + l_{g_2} = 5$ individual categories, with interaction, we need to examine the distribution of $l_{g_1}*l_{g_2}=6$ combination of categories. Consider $4$ designs in Figure \ref{fig:interaction-gran} where different distributions are assumed for different combination of categories resulting in different designs. Design-1 has no change in distributions across $g1$ or $g2$, while Design-2 and Design-3 change across only $g1$ and $g2$ respectively. Design-4 changes across categories of both $g1$ and $g2$. Design-3 and Design-4 looks similar according to their relative difference between consecutive categories, but Design-4 also changes across facets, unlike Design-3 where all facets look the same.
 
 
-
-```{r}
+```{r interaction-gran, fig.cap = "Design-1 has no change in distributions across different categories of $g1$ or $g2$, while Design-2 and Design-3 change across only $g1$ and $g2$ respectively. Design-4 changes across categories of both $g1$ and $g2$."}
 ## ----designs
 
 sim_null_normal <- function(nxj, nfacetj, mean, sd, w1 = 0, w2=0) {
