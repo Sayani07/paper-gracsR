@@ -578,3 +578,233 @@ gran1_change <- (p2 + p3 + p4) *
 ##----gran2and1-clubbed
 
 ggpubr::ggarrange(gran2_change, gran1_change, labels = c("a", "b"))
+
+
+##----interaction-gran
+
+##designs
+
+sim_null_normal <- function(nxj, nfacetj, mean, sd, w1 = 0, w2=0) {
+  rep(distributional::dist_normal(mu = mean, sigma = sd),
+      times = nxj * nfacetj
+  )
+}
+
+sim_varf_normal <- function(nx, nfacet, mean, sd, w1, w2) {
+  rep(dist_normal((mean + seq(0, nfacet - 1, by = 1) * w1),
+                  (sd + seq(0, nfacet - 1, by = 1) * w2)), each = nx)
+}
+
+sim_varx_normal <- function(nx, nfacet, mean, sd, w1, w2) {
+  rep(dist_normal((mean + seq(0, nx - 1, by = 1) * w1),
+                  (sd + seq(0, nx - 1, by = 1) * w2)), nfacet)
+}
+
+sim_varall_normal <- function(nx, nfacet, mean, sd, w1, w2) {
+  dist_normal((mean + seq(0, (nx *nfacet - 1), by = 1) * w1),
+              (sd + seq(0,  (nx *  nfacet - 1), by = 1) * w2))
+}
+
+
+##data
+
+library(hakear)
+
+nx_val = 2 # number of x-axis levels
+nfacet_val = 3 # number of facet levels
+w1_val = 1 # increment in mean
+w2_val = 0 # increment in sd
+mean_val = 0 # mean of normal distribution of starting combination
+sd_val = 2 # sd of normal distribution of starting combination
+quantile_prob_val = seq(0.1, 0.9, 0.1)
+ntimes_val = 300
+
+sim_panel_varall <- sim_panel(
+  nx = nx_val, nfacet =  nfacet_val,
+  ntimes = ntimes_val,
+  # sim_dist = sim_varall_normal(2, 3, 5, 10, 5, -1.5)
+  sim_dist = sim_varall_normal(nx_val, nfacet_val, mean_val, sd_val, w1_val, w2_val)
+) %>% unnest(data)  %>% 
+  rename( "g2" = "id_facet",
+          "g1" = "id_x")
+
+sim_panel_varx <- sim_panel(
+  nx = nx_val, nfacet =  nfacet_val,
+  ntimes = ntimes_val,
+  # sim_dist = sim_varx_normal(2, 3, 5, 10, 5, -1.5)
+  sim_dist = sim_varx_normal(nx_val, nfacet_val, mean_val, sd_val, w1_val, w2_val)
+) %>% unnest(data)  %>% 
+  rename( "g2" = "id_facet",
+          "g1" = "id_x")
+
+sim_panel_varf <- sim_panel(
+  nx = nx_val, nfacet =  nfacet_val,
+  ntimes = ntimes_val,
+  # sim_dist = sim_varf_normal(2, 3, 5, 10, 5, 5)
+  sim_dist = sim_varf_normal(nx_val, nfacet_val, mean_val, sd_val, w1_val, w2_val)
+) %>% unnest(data)  %>% 
+  rename( "g2" = "id_facet",
+          "g1" = "id_x")
+
+sim_panel_null <- sim_panel(
+  nx = nx_val,
+  nfacet =  nfacet_val,
+  ntimes = ntimes_val,
+  sim_dist = distributional
+  ::dist_normal(mean_val, sd_val)
+) %>% unnest(c(data)) %>% 
+  rename( "g2" = "id_facet",
+          "g1" = "id_x")
+
+
+##category-plots
+
+p_null <- sim_panel_null %>%
+  ggplot(aes(x = as.factor(g1), y = sim_data)) +
+  facet_wrap(~g2, labeller = "label_both") +
+  geom_boxplot() +
+  ylab("") +
+  #ggtitle(paste("(a)", round(null, 2))) +
+  xlab("") +
+  theme_bw()+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  #ggtitle("design1")+
+  theme_validation() +ylab("")  +
+  theme(panel.spacing =unit(0, "lines"))+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +ggtitle("Design-1")
+
+p_varf <- sim_panel_varf %>%
+  ggplot(aes(x = as.factor(g1), y = sim_data)) +
+  facet_wrap(~g2, labeller = "label_both") +
+  geom_boxplot() +
+  ylab("") +
+  #ggtitle(paste("(b)", round(varf, 2))) +
+  xlab("")+
+  theme_bw()+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  #ggtitle("design2")+
+  theme_validation()+ylab("") +
+  theme(panel.spacing =unit(0, "lines"))+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )+ggtitle("Design-2")
+
+p_varx <- sim_panel_varx %>%
+  ggplot(aes(x = as.factor(g1), y = sim_data)) +
+  facet_wrap(~g2, labeller = "label_both") +
+  geom_boxplot()+
+  ylab("")  +
+  #ggtitle(paste("(c)", round(varx, 2))) +
+  xlab("")+
+  theme_bw()+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  #ggtitle("design3")+
+  theme_validation()+ylab("") +
+  theme(panel.spacing =unit(0, "lines"))+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )+ggtitle("Design-3")
+
+p_varall <- sim_panel_varall %>%
+  ggplot(aes(x = as.factor(g1), y = sim_data)) +
+  facet_wrap(~g2, labeller = "label_both") +
+  geom_boxplot() +
+  ylab("") +
+  #ggtitle(paste("(d)", round(varall, 2))) +
+  xlab("")+
+  theme_bw()+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  #ggtitle("design4") +
+  theme_validation()+ylab("") +
+  theme(panel.spacing =unit(0, "lines"))+ theme(
+    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )+ggtitle("Design-4")
+
+
+change_index <- function(data){
+  
+  index_new <- map(seq_len(ntimes_val), function(i){
+    map((seq_len(nx_val*nfacet_val)), function(j)
+    {
+      value = i + (j-1)*ntimes_val
+    })
+  }) %>% unlist()
+  
+  data_new = data %>%
+    ungroup() %>%
+    mutate(index_old = row_number(),
+           index_new = index_new)
+  
+  y = data_new[match(index_new, data_new$index_old),]
+  
+  y <- y %>%
+    mutate(time = row_number())
+  
+  return(y)
+}
+
+endbreaks<- nrow(sim_panel_null)
+
+p1 <- change_index(sim_panel_null) %>%
+  ggplot(aes(x = time,
+             y = sim_data)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(1, endbreaks, 200))+
+  theme_bw() +
+  #geom_point(alpha = 0.5, color = "blue")
+  #theme(panel.grid.major.x =  element_line(colour = "#A9A9A9"),
+  #    panel.grid.minor.x =  element_blank())+
+  ylab("")+
+  xlab("")
+
+
+p2 <- change_index(sim_panel_varf) %>%
+  ggplot(aes(x = time,
+             y = sim_data)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(1, endbreaks, 200))+
+  theme_bw() +
+  #geom_point(alpha = 0.5, color = "blue") +
+  #theme(panel.grid.major.x =  element_line(colour = "#A9A9A9"),
+  #   panel.grid.minor.x =  element_blank())+
+  ylab("")+
+  xlab("")
+
+p3 <- change_index(sim_panel_varx) %>%
+  ggplot(aes(x = time,
+             y = sim_data)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(1, endbreaks, 200))+
+  theme_bw() +
+  #geom_point(alpha = 0.5, color = "blue")+
+  #theme(panel.grid.major.x =  element_line(colour = "#A9A9A9"),
+  #     panel.grid.minor.x =  element_blank())+
+  ylab("")+
+  xlab("")
+
+
+p4 <- change_index(sim_panel_varall) %>%
+  ggplot(aes(x = time,
+             y = sim_data)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(1, endbreaks, 200))+
+  theme_bw() +
+  #geom_point(alpha = 0.5, color = "blue") +
+  theme(panel.grid.major.x =  element_line(colour = "#A9A9A9"),
+        panel.grid.minor.x =  element_blank())+
+  ylab("")+
+  xlab("") 
+
+
+#((p1 + p_null)/( p2 + p_varf)/(p3 + p_varx)/(p4 + p_varall)) 
+#p_null+ p_varf + p_varx + p_varall
+ggpubr::ggarrange(p_null, p_varf, p_varx, p_varall)
+
+#labels = c("Design-1", "Design-2", "Design-3", "Design-4"))
