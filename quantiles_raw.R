@@ -85,7 +85,7 @@ plot(data_356cust_pc, type="l", npcs=50)
 
 library(liminal)
 data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:10])
-limn_tour(data_356cust_pc10, PC1:PC)
+limn_tour(data_356cust_pc10, PC1:PC5)
 
 sort(abs(data_356cust_pc$rotation[,1]))
 

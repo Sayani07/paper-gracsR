@@ -218,3 +218,363 @@ p1 <- elec_ts %>%
 
 
 ggsave("figs/raw_plot_cust.png")
+
+
+##----tab-distribution
+granularity = c("g1", "g2", "g3")
+alternate_design =  c("g10 ~ N(0, 1), g11 ~ N(2, 1)",
+                      "g21 ~ N(2, 1), g22 ~ N(1, 1), g23 ~ N(0, 1)",
+                      "g31 ~ N(0, 1), g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1), g35 ~ N(0, 1)")
+
+# alternate_design =  c("g11 ~ N(2, 1)",
+#                       "g21 ~ N(2, 1), g22 ~ N(1, 1)",
+#                       "g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1)")
+
+tab_dist <- tibble::tibble(granularity = granularity, `Varying distributions` = alternate_design)
+
+# knitr::kable(tab_dist, caption = "Alternate distributions of different categories if they deviate from null.")
+
+
+##----tab-design
+design = c("design-1", "design-2", "design-3", "design-4", "design-5")
+g1 = c("fixed", "vary", "fixed", "fixed", "vary")
+g2 = c("fixed", "fixed", "vary", "fixed", "vary")
+g3 = c("fixed", "fixed", "fixed", "vary", "vary")
+table <- tibble(design, g1, g2, g3)
+
+#%>% kable(caption = "5 different designs resulting from considering different distributions across categories.")
+
+
+##----tab-dist-design
+# library(kableExtra)
+# 
+# knitr::kables(list(kable(caption = "Alternate distributions of different categories if they deviate from null.",
+#    tab_dist
+#     ) %>% kable_styling(),
+#   kable(caption = "5 different designs resulting from considering different distributions across categories.",
+#  tibble(design, g1, g2, g3)
+#     ) %>% kable_styling()
+#   )
+# ) %>% kable_styling()
+
+knitr::kable(
+  list(tab_dist,  tibble(design, g1, g2, g3)),
+  caption = 'For Scenario (a), distributions of different categories (top), 5 designs resulting from different distributions across categories (below)',
+  booktabs = TRUE, valign = 't'
+)
+
+##----generate-design-3change
+generate_design <- function(t, mu1, mu2, mu3){
+  
+  t <- seq(0, t, 1)
+  g1 <- t %%2
+  g2 <- t %%3
+  g3 <- t %%5
+  
+  # null design
+  g1_dnull <- rep( rep(0, each = length(unique(g1))), length.out= length(t))
+  g2_dnull <- rep( rep(0, each = length(unique(g2))), length.out= length(t))
+  g3_dnull <- rep( rep(0, each = length(unique(g3))), length.out= length(t))
+  
+  # mean changing across categories in varying ways
+  
+  g1_dvary <- rep(mu1, length.out= length(t))
+  g2_dvary <- rep(mu2, length.out= length(t))
+  g3_dvary <- rep(mu3, length.out= length(t))
+  
+  
+  design1 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dnull)
+  design2 = distributional::dist_normal(g1_dvary + g2_dnull + g3_dnull)
+  design3 = distributional::dist_normal(g1_dnull + g2_dvary + g3_dnull)
+  design4 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dvary)
+  design5 = distributional::dist_normal(g1_dvary + g2_dvary + g3_dvary)
+  
+  data_bind <- tibble::tibble(
+    index = t,
+    g1 = g1,
+    g2 = g2,
+    g3 = g3,
+    design1 = distributional::generate(design1, times = 1) %>% unlist(),
+    design2 = distributional::generate(design2, times = 1) %>% unlist(),
+    design3 = distributional::generate(design3, times = 1) %>% unlist(),
+    design4 = distributional::generate(design4, times = 1) %>% unlist(),
+    design5 = distributional::generate(design5, times = 1) %>% unlist()
+  ) %>% 
+    pivot_longer(-c(1, 2, 3, 4), names_to = "design", values_to = "sim_data")
+  
+  data_bind
+}
+
+t = 300
+mu1= c(0, 2)
+mu2 = c(2, 1, 0)
+mu3 = c(0, 1, 2, 1, 0)
+
+data_bind <- generate_design(t, mu1, mu2, mu3)
+
+##----plot-3gran-new
+# plot_linear_data <- function(data){
+# ggplot(data,
+#              aes(x = index, y = sim_data)) + 
+#   geom_line() +
+#   xlab("index")+
+#   theme_bw() 
+# }
+
+p1 <- ggplot(data_bind,
+             aes(x = index, y = sim_data)) + 
+  geom_line() +
+  xlab("index")+
+  facet_wrap(~design, scales = "free_y",ncol =1) +
+  theme_validation()
+
+p2 <- ggplot(data_bind,
+             aes(x = as.factor(g1), y = sim_data)) + 
+  geom_boxplot(alpha =0.5) + xlab("g1") + 
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  theme_validation()
+
+
+
+p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") + ylab("")+
+  theme_validation()
+
+p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alpha =0.5) +
+  xlab("g3") + theme_bw()+
+  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue")+ ylab("")+
+  theme_validation()
+
+
+(p1 + (p2 + p3 + p4)) *
+  theme_validation() + plot_layout(widths = c(2, 1))
+# 
+# plot_cyclic_data( data_bind %>% filter(design=="design2"))
+# plot_data( data_bind %>% filter(design=="design3"))
+# plot_data( data_bind %>% filter(design=="design4"))
+# plot_data( data_bind %>% filter(design=="design5"))
+
+##----generate-design-new
+
+generate_design <- function(n = 300, #length of time series
+                            mu11 = 0,
+                            mu12 = 0,
+                            mu21 = 0,
+                            mu22 = 0 ,
+                            mu23 = 0,
+                            mu31 = 0,
+                            mu32 = 0,
+                            mu33 = 0,
+                            mu34 = 0,
+                            mu35 = 0)
+{
+  
+  n <- n+500 # 500 burning observations
+  t <- seq(0, n-1, 1)
+  
+  g1 <- t %%2
+  g2 <- t %%3
+  g3 <- t %%5
+  
+  str_gran <- bind_cols(index = t, g1 = g1, g2 = g2, g3 = g3)
+  
+  # calculation of g1
+  g1_table <- bind_cols(g1 = unique(g1), dist_mean = c(mu11, mu12))
+  
+  g1_tally <- str_gran %>% group_by(g1) %>%
+    count() %>%
+    left_join(g1_table, by = "g1")
+  
+  g1_dist <- g1_tally %>%
+    mutate(g1_d = list(rep(g1, each = n)),
+           g1_dist = list(rnorm(n, dist_mean, 1))) %>% 
+    ungroup() %>% 
+    select(g1_d, g1_dist) %>% 
+    unnest(cols = c(g1_d, g1_dist))
+  
+  g1_data <- str_gran %>% arrange(g1) %>% bind_cols(g1_dist = g1_dist$g1_dist) %>% arrange(index)
+  
+  # calculation of g2
+  
+  g2_table<- bind_cols(g2 = unique(g2),
+                       dist_mean = c(mu21, mu22, mu23))
+  
+  g2_tally <- str_gran %>%
+    group_by(g2) %>%
+    count() %>% 
+    left_join(g2_table, by = "g2")
+  
+  g2_dist <- g2_tally %>%
+    mutate(g2_d = list(rep(g2, each = n)),
+           g2_dist = list(rnorm(n, dist_mean, 1))) %>% 
+    ungroup() %>% 
+    select(g2_d, g2_dist) %>% 
+    unnest(cols = c(g2_d, g2_dist))
+  
+  g2_data <- str_gran %>% arrange(g2) %>% bind_cols(g2_dist = g2_dist$g2_dist) %>% arrange(index)
+  
+  # calculation of g3
+  
+  g3_table<- bind_cols(g3 = unique(g3), dist_mean = c(mu31, mu32, mu33, mu34, mu35))
+  
+  g3_tally <- str_gran %>% group_by(g3) %>% count() %>% left_join(g3_table, by = "g3")
+  
+  g3_dist <- g3_tally %>%
+    mutate(g3_d = list(rep(g3, each = n)),
+           g3_dist = list(rnorm(n, dist_mean, 1))) %>% 
+    ungroup() %>% 
+    select(g3_d, g3_dist) %>% 
+    unnest(cols = c(g3_d, g3_dist))
+  
+  g3_data <- str_gran %>% arrange(g3) %>% bind_cols(g3_dist = g3_dist$g3_dist) %>% arrange(index)
+  
+  
+  innov_data <- g1_data %>% 
+    left_join(g2_data %>% select(index, g2_dist), by = "index") %>% 
+    left_join(g3_data %>% select(index, g3_dist), by = "index")
+  
+
+  nd_time = innov_data %>% mutate(ts = g1_dist + g2_dist + g3_dist)
+  
+  nd_time
+}
+
+##----generate-design-2gran-data
+
+set.seed(123)
+
+nTj = 300
+mean_diffj = 1
+
+design1 <- generate_design(n=nTj) # null design
+design2 <- generate_design(n=nTj,
+                           mu21 = mean_diffj, 
+                           mu32=mean_diffj , 
+                           mu34=mean_diffj)
+
+design3 <- generate_design(n=nTj, 
+                           mu22=mean_diffj, 
+                           mu32=mean_diffj , 
+                           mu34=mean_diffj)
+
+design4 <- generate_design(n=nTj,
+                           mu23 = mean_diffj,
+                           mu31 = 2*mean_diffj ,
+                           mu32=mean_diffj)        
+data_bind <- bind_rows(design1, design2, design3, design4, .id = "design")
+
+
+##----generate-design-2gran-plot 
+
+p1 <- ggplot(data_bind,
+             aes(x = index, y = ts)) + 
+  geom_line() +
+  xlab("index")+
+  facet_wrap(~design, scales = "free_y",ncol =1, labeller = "label_both") +
+  theme_validation()
+
+p2 <- ggplot(data_bind,
+             aes(x = as.factor(g1), y = ts)) + 
+  geom_boxplot(alpha =0.5) + xlab("g1") + 
+  facet_wrap(~design, scales = "free_y", ncol = 1, labeller = "label_both")+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  theme_validation()
+
+
+p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = ts)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol = 1, labeller = "label_both")+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") + ylab("")+
+  theme_validation()
+
+p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = ts)) + geom_boxplot(alpha =0.5) +
+  xlab("g3") + theme_bw()+
+  facet_wrap(~design, scales = "free_y", ncol = 1, labeller = "label_both")+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue")+ ylab("")+
+  theme_validation()
+
+gran2_change <- (p2 + p3 + p4) *
+  theme_validation()
+
+##----generate-design-1gran-data
+
+set.seed(123)
+
+nTj = 300
+mean_diffj = 1
+
+design1 <- generate_design(n=nTj,
+                           mu31 = mean_diffj) 
+#mu32=mean_diffj , 
+#mu34=mean_diffj)
+
+design2 <- generate_design(n=nTj, 
+                           mu32=mean_diffj) 
+#mu32=mean_diffj , 
+#mu34=mean_diffj)
+
+design3 <- generate_design(n=nTj,
+                           mu35 = mean_diffj)
+#mu31 = 2*mean_diffj ,
+#mu32=mean_diffj)
+design4 <- generate_design(n=nTj,
+                           mu32 = mean_diffj,
+                           mu33 = mean_diffj)
+
+data_bind <- bind_rows(design1, design2, design3, design4,  .id = "design")
+
+##----generate-design-1gran-plot 
+
+p1 <- ggplot(data_bind,
+             aes(x = index, y = ts)) + 
+  geom_line() +
+  xlab("index")+
+  facet_wrap(~design, scales = "free_y",ncol =1, labeller = "label_both") +
+  theme_validation()
+
+p2 <- ggplot(data_bind,
+             aes(x = as.factor(g1), y = ts)) + 
+  geom_boxplot(alpha =0.5) + xlab("g1") + 
+  facet_wrap(~design, scales = "free_y", ncol = 1, labeller = "label_both")+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") +
+  theme_validation()
+
+
+p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = ts)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
+  facet_wrap(~design, scales = "free_y",ncol = 1, labeller = "label_both")+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue") + ylab("")+
+  theme_validation()
+
+p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = ts)) + geom_boxplot(alpha =0.5) +
+  xlab("g3") + theme_bw()+
+  facet_wrap(~design, scales = "free_y", ncol = 1, labeller = "label_both")+ stat_summary(
+    fun = median,
+    geom = 'line',
+    aes(group = 1), size = 0.8, color = "blue")+ ylab("")+
+  theme_validation()
+
+gran1_change <- (p2 + p3 + p4) *
+  theme_validation() 
+
+
+##----gran2and1-clubbed
+
+ggpubr::ggarrange(gran2_change, gran1_change, labels = c("a", "b"))

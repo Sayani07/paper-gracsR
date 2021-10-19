@@ -525,157 +525,25 @@ _(c) One signifiant granularity_
 \noindent Here only one granularity is responsible for distinguishing the designs. Designs change significantly only for the granularity $g3$. Figure \ref{fig:plot-1gran}(right) shows this.
 
 
-```{r tab-distribution, fig.pos="htb"}
-granularity = c("g1", "g2", "g3")
-alternate_design =  c("g10 ~ N(0, 1), g11 ~ N(2, 1)",
-                      "g21 ~ N(2, 1), g22 ~ N(1, 1), g23 ~ N(0, 1)",
-                      "g31 ~ N(0, 1), g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1), g35 ~ N(0, 1)")
-
-# alternate_design =  c("g11 ~ N(2, 1)",
-#                       "g21 ~ N(2, 1), g22 ~ N(1, 1)",
-#                       "g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1)")
-
-tab_dist <- tibble::tibble(granularity = granularity, `Varying distributions` = alternate_design)
-
-# knitr::kable(tab_dist, caption = "Alternate distributions of different categories if they deviate from null.")
+```{r tab-distribution}
 ```
 
 
 ```{r tab-design}
-design = c("design-1", "design-2", "design-3", "design-4", "design-5")
-g1 = c("fixed", "vary", "fixed", "fixed", "vary")
-g2 = c("fixed", "fixed", "vary", "fixed", "vary")
-g3 = c("fixed", "fixed", "fixed", "vary", "vary")
-table <- tibble(design, g1, g2, g3)
-
-#%>% kable(caption = "5 different designs resulting from considering different distributions across categories.")
 ```
 
 
 ```{r tab-dist-design}
-
-# library(kableExtra)
-# 
-# knitr::kables(list(kable(caption = "Alternate distributions of different categories if they deviate from null.",
-#    tab_dist
-#     ) %>% kable_styling(),
-#   kable(caption = "5 different designs resulting from considering different distributions across categories.",
-#  tibble(design, g1, g2, g3)
-#     ) %>% kable_styling()
-#   )
-# ) %>% kable_styling()
-# 
-knitr::kable(
-  list(tab_dist,  tibble(design, g1, g2, g3)),
-  caption = 'For Scenario (a), distributions of different categories (top), 5 designs resulting from different distributions across categories (below)',
-  booktabs = TRUE, valign = 't'
-)
 ```
 
 
 
 ```{r generate-design-3change}
-generate_design <- function(t, mu1, mu2, mu3){
-  
-t <- seq(0, t, 1)
-g1 <- t %%2
-g2 <- t %%3
-g3 <- t %%5
-
-# null design
-g1_dnull <- rep( rep(0, each = length(unique(g1))), length.out= length(t))
-g2_dnull <- rep( rep(0, each = length(unique(g2))), length.out= length(t))
-g3_dnull <- rep( rep(0, each = length(unique(g3))), length.out= length(t))
- 
-# mean changing across categories in varying ways
-
-g1_dvary <- rep(mu1, length.out= length(t))
-g2_dvary <- rep(mu2, length.out= length(t))
-g3_dvary <- rep(mu3, length.out= length(t))
-
-
-design1 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dnull)
-design2 = distributional::dist_normal(g1_dvary + g2_dnull + g3_dnull)
-design3 = distributional::dist_normal(g1_dnull + g2_dvary + g3_dnull)
-design4 = distributional::dist_normal(g1_dnull + g2_dnull + g3_dvary)
-design5 = distributional::dist_normal(g1_dvary + g2_dvary + g3_dvary)
-
-data_bind <- tibble::tibble(
-index = t,
-g1 = g1,
-g2 = g2,
-g3 = g3,
-design1 = distributional::generate(design1, times = 1) %>% unlist(),
-design2 = distributional::generate(design2, times = 1) %>% unlist(),
-design3 = distributional::generate(design3, times = 1) %>% unlist(),
-design4 = distributional::generate(design4, times = 1) %>% unlist(),
-design5 = distributional::generate(design5, times = 1) %>% unlist()
-) %>% 
-  pivot_longer(-c(1, 2, 3, 4), names_to = "design", values_to = "sim_data")
-
-data_bind
-}
-
-t = 300
-mu1= c(0, 2)
-mu2 = c(2, 1, 0)
-mu3 = c(0, 1, 2, 1, 0)
-
-data_bind <- generate_design(t, mu1, mu2, mu3)
 
 ```
 
 ```{r plot-3gran-new, out.width="100%", fig.cap="The linear (left) and cyclic (right) representation of the measured variable is shown. In this scenario, all of $g1$, $g2$ and $g3$ changes across at least one design. Also, it is not possible to comprehend these patterns across cyclic granularities or group similar series just by looking at the linear plots."}
 
-# plot_linear_data <- function(data){
-# ggplot(data,
-#              aes(x = index, y = sim_data)) + 
-#   geom_line() +
-#   xlab("index")+
-#   theme_bw() 
-# }
-
-p1 <- ggplot(data_bind,
-             aes(x = index, y = sim_data)) + 
-  geom_line() +
-  xlab("index")+
-  facet_wrap(~design, scales = "free_y",ncol =1) +
-  theme_validation()
-
-p2 <- ggplot(data_bind,
-             aes(x = as.factor(g1), y = sim_data)) + 
-  geom_boxplot(alpha =0.5) + xlab("g1") + 
-  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
-    fun = median,
-    geom = 'line',
-    aes(group = 1), size = 0.8, color = "blue") +
-  theme_validation()
-
-
-
-p3 <- ggplot(data_bind, aes(x = as.factor(g2), y = sim_data)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
-  facet_wrap(~design, scales = "free_y",ncol = 1)+ stat_summary(
-    fun = median,
-    geom = 'line',
-    aes(group = 1), size = 0.8, color = "blue") + ylab("")+
-  theme_validation()
-
-p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alpha =0.5) +
-  xlab("g3") + theme_bw()+
-  facet_wrap(~design, scales = "free_y", ncol = 1)+ stat_summary(
-    fun = median,
-    geom = 'line',
-    aes(group = 1), size = 0.8, color = "blue")+ ylab("")+
-  theme_validation()
-
-
-(p1 + (p2 + p3 + p4)) *
-  theme_validation() + plot_layout(widths = c(2, 1))
-# 
-# plot_cyclic_data( data_bind %>% filter(design=="design2"))
-# plot_data( data_bind %>% filter(design=="design3"))
-# plot_data( data_bind %>% filter(design=="design4"))
-# plot_data( data_bind %>% filter(design=="design5"))
 ```
 
 
@@ -912,9 +780,34 @@ gran1_change <- (p2 + p3 + p4) *
 
 <!-- A subset of many possible designs are shown in Figure \ref{fig: plot-linear }. For the parameter space (XXX unique  combinations shown in table YYY), 100, 500 independent replications of all possible combination of simulation parameters were generated. The clustering methodologies were run all these unique combinations and subsets of these to verify if the methodologies work as expected. -->
 
+```{r generate-design-new}
+
+```
+
+
+```{r generate-design-2gran-data}
+
+```
+
+
+```{r generate-design-2gran-plot}
+
+```
+
+
+```{r generate-design-1gran-data}
+
+```
+
+
+```{r generate-design-1gran-plot}
+
+```
+
+
 ```{r gran2and1-clubbed, fig.cap=" For the left scenario $g1$, $g2$ would change across atleast one design but $g3$ change remains same across all design. For tthe right one, only $g3$ changes across different designs."}
 #gran2_change  + gran1_change + plot_layout(widths = c(1,1))
-ggpubr::ggarrange(gran1_change, gran2_change, labels = c("a", "b"))
+#ggpubr::ggarrange(gran1_change, gran2_change, labels = c("a", "b"))
 ```
 
 ### Interaction of granularities
