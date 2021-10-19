@@ -509,20 +509,20 @@ the behavior of the entity will not change drastically and hence the time series
 ### Individual granularities
 
 
-  _(a) All signifiant granularities_
+  _Scenario (a): All signifiant granularities_
 
 <!-- Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1). -->
 
-\noindent Consider the scenario when all three granularities $g1$, $g2$, and $g3$ are responsible for distinguishing the designs. That means that for at least one among the to-be-grouped designs, the pattern for each of $g1$, $g2$, and $g3$ will change. We consider different distributions across categories (as in Table \ref{tab:tab-dist-design}) (top) that will lead to different designs (as in Table \ref{tab:tab-dist-design}) (below). Figure \ref{fig:plot-3gran-new} shows the linear and cyclic representation of the simulated variable under these five designs. For the consequent data designs, only graphical representations will be provided.
+\noindent Consider the scenario when all three granularities $g1$, $g2$, and $g3$ are responsible for distinguishing the designs. This implies that the patterns across each granularity will change significantly for at least one among the to-be-grouped designs. We consider different distributions across categories (as in Table \ref{tab:tab-dist-design} top) that will lead to different designs (as in Table \ref{tab:tab-dist-design} below). Figure \ref{fig:plot-3gran-new} shows the linear and cyclic representation of the simulated variable under these five designs. As could be seen from the plot, it is impossible to decipher the structural difference in the time series variable just by looking at the linear view. The difference in structure becomes quite clear when we see the distribution across cyclic granularities. Hence, for the consequent scenarios, only graphical displays across cyclic granularities are provided to emphasize the difference in structure.
 
-_(b) Few significant granularities_
+_Scenario (b): Few significant granularities_
 
-\noindent This is the case where one granularity will remain the same across all designs. We consider the case where the distribution of $y$ would vary across levels of $g2$ for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. Figure \ref{#fig:plot-linear} shows the linear and cyclic representation of $y$. The first panel shows raw plot of $y$ in a linear scale and the second panel shows distribution of $y$ across cyclic granularities namely $g1$, $g2$ and $g3$. As could be seen from the plots, it is impossible to decipher from the raw time plot that the time series variable shows such pattern across different granularities.
+\noindent This is the case where one granularity will remain the same across all designs. We consider the case where the distribution of $v$ would vary across levels of $g2$ for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. Figure
+\ref{#fig:plot-linear}(left) shows the considered design. 
 
 _(c) One signifiant granularity_
 
-\noindent Here only one granularity is responsible for distinguishing the designs. Designs change significantly only for the granularity $g2$. Figure \ref{fig:plot-1gran} shows this.
-
+\noindent Here only one granularity is responsible for distinguishing the designs. Designs change significantly only for the granularity $g3$. Figure \ref{fig:plot-1gran}(right) shows this.
 
 
 ```{r tab-distribution, fig.pos="htb"}
@@ -625,7 +625,7 @@ data_bind <- generate_design(t, mu1, mu2, mu3)
 
 ```
 
-```{r plot-3gran-new, out.width="100%", fig.cap="The linear (left) and cyclic (right) representation of the measured variable is shown. In this scenario, all of $g1$, $g2$ and $g3$ changes across at least one design. Also, it is not possible to comprehend these patterns across cyclic granularities or group similar series just by looking at the linear plots.", fig.pos="htb"}
+```{r plot-3gran-new, out.width="100%", fig.cap="The linear (left) and cyclic (right) representation of the measured variable is shown. In this scenario, all of $g1$, $g2$ and $g3$ changes across at least one design. Also, it is not possible to comprehend these patterns across cyclic granularities or group similar series just by looking at the linear plots."}
 
 # plot_linear_data <- function(data){
 # ggplot(data,
