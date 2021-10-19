@@ -497,7 +497,8 @@ To validate the clustering approaches, we create data designs that replicate pro
 
 <!-- An ARMA (p,q) process is used to generate series, where $p$ and $q$ are selected at random such that the series is stationary. The various designs on $g1$, $g2$, and $g3$ are introduced by adding matching designs to this series' innovations. The innovations are considered to have a normal distribution, although they follow the same pattern as the designs. To eliminate the effect of starting values, the first 500 observations in each series are discarded. -->
 
-Each of the $7$ categories from $\{g10,g11$, $g20, g21,\dots g32, g33, g34\}$ might be assumed to come from the same distribution, a subset of them from the same distribution, a subset of them from separate distributions, or all from different distributions, resulting in various data designs. As the methods ignores the linear progression of time, there is little value in adding time dependency in the data generating process. It is reasonable to construct a time series using properties such as trend, seasonality, and auto-correlation. However, when examining distributions across categories of cyclic granularities, these time series features are lost or addressed independently by considering all seasonal fluctuations. Because the time span during which an entity is observed in order to ascertain its behavior is very short, it is assumed that the time series will remain stationary throughout the observation period. The data type is set to "continuous," and the setup is assumed to be gaussian. For example, in a null design, all categories are considered to be normal (0,1). The mean of the subsequent categories are incremented or decremented from this null design based on the mean difference between them in non-null designs.
+Each category or combination of categories from $g1$, $g2$ and $g3$ are assumed to come from the same distribution, a subset of them from the same distribution, a subset of them from separate distributions, or all from different distributions, resulting in various data designs. As the methods ignore the linear progression of time, there is little value in adding time dependency in the data generating process. It is often reasonable to construct a time series using properties such as trend, seasonality, and auto-correlation. However, when examining distributions across categories of cyclic granularities, these time series features are lost or addressed independently by considering seasonal fluctuations through cyclic granularities. Because the time span during which an entity is observed in order to ascertain its behavior is not very long,
+the behavior of the entity will not change drastically and hence the time series can be assumed to remain stationary throughout the observation period. If the observation period is very long (for e.g more than 3 years), property, physical or geographical attributes might change leading to a non-stationary time series. But such a scenario is not considered here and the resulting clusters are assumed to be time invariant in the observation period. The data type is set to be "continuous," and the setup is assumed to be Gaussian. When the distribution of a granularity is "fixed", it means distributions across categories do not vary and are considered to be from N (0,1). The mean of different categories are altered in the "varying" designs, leading to varying distributions across categories.
 
 
 <!-- An ARMA (p,q) process is used to generate series, where $p$ and $q$ are selected at random such that the series is stationary. The various designs on $g1$, $g2$, and $g3$ are introduced by adding matching designs to this series' innovations. The innovations are considered to have a normal distribution, although they follow the same pattern as the designs. To eliminate the effect of starting values, the first 500 observations in each series are discarded. -->
@@ -523,22 +524,21 @@ _(c) One signifiant granularity_
 \noindent Here only one granularity is responsible for distinguishing the designs. Designs change significantly only for the granularity $g2$. Figure \ref{fig:plot-1gran} shows this.
 
 
+
 ```{r tab-distribution, fig.pos="htb"}
 granularity = c("g1", "g2", "g3")
-# alternate_design =  c("g10 ~ N(0, 1), g11 ~ N(2, 1)",
-#                       "g21 ~ N(2, 1), g22 ~ N(1, 1), g23 ~ N(0, 1)",
-#                       "g31 ~ N(0, 1), g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1), g35 ~ N(0, 1)")
+alternate_design =  c("g10 ~ N(0, 1), g11 ~ N(2, 1)",
+                      "g21 ~ N(2, 1), g22 ~ N(1, 1), g23 ~ N(0, 1)",
+                      "g31 ~ N(0, 1), g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1), g35 ~ N(0, 1)")
 
-alternate_design =  c("g11 ~ N(2, 1)",
-                      "g21 ~ N(2, 1), g22 ~ N(1, 1)",
-                      "g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1)")
+# alternate_design =  c("g11 ~ N(2, 1)",
+#                       "g21 ~ N(2, 1), g22 ~ N(1, 1)",
+#                       "g32 ~ N(1, 1), g33 ~ N(2, 1), g34 ~ N(1, 1)")
 
 tab_dist <- tibble::tibble(granularity = granularity, `Varying distributions` = alternate_design)
 
 # knitr::kable(tab_dist, caption = "Alternate distributions of different categories if they deviate from null.")
 ```
-
-<!-- A combination of these null and alternate distributions are considered when building the designs as in the table \ref{tab:tab-design}.  -->
 
 
 ```{r tab-design}
@@ -567,7 +567,7 @@ table <- tibble(design, g1, g2, g3)
 # 
 knitr::kable(
   list(tab_dist,  tibble(design, g1, g2, g3)),
-  caption = 'Alternate distributions of different categories  (top), 5 designs resulting from different distributions across categories (below)',
+  caption = 'For Scenario (a), distributions of different categories (top), 5 designs resulting from different distributions across categories (below)',
   booktabs = TRUE, valign = 't'
 )
 ```
