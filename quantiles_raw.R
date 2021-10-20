@@ -83,48 +83,34 @@ data_356cust_pc <- prcomp(data_356cust_wide[,-1],
 
 plot(data_356cust_pc, type="l", npcs=50)
 
+# from scree-plot it looks like first 10 PCs explain most of the
+# variation
+
+
 library(liminal)
-data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:10])
-limn_tour(data_356cust_pc10, PC1:PC5)
+
+set.seed(2935)
+data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:6])
+limn_tour(data_356cust_pc10, PC1:PC6)
 
 sort(abs(data_356cust_pc$rotation[,1]))
-
-abs(data_356cust_pc$rotation[,1]) %>% hist
-#abs(bas6[,1]) %>% hist
-
-##---- with scaling
-
-# data_356cust_pc <- prcomp(data_356cust_wide[,-1],
-#                           center = FALSE, scale = TRUE, retx = TRUE)
-# 
-# plot(data_356cust_pc, type="l", npcs=50)
-# 
-# library(liminal)
-# data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:10])
-# limn_tour(data_356cust_pc10, PC1:PC10)
-# 
-# sort(abs(data_356cust_pc$rotation[,1]))
-
 
 ##---- t-SNE embeddings
 
 library(Rtsne)
-tSNE_fit<-data_356cust_wide%>% 
+
+tSNE_fit <- data_356cust_wide%>% 
   select(-customer_id) %>% 
-  Rtsne()
+  Rtsne( pca = FALSE,
+         perplexity = 30)
 
+tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], tsneY = tSNE_fit$Y[, 2])
 
-tSNE_fit$Y %>% 
-  as.data.frame() %>% 
-  rename(tSNE1="V1",
-         tSNE2="V2") %>% 
-  mutate(customer_id=as.character(data_356cust_wide$customer_id)) -> tSNE.plot
-
-library(ggplot2)
-ggplot()+
-  geom_point(data=tSNE.plot,
-             aes(x=tSNE1,y=tSNE2))
-
+limn_tour_link(
+  tsne_df,
+  data_356cust_pc10,
+  cols = PC1:PC6
+)+ 
 
 # +
 #   stat_ellipse(data=tSNE.plot,
