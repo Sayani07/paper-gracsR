@@ -1,5 +1,5 @@
 ---
-title: "Selecting similar behaving group of customers to check nqt clustering methodology"
+title: "Selecting similar behaving group of customers to check clustering methodology"
 output: html_document
 ---
 
@@ -44,11 +44,11 @@ library(ggpubr)
 
 quantile_prob_graph <- c(0.25, 0.5, 0.75)
 
-wkndwday <- read_rds("../../../data/dist_gran_wkndwday_356cust_nqt.rds") %>% broom::tidy() 
+wkndwday <- read_rds(here("data/dist_gran_wkndwday_356cust_nqt.rds")) %>% broom::tidy() 
 
-moy <- read_rds("../../../data/dist_gran_moy_356cust_nqt.rds") %>% broom::tidy()
+moy <- read_rds(here("data/dist_gran_moy_356cust_nqt.rds")) %>% broom::tidy()
 
-hod <- read_rds("../../../data/dist_gran_hod_356cust_nqt.rds") %>% broom::tidy()
+hod <- read_rds(here("data/dist_gran_hod_356cust_nqt.rds")) %>% broom::tidy()
 
 distance <- wkndwday %>% 
   left_join(moy, by = c("item1", "item2")) %>% 
@@ -170,6 +170,7 @@ mds_all <- mds_hod %>%
   left_join(mds_wpd, by = "customer_id") %>% 
   select(customer_id, everything())
 
+write_rds(mds_all, "data/mds_all_nqt.rds")
 
 ```
 
@@ -204,10 +205,10 @@ mds_wpd <- base %>%
   group_by(customer_id) %>%
   add_trace(x = ~mds1.wpd, y = ~ mds2.wpd, text = ~customer_id)
 
-cols <- toRGB(RColorBrewer::brewer.pal(5, "Dark2"))
+
 subplot(mds_total, mds_hod, mds_moy ,mds_wkndwday, titleX = TRUE) %>%
   layout(showlegend = FALSE) %>%
-  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect", persistent = TRUE) 
+  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect") 
 ```
 
 # Visualize similarity between js and wpd methodologies:
@@ -216,7 +217,7 @@ subplot(mds_total, mds_hod, mds_moy ,mds_wkndwday, titleX = TRUE) %>%
 ```{r wpd-total}
 subplot(mds_wpd, mds_total, nrows = 1, titleX = TRUE) %>%
   layout(showlegend = FALSE) %>%
-  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect", persistent = TRUE)
+  highlight(on = "plotly_selected", dynamic = TRUE, selectize = TRUE, selected = attrs_selected(0.5), opacityDim = 0.2, off = "plotly_deselect")
 ```
 
 

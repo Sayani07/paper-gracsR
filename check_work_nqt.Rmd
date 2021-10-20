@@ -1,0 +1,799 @@
+---
+title:  Selecting customers
+
+abstract: |
+ Clustering elements based on behavior across time granularities 
+bibliography: [bibliography.bib]
+preamble: >
+  \setlength {\marginparwidth }{2cm}
+  \usepackage{mathtools,amssymb,booktabs,longtable,todonotes,amsthm}
+  \def\mod{~\text{mod}~}
+output:
+  bookdown::pdf_book:
+    base_format: rticles::asa_article
+    fig_height: 4
+    fig_width: 6
+    fig_caption: yes
+    dev: "pdf" 
+    keep_tex: yes
+    toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache=TRUE, messages=FALSE, warning=FALSE)
+# Make sure you have the latest version of rmarkdown and bookdown
+#devtools::install_github("rstudio/rmarkdown")
+#devtools::install_github("rstudio/bookdown")
+library(ggplot2)
+library(gravitas)
+library(gracsr)
+library(ggdendro)
+library(dplyr)
+library(readr)
+library(visdat)
+library(ggplot2)
+library(tidyverse)
+library(naniar)
+library(here)
+library(tsibble)
+library(knitr)
+library(patchwork)
+library(GGally)
+library(distributional)
+library(viridis)
+```
+
+
+```{r mytheme}
+theme_characterisation <- function() {
+  
+  theme_bw() + # seeting theme
+    theme(strip.text = element_text(size = 9,
+                                    margin = margin(b = 0, t = 0))) + # narrow facet space
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + # no axis ticks 
+  theme(panel.spacing =unit(0, "lines")) +  # to ensure no gap between facets
+    theme(axis.text.x = element_text(angle=90, hjust=1, size = 9)) + # rotate the x-axis text
+    theme(legend.position = "bottom")+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
+  theme(axis.text.x = element_text(size=5))
+}
+```
+
+
+
+```{r anchor}
+anchor1 <- 8302280 # 1Q
+anchor2 <- 8640717  # 2Q
+anchor3 <- 8402996 # 3Q
+anchor4 <- 8308172 # 4Q
+kopt <- 4 # number of clusters
+```
+
+
+_Where they lie on the mds plot of total, hod, moy, wkndwday and wpd_
+
+
+```{r data-read}
+
+quantile_prob_graph <- c(0.25, 0.5, 0.75)
+
+wkndwday <- read_rds(here("data/dist_gran_wkndwday_356cust_nqt.rds")) %>% broom::tidy()
+
+moy <- read_rds(here("data/dist_gran_moy_356cust_nqt.rds")) %>% broom::tidy()
+
+hod <- read_rds(here("data/dist_gran_hod_356cust_nqt.rds")) %>% broom::tidy()
+
+
+distance <- wkndwday %>% 
+  left_join(moy, by = c("item1", "item2")) %>% 
+  left_join(hod, by = c("item1", "item2")) %>% 
+  rename("wkndwday" ="distance.x",
+         "moy" = "distance.y",
+         "hod" = "distance") %>%
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2))) 
+```
+
+
+
+
+```{r data-pick}
+total_distance <- distance %>% 
+  #mutate(total = hod)
+  mutate(total = wkndwday/2 + moy/12 + hod/24) 
+
+  
+# 8454221 10420689 1001 8454221 10018298 10420689 9393696
+
+
+# k-nearest neighbor pick function
+nn_pick_function <- function(anchor, k = 5){
+  data <- total_distance %>% filter(item1 %in% 
+                            c(anchor)|item2 %in% 
+                            c(anchor) ) %>% 
+  #group_by(item1) %>%
+  arrange(total) %>% 
+  head(k) %>% 
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2)))
+  
+  unique(c(data$item1,data$item2)) %>% as_tibble()
+}
+
+data_pick_one <- nn_pick_function(anchor1)
+data_pick_two <- nn_pick_function(anchor2)
+data_pick_three <- nn_pick_function(anchor3)
+data_pick_four <- nn_pick_function(anchor4)
+
+# c(11013154, 9345642, 8328008, 8636035,8627007,8454235)
+
+data_pick_cust <- bind_rows(
+data_pick_one, data_pick_two, data_pick_three, data_pick_four,
+.id = "design")
+
+data_pick_cust$design <- paste("design", data_pick_cust$design, sep = "-")
+
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))%>%
+  filter(customer_id %in% data_pick_cust$value) %>% 
+  gracsr::scale_gran(method = "robust", response = "general_supply_kwh")
+```
+
+
+
+```{r mds-plots}
+
+data_pick_char <- data_pick_cust %>% 
+  rename("customer_id" = "value") %>% 
+  mutate(customer_id = as.character(customer_id))
+
+mds_all <- read_rds(here("data/mds_all_nqt.rds"))  %>% 
+  left_join(data_pick_char)
+
+
+highlight_df <- mds_all %>% filter(customer_id %in% data_pick_char$customer_id)
+
+
+total_plot <- ggplot(mds_all,
+aes(x = mds1.total, y = mds2.total)) +
+  geom_point(alpha = 0.3) +
+  geom_point(data = highlight_df, 
+             aes(x = mds1.total, y = mds2.total, color = as.factor(design)))
+
+wpd_plot <- ggplot(mds_all,
+aes(x = mds1.wpd, y = mds2.wpd)) +
+  geom_point(alpha = 0.3) +
+  geom_point(data = highlight_df, 
+             aes(x = mds1.wpd, y = mds2.wpd, color = as.factor(design)))
+  
+hod_plot <- ggplot(mds_all,
+aes(x = mds1.hod, y = mds2.hod)) +
+  geom_point(alpha = 0.3) +
+  geom_point(data = highlight_df, 
+             aes(x = mds1.hod, y = mds2.hod, color = as.factor(design)))
+
+
+moy_plot <- ggplot(mds_all,
+aes(x = mds1.moy, y = mds2.moy)) +
+  geom_point(alpha = 0.3) +
+  geom_point(data = highlight_df, 
+             aes(x = mds1.moy, y = mds2.moy, color = as.factor(design)))
+
+wkndwday_plot <- ggplot(mds_all,
+aes(x = mds1.wkndwday, y = mds2.wkndwday)) +
+  geom_point(alpha = 0.3) +
+  geom_point(data = highlight_df, 
+             aes(x =  mds1.wkndwday, 
+                 y =  mds2.wkndwday, 
+                 color = as.factor(design)))
+
+p <- (total_plot + wpd_plot)/(hod_plot + moy_plot + wkndwday_plot)
+
+
+
+p*theme_characterisation() +
+  plot_layout(guides = "collect")
+
+```
+
+
+
+```{r clustering}
+filtered_distance <- distance %>% filter(item1 %in% data_pick_cust$value) %>% 
+  filter(item2 %in% data_pick_cust$value)
+
+
+total_distance <- filtered_distance %>% 
+mutate(total = wkndwday/2 + moy/12 + hod/24) 
+#mutate(total = hod) 
+
+total_distance_wide <- total_distance %>% pivot_wider(-c(2:5), 
+                               names_from = item2,
+                               values_from = total)
+#total_distance_wide$`11013154` <- NA
+
+rownames(total_distance_wide) <- total_distance_wide$item1
+
+mds_data <- total_distance_wide %>% 
+  mutate_all(~replace(., is.na(.), 0)) %>%
+   tibble::rownames_to_column() %>%  
+   select(-item1) %>% 
+   pivot_longer(-rowname) %>% 
+   pivot_wider(names_from=rowname, values_from=value) 
+
+rownames(mds_data) <- total_distance_wide$item1
+
+# group <- mds_data[-1] %>% clust_gran(kopt=4)
+# 
+
+df <- mds_data[-1] %>% as.matrix()
+DM <- matrix(0, ncol(mds_data), ncol(mds_data))
+DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)]
+
+f = as.dist(DM)
+
+#f %>% hclust %>% cutree(k=4)
+
+
+first_lot <- mds_data %>% names()
+# because distance matrix is such  that 1:23 appears in columns and 2:24 appears in rows such that 1st customer is missing from row and last customer is missing from variables
+id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
+
+group <- f %>% hclust (method = "ward.D") %>% cutree(k=kopt)
+
+cluster_result <- bind_cols(id = id, group = group) 
+
+mds  = cmdscale(f)
+rownames(mds) = id
+colnames(mds) = c("mds1", "mds2")
+```
+
+
+```{r heatmap-hod}
+
+data_heatmap_hod <- quantile_gran(data_pick,
+                                  "hour_day",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles,
+              values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
+  
+#data_heatmap_hod$customer_id = factor(data_heatmap_hod$customer_id, levels = data_pick_cust$value)
+data_heatmap_hod$category <- factor(data_heatmap_hod$category, levels = 0:23)
+
+```
+
+```{r data-heatmap-hod-new}
+
+legend_title <- "group"
+
+data_heatmap_hod %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=customer_id,
+                  fill = as.factor(group)),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=customer_id, 
+                color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) + theme_characterisation() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))+
+  scale_x_discrete(breaks = seq(0, 23, 3))
+# + scale_y_continuous(breaks = NULL) 
+```
+
+
+```{r data-heatmap-moy}
+
+data_heatmap_moy <- quantile_gran(data_pick, "month_year", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
+  
+data_heatmap_moy$category <- factor(data_heatmap_moy$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+
+data_heatmap_moy %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, 
+                  group=customer_id, 
+              fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+    ylab("demand (in Kwh)") +
+    xlab("month-of-year") +
+  theme_characterisation() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))
+```
+
+
+```{r data-heatmap-wkndwday}
+
+data_heatmap_wkndwday <- quantile_gran(data_pick, "wknd_wday", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
+  
+data_heatmap_wkndwday$category <- factor(data_heatmap_wkndwday$category, levels = c("Weekday", "Weekend"))
+
+
+data_heatmap_wkndwday %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, 
+                  group=customer_id, 
+              fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+ theme_characterisation() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))
+```
+
+
+
+```{r data-heatmap-hod-group}
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id"))
+
+data_heatmap_hod_group <- quantile_gran(data_group,
+                                  gran1="hour_day",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+  
+data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
+
+# data_heatmap_hod_group <- data_heatmap_hod_group %>%
+#   mutate(group = case_when(group==1 ~"Group 2",
+#                            group==2 ~"Group 4",
+#                            group==3 ~"Group 1",
+#                            group==4 ~"Group 3"))
+
+# data_heatmap_hod_group$group <- factor(data_heatmap_hod_group$group, levels = c("Group 1", "Group 2", "Group 3", "Group 4"))
+
+data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
+
+hod_group <- data_heatmap_hod_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=group,
+                  fill = as.factor(group), alpha = 0.5),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=group, 
+                color = as.factor(group)), size = 1)+
+  facet_wrap(~group, 
+             scales = "free_y",  
+             nrow = 4) + 
+             theme_characterisation() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) 
+# 
+
+# 
+# data_pick_cust <- data_pick_cust %>% mutate(value = as.character(value))
+# 
+# data_pick_cust %>% left_join(cluster_result, by = c("value" = "id")) %>% group_by(group)
+```
+
+
+
+```{r data-heatmap-moy-group}
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id"))
+
+data_heatmap_moy_group <- quantile_gran(data_group,
+                                  gran1="month_year",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+
+data_heatmap_moy_group$group <- paste("group", data_heatmap_moy_group$group, sep = "-")
+
+
+moy_group <- data_heatmap_moy_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
+  ylab("demand (in Kwh)") +
+  theme_characterisation() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))
+```
+
+
+```{r data-heatmap-wkndwday-2}
+
+data_heatmap_wkndwday <- quantile_gran(data_pick, "wknd_wday", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"="value"))
+  
+data_heatmap_wkndwday$category <- factor(data_heatmap_wkndwday$category, levels = c("Weekday", "Weekend"))
+
+
+p1 <- data_heatmap_wkndwday %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=customer_id), fill = "lightblue") +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 6) +
+   theme_characterisation() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))
+
+```
+
+```{r data-heatmap-wkndwday-group}
+data_group <- data_pick %>%
+  mutate(customer_id = as.character(customer_id)) %>%
+  left_join(cluster_result, by = c("customer_id" = "id"))
+
+wkndwday_data<- data_group %>% create_gran("wknd_wday") 
+ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
+
+wkndwday_group <- wkndwday_data%>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  lvplot::geom_lv(aes(fill = as.factor(group), color = as.factor(group)), k=5, alpha = 0.5) +
+  #geom_boxplot(aes(fill = as.factor(group), color = as.factor(group)),alpha = 0.5)+
+  #geom_boxplot(outlier.shape = NA) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4)  +
+  theme_characterisation() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey"))
+  
+
+```
+
+
+```{r combined}
+
+combined <- hod_group + moy_group + wkndwday_group & theme(legend.position = "bottom")
+combined + plot_layout(guides = "collect")
+
+```
+
+##  wpd-based clustering
+
+
+```{r ggpairs}
+
+elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
+
+elec_pick <- elec_600_wpd %>% 
+  filter(customer_id %in% data_pick_cust$value)
+
+elec_pick_wide <- elec_pick %>% pivot_wider(-c(1, 2), names_from = "x_variable", values_from = wpd)
+
+```
+
+
+
+
+```{r }
+
+# robust_scale <-  function(x){
+#   (x - stats::median(x))/(stats::IQR(x))
+# }
+
+#scaled_var <- apply(elec_pick_wide[-c(1)], 2, robust_scale) %>% as_tibble()
+
+scaled_var <- elec_pick_wide
+
+f <- elec_pick_wide[-1] %>% dist() 
+
+
+group <- f%>% hclust (method = "ward.D") %>% cutree(k=kopt)
+
+
+cluster_result_wpd <- bind_cols(id = elec_pick_wide$customer_id, group = group) 
+
+# mds plot
+
+# mds  = cmdscale(f)
+# rownames(mds) = id
+# colnames(mds) = c("mds1", "mds2")
+ 
+# ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result_wpd$group),
+#        aes(x = mds1, y = mds2, color = as.factor(group))) +
+#   geom_point() +
+#   geom_text(aes(label = id))
+
+
+data_pcp <- scaled_var %>% 
+  #bind_cols(customer_id =  elec_pick_wide$customer_id) %>%
+  left_join(cluster_result_wpd , by = c("customer_id" = "id")) %>% 
+  select(customer_id, group, everything()) %>% 
+  mutate(group = as.factor(group))
+
+
+pairsplot <- ggpairs(data_pcp, 
+                     columns = 3:5,
+                     aes(fill=group, color = group), alpha = 0.5) +
+  scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) +
+  theme_light()
+
+# will give error if you have got just one observation in a cluster
+  
+
+# ggplot(data = data_pcp,
+#        aes(x = month_year, y = wkndwday)) +
+#   geom_point() +
+#   geom_text(aes(label = id))
+  
+  # 
+  # scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))
+
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 3:ncol(data_pcp),
+                   groupColumn = "group",
+                   showPoints = FALSE, 
+                   alphaLines = 0.8,
+                   order = "anyClass",
+                   scale = "globalminmax"
+) + theme_characterisation()+
+  ylab("wpd") + scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) + theme_light()
+```
+
+```{r parcoord}
+parcoord
+```
+
+
+```{r data-heatmap-hod-group-wpd}
+
+cluster_result_wpd$id <- as.character(cluster_result_wpd$id)
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
+
+data_heatmap_hod_group <- quantile_gran(data_group,
+                                  gran1="hour_day",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+  
+data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
+
+# data_heatmap_hod_group <- data_heatmap_hod_group %>%
+#   mutate(group = case_when(group==1 ~"Group 2",
+#                            group==2 ~"Group 4",
+#                            group==3 ~"Group 1",
+#                            group==4 ~"Group 3"))
+
+# data_heatmap_hod_group$group <- factor(data_heatmap_hod_group$group, levels = c("Group 1", "Group 2", "Group 3", "Group 4"))
+
+data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
+
+hod_group_wpd <- data_heatmap_hod_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=group,
+                  fill = as.factor(group), alpha = 0.5),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=group, 
+                color = as.factor(group)), size = 1)+
+  facet_wrap(~group, 
+             scales = "free_y",  
+             nrow = 4) + 
+              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
+  ylab("demand (in Kwh)") + 
+  theme_light()+ 
+  theme_characterisation() +
+ scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) 
+
+# 
+
+# 
+# data_pick_cust <- data_pick_cust %>% mutate(value = as.character(value))
+# 
+# data_pick_cust %>% left_join(cluster_result, by = c("value" = "id")) %>% group_by(group)
+```
+
+
+```{r data-heatmap-moy-group-wpd}
+
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
+
+data_heatmap_moy_group <- quantile_gran(data_group,
+                                  gran1="month_year",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+
+data_heatmap_moy_group$group <- paste("group", data_heatmap_moy_group$group, sep = "-")
+
+
+moy_group_wpd <- data_heatmap_moy_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
+  ylab("demand (in Kwh)") + 
+  theme_light()+ 
+  theme_characterisation() +
+ scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) 
+```
+
+
+
+
+```{r data-heatmap-wkndwday-group-new2-wpd}
+data_group <- data_pick %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
+
+data_heatmap_wkndwday_group <- quantile_gran(data_group,
+                                  gran1="wknd_wday",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$category, levels = c("Weekday", "Weekend"))
+
+data_heatmap_wkndwday_group$group <- paste("group", data_heatmap_wkndwday_group$group, sep = "-")
+
+
+wkndwday_group_wpd <- data_heatmap_wkndwday_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4)+
+    #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) 
+    xlab("wknd-wday") + 
+  ylab("demand (in Kwh)") + 
+  theme_light()+ 
+  theme_characterisation() +
+ scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) 
+
+
+data_group <- data_pick %>%
+  mutate(customer_id = as.character(customer_id)) %>%
+  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
+
+wkndwday_data<- data_group %>% create_gran("wknd_wday") 
+ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
+
+wkndwday_group_wpd <- wkndwday_data%>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  lvplot::geom_lv(aes(fill = as.factor(group), color = as.factor(group)), k=5, alpha = 0.5) +
+  #geom_boxplot(aes(fill = as.factor(group), color = as.factor(group)),alpha = 0.5)+
+  #geom_boxplot(outlier.shape = NA) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 4)   + 
+  theme_light()+ 
+  theme_characterisation() +
+ scale_fill_viridis_d(direction = -1) +
+  scale_color_viridis_d(direction = -1) 
+```
+
+
+```{r combined-wpd}
+
+combined <- hod_group_wpd + moy_group_wpd + wkndwday_group_wpd & theme(legend.position = "bottom")
+combined + plot_layout(guides = "collect")
+
+```
+```{r extra}
+# total
+# data = mds_total %>% left_join(data_pick_char)
+# 
+# highlight_df <- data %>% filter(customer_id%in% data_pick_char$customer_id)
+#   
+# total_plot <- ggplot(data,
+# aes(x = mds1.total, y = mds2.total)) +
+#   geom_point(alpha = 0.3) +
+#   geom_point(data = highlight_df, 
+#              aes(x = mds1.total, y = mds2.total, color = as.factor(design)), size = 2)
+# 
+# #hod
+# 
+# data = mds_hod %>% left_join(data_pick_char)
+# 
+# highlight_df <- data %>% filter(customer_id%in% data_pick_char$customer_id)
+#   
+# hod_plot <- ggplot(data,
+# aes(x = mds1.hod, y = mds2.hod)) +
+#   geom_point(alpha = 0.3) +
+#   geom_point(data = highlight_df, 
+#              aes(x = mds1.hod, y = mds2.hod, color = as.factor(design)), size = 2)+theme(legend.position = "bottom")
+# 
+# # moy
+# 
+# data = mds_moy %>% left_join(data_pick_char)
+# 
+# highlight_df <- data %>% filter(customer_id%in% data_pick_char$customer_id)
+#   
+# moy_plot <- ggplot(data,
+# aes(x = mds1.moy, y = mds2.moy)) +
+#   geom_point(alpha = 0.3) +
+#   geom_point(data = highlight_df, 
+#              aes(x = mds1.moy, y = mds2.moy, color = as.factor(design)), size = 2)+theme(legend.position = "bottom")
+# 
+# # wkndwday
+# 
+# data = mds_wkndwday %>% left_join(data_pick_char)
+# 
+# highlight_df <- data %>% filter(customer_id %in% data_pick_char$customer_id)
+#   
+# wkndwday_plot <- ggplot(data,
+# aes(x = mds1.wkndwday, y = mds2.wkndwday)) +
+#   geom_point(alpha = 0.3) +
+#   geom_point(data = highlight_df, 
+#              aes(x =  mds1.wkndwday, 
+#                  y =  mds2.wkndwday, 
+#                  color = as.factor(design)),
+#              size = 2)+ theme(legend.position = "bottom")
+
+
+```
+

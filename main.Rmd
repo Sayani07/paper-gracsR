@@ -1150,6 +1150,12 @@ data_group <- data_pick %>%
   mutate(customer_id = as.character(customer_id)) %>%
   left_join(cluster_result, by = c("customer_id" = "id"))
 
+
+data_group %>% filter(group==1) %>% 
+  prob_plot("hour_day",
+            "month_year", 
+            response = "general_supply_kwh", plot_type = "quantile")
+
 # data_heatmap_wkndwday_group <- quantile_gran(data_group,
 #                                   gran1="wknd_wday",
 #                                   quantile_prob_val = c(0.25, 0.5, 0.75),

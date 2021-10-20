@@ -76,6 +76,15 @@ data_356cust_wide <- left_join(data_356cust_hod_wide,
 
 save(data_356cust_wide, file="data/data_356cust_wide.rda")
 
+cluster_result <- cluster_result %>% mutate(customer_id = as.integer(id))
+
+data_356cust_wide_group <- data_356cust_wide %>% 
+  left_join(cluster_result, by = ("customer_id")) %>% 
+  mutate(group = if_else(is.na(group), 10L, group))
+
+
+data_356cust_wide_group$group <- factor(data_356cust_wide_group$group)
+
 # without scaling
 
 data_356cust_pc <- prcomp(data_356cust_wide[,-1],
@@ -90,7 +99,8 @@ plot(data_356cust_pc, type="l", npcs=50)
 library(liminal)
 
 set.seed(2935)
-data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:6])
+data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:6]) %>% 
+  mutate(group = data_356cust_wide_group$group)
 limn_tour(data_356cust_pc10, PC1:PC6)
 
 sort(abs(data_356cust_pc$rotation[,1]))
@@ -105,12 +115,15 @@ tSNE_fit <- data_356cust_wide%>%
          perplexity = 30)
 
 tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], tsneY = tSNE_fit$Y[, 2])
+rownames(tsne_df) <- data_356cust_wide$customer_id
+rownames(data_356cust_pc10) <- data_356cust_wide$customer_id
+
 
 limn_tour_link(
   tsne_df,
   data_356cust_pc10,
   cols = PC1:PC6
-)+ 
+)
 
 # +
 #   stat_ellipse(data=tSNE.plot,
