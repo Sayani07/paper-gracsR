@@ -453,7 +453,7 @@ generate_design <- function(n = 300, #length of time series
 set.seed(123)
 
 nTj = 300
-mean_diffj = 1
+mean_diffj = 2
 
 design1 <- generate_design(n=nTj) # null design
 design2 <- generate_design(n=nTj,
@@ -508,29 +508,24 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = ts)) + geom_boxplot(alpha =0.
   theme_validation()
 
 gran2_change <- (p2 + p3 + p4) *
-  theme_validation()
+  theme_validation() +  plot_annotation('(a)')
 
 ##----generate-design-1gran-data
 
 set.seed(123)
 
 nTj = 300
-mean_diffj = 1
+mean_diffj = 2
 
-design1 <- generate_design(n=nTj,
-                           mu31 = mean_diffj) 
-#mu32=mean_diffj , 
-#mu34=mean_diffj)
+design1 <- generate_design(n=nTj) 
+
 
 design2 <- generate_design(n=nTj, 
                            mu32=mean_diffj) 
-#mu32=mean_diffj , 
-#mu34=mean_diffj)
 
 design3 <- generate_design(n=nTj,
                            mu35 = mean_diffj)
-#mu31 = 2*mean_diffj ,
-#mu32=mean_diffj)
+
 design4 <- generate_design(n=nTj,
                            mu32 = mean_diffj,
                            mu33 = mean_diffj)
@@ -572,12 +567,12 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = ts)) + geom_boxplot(alpha =0.
   theme_validation()
 
 gran1_change <- (p2 + p3 + p4) *
-  theme_validation() 
+  theme_validation()  +  plot_annotation('(b)')
 
 
 ##----gran2and1-clubbed
 
-ggpubr::ggarrange(gran2_change, gran1_change, labels = c("a", "b"))
+ggpubr::ggarrange(gran2_change, gran1_change)
 
 
 ##----interaction-gran
@@ -612,7 +607,7 @@ library(hakear)
 
 nx_val = 2 # number of x-axis levels
 nfacet_val = 3 # number of facet levels
-w1_val = 1 # increment in mean
+w1_val = 2 # increment in mean
 w2_val = 0 # increment in sd
 mean_val = 0 # mean of normal distribution of starting combination
 sd_val = 2 # sd of normal distribution of starting combination
@@ -674,7 +669,7 @@ p_null <- sim_panel_null %>%
   theme_validation() +ylab("")  +
   theme(panel.spacing =unit(0, "lines"))+ theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +ggtitle("Design-1")
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) 
 
 p_varf <- sim_panel_varf %>%
   ggplot(aes(x = as.factor(g1), y = sim_data)) +
@@ -691,7 +686,7 @@ p_varf <- sim_panel_varf %>%
   theme_validation()+ylab("") +
   theme(panel.spacing =unit(0, "lines"))+ theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )+ggtitle("Design-2")
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
 
 p_varx <- sim_panel_varx %>%
   ggplot(aes(x = as.factor(g1), y = sim_data)) +
@@ -708,7 +703,7 @@ p_varx <- sim_panel_varx %>%
   theme_validation()+ylab("") +
   theme(panel.spacing =unit(0, "lines"))+ theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )+ggtitle("Design-3")
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
 
 p_varall <- sim_panel_varall %>%
   ggplot(aes(x = as.factor(g1), y = sim_data)) +
@@ -725,7 +720,7 @@ p_varall <- sim_panel_varall %>%
   theme_validation()+ylab("") +
   theme(panel.spacing =unit(0, "lines"))+ theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )+ggtitle("Design-4")
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
 
 
 change_index <- function(data){
@@ -805,6 +800,6 @@ p4 <- change_index(sim_panel_varall) %>%
 
 #((p1 + p_null)/( p2 + p_varf)/(p3 + p_varx)/(p4 + p_varall)) 
 #p_null+ p_varf + p_varx + p_varall
-ggpubr::ggarrange(p_null, p_varf, p_varx, p_varall)
+p_null +p_varf + p_varx + p_varall + plot_annotation(tag_prefix = '(', tag_levels = 'a', tag_suffix  = ')')
 
 #labels = c("Design-1", "Design-2", "Design-3", "Design-4"))

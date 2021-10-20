@@ -24,8 +24,8 @@ simtable <- expand.grid(mean_diff = mean_diff,
 
 # parallel::mclapply(seq_len(nrow(simtable)), function(scen){
 
-scen<-as.numeric(commandArgs()[[6]]) # If running batch job uncomment this
-#scen <- 10
+#scen<-as.numeric(commandArgs()[[6]]) # If running batch job uncomment this
+scen <- 1
 
 
 simj<-simtable[scen,] #Extract row of table
@@ -144,72 +144,40 @@ set.seed(123)
 bind_data_iter <- map(seq_len(niterj), 
                       function(x){
                         #set.seed(seed_len[x])  
-                        design1 <- generate_design(n=nTj) # null design
-                        design2 <- generate_design(n=nTj,
-                                                   mu31 = mean_diffj) 
-                                                   #mu32=mean_diffj , 
-                                                   #mu34=mean_diffj)
+                        # design1 <- generate_design(n=nTj) # null design
+                        # design2 <- generate_design(n=nTj,
+                        #                            mu31 = mean_diffj) 
+                        #                            
+                        # 
+                        # design3 <- generate_design(n=nTj, 
+                        #                            mu32=mean_diffj) 
+                        #                       
+                        # 
+                        # design4 <- generate_design(n=nTj,
+                        #                            mu33 = mean_diffj)
+                        #                  
+                        # design5 <- generate_design(n=nTj,
+                        #                            mu32 = mean_diffj,
+                        #                            mu33 = mean_diffj)
+                        # bind_design <- bind_rows(design1, design2, design3, design4, design5,  .id = "design")
+                        # 
                         
-                        design3 <- generate_design(n=nTj, 
+                        design1 <- generate_design(n=nTj) 
+     
+                        
+                        design2 <- generate_design(n=nTj, 
                                                    mu32=mean_diffj) 
-                                                   #mu32=mean_diffj , 
-                                                   #mu34=mean_diffj)
-                        
+                       
+                        design3 <- generate_design(n=nTj,
+                                                   mu35 = mean_diffj)
+       
                         design4 <- generate_design(n=nTj,
-                                                   mu33 = mean_diffj)
-                                                   #mu31 = 2*mean_diffj ,
-                                                   #mu32=mean_diffj)
-                        design5 <- generate_design(n=nTj,
                                                    mu32 = mean_diffj,
                                                    mu33 = mean_diffj)
-                        bind_design <- bind_rows(design1, design2, design3, design4, design5,  .id = "design")
+                        
+                        data_bind <- bind_rows(design1, design2, design3, design4,  .id = "design")
                       }) %>% bind_rows(.id = "seed_id") %>% 
   mutate(customer_id = paste(design,seed_id, sep ="-"))
-
-
-p1 <- ggplot(bind_design,
-             aes(x = index, y = ts)) +
-  geom_line() +
-  xlab("index")+
-  facet_wrap(~design, scales = "free_y",ncol =1)
-
-
-p2 <- ggplot(bind_design,
-             aes(x = as.factor(g1), y = ts)) +
-  geom_boxplot(alpha =0.5) + xlab("g1") +
-  facet_wrap(~design,
-             #scales = "free_y",
-             ncol = 1)+ stat_summary(
-    fun = median,
-    geom = 'line',
-    aes(group = 1), size = 0.8, color = "blue") +
-  theme_validation()
-
-
-p3 <- ggplot(bind_design, aes(x = as.factor(g2), y = ts)) + geom_boxplot(alpha =0.5) + xlab("g2") + theme_bw() +
-  facet_wrap(~design,
-             #scales = "free_y",
-             ncol = 1)+ stat_summary(
-    fun = median,
-    geom = 'line',
-    aes(group = 1), size = 0.8, color = "blue") + ylab("")+
-  theme_validation()
-
-p4 <- ggplot(bind_design, aes(x = as.factor(g3), y = ts)) +
-  geom_boxplot(alpha =0.5) +
-  xlab("g3") + theme_bw()+
-  facet_wrap(~design,
-             #scales = "free_y",
-             ncol = 1)+
-             stat_summary(
-    fun = median,
-    geom = 'line',
-    aes(group = 1), size = 0.8, color = "blue")+ ylab("") +
-  theme_validation()
-
-
-(p1 + (p2 + p3 + p4)) *
-  theme_validation() + plot_layout(widths = c(2, 1))
 
 
 ##---tsibble-data
@@ -225,7 +193,9 @@ dist_mat <- bind_data_iter_tsibble %>%
   #scale_gran(method = "robust", response = "sim_data") %>%
   dist_wpd(harmony_tbl, response = "ts", nperm=100)
 
-groups = dist_mat%>% clust_gran(kopt = 5)
+write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_wpd_", scen, ".rds")))
+
+groups = dist_mat%>% clust_gran(kopt = 4)
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
 actual_group = as.factor(bind_data_iter_tsibble %>%as_tibble %>% select(customer_id, design) %>% distinct() %>% pull(design))
@@ -262,8 +232,10 @@ dist_mat_g3 <- bind_data_iter_tsibble %>%
 
 dist_mat <- dist_mat_g1/2 + dist_mat_g2/3 + dist_mat_g3/5
 
+write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_nqt_", scen, ".rds")))
+
 groups = dist_mat %>% 
-  clust_gran(kopt = 5)
+  clust_gran(kopt = 4)
 
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
@@ -301,9 +273,11 @@ dist_mat_g3 <- bind_data_iter_tsibble %>%
 
 dist_mat <- dist_mat_g1/2 + dist_mat_g2/3 + dist_mat_g3/5
 
-groups = dist_mat %>% 
-  clust_gran(kopt = 5)
 
+write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_robust_", scen, ".rds")))
+
+groups = dist_mat %>% 
+  clust_gran(kopt = 4)
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
 
