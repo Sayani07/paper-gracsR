@@ -1,5 +1,5 @@
 ---
-title:  Clustering based on probability distributions with application on residential customers
+title:  Clustering time series based on probability distributions across temporal granularities
 
 # to produce blinded version set to 1
 blinded: 0
@@ -20,12 +20,13 @@ keywords:
 - statistical distributions
 - time granularities
 - calendar algebra
-- periodicties
+- periodic data
 - grammar of graphics
 - R
 
 abstract: |
- Clustering elements based on behavior across time granularities 
+ With more and more time series data being collected at much finer temporal resolution, for a longer length of time, and for a larger number of individuals/entities, time series clustering research is getting a lot of traction. The sort of noisy, patchy, uneven, and asynchronous time series that is typical in many disciplines limits similarity searches among these lengthy time series. In this work, we suggest a method for overcoming these constraints by grouping time series based on probability distributions over cyclic temporal granularities. Cyclic granularities are temporal deconstructions of a time period into units such as hour-of-the-day, work-day/weekend, and so on, and can be helpful for detecting repeating patterns. Looking at probability distributions across cyclic granularities results in an approach that is robust to missing or noisy data, aids in dimension reduction, and ensures small pockets of similar repeated behaviours. The proposed method was tested using a collection of residential electricity customers. The simulated and empirical evidence demonstrates that our method is capable of producing meaningful clusters.
+ 
 bibliography: [bibliography.bib]
 preamble: >
   \setlength {\marginparwidth }{2cm}
