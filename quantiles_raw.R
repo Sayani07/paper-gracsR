@@ -4,7 +4,6 @@ library(readr)
 library(tsibble)
 library(gravitas)
 
-
 # no scaling
 
 data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) 
@@ -76,14 +75,14 @@ data_356cust_wide <- left_join(data_356cust_hod_wide,
 
 save(data_356cust_wide, file="data/data_356cust_wide.rda")
 
-cluster_result <- cluster_result %>% mutate(customer_id = as.integer(id))
+# cluster_result <- cluster_result %>% mutate(customer_id = as.integer(id))
 
-data_356cust_wide_group <- data_356cust_wide %>% 
-  left_join(cluster_result, by = ("customer_id")) %>% 
-  mutate(group = if_else(is.na(group), 10L, group))
+# data_356cust_wide_group <- data_356cust_wide %>% 
+#   left_join(cluster_result, by = ("customer_id")) %>% 
+#   mutate(group = if_else(is.na(group), 10L, group))
 
 
-data_356cust_wide_group$group <- factor(data_356cust_wide_group$group)
+# data_356cust_wide_group$group <- factor(data_356cust_wide_group$group)
 
 # without scaling
 
@@ -99,8 +98,8 @@ plot(data_356cust_pc, type="l", npcs=50)
 library(liminal)
 
 set.seed(2935)
-data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:6]) %>% 
-  mutate(group = data_356cust_wide_group$group)
+data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:6])
+# %>%   mutate(group = data_356cust_wide_group$group)
 limn_tour(data_356cust_pc10, PC1:PC6)
 
 sort(abs(data_356cust_pc$rotation[,1]))
@@ -108,22 +107,55 @@ sort(abs(data_356cust_pc$rotation[,1]))
 ##---- t-SNE embeddings
 
 library(Rtsne)
-
+set.seed(2099)
 tSNE_fit <- data_356cust_wide%>% 
   select(-customer_id) %>% 
   Rtsne( pca = FALSE,
          perplexity = 30)
 
-tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], tsneY = tSNE_fit$Y[, 2])
-rownames(tsne_df) <- data_356cust_wide$customer_id
+
+data_pick_one <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble 
+data_pick_two <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble
+data_pick_three <- c(8221762, 8273636, 10359424, 8232822)%>% as_tibble
+#data_pick_four <- c(10590714,8495194,8589936, 8454235) %>% as_tibble
+
+data_pick_cust <- bind_rows(
+  data_pick_one, data_pick_two, data_pick_three,
+  .id = "design")
+
+
+tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], tsneY = tSNE_fit$Y[, 2], customer_id = data_356cust_wide$customer_id) %>% left_join(
+  data_pick_cust, by = c("customer_id" = "value"
+)) %>% mutate(design = if_else(is.na(design), "0", design))
+
+#rownames(tsne_df) <- data_356cust_wide$customer_id
+
 rownames(data_356cust_pc10) <- data_356cust_wide$customer_id
 
+## ----tsne-xy--------------------------------------------------------
+tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY, color = design)) +
+  geom_point(aes(text = customer_id)) +
+  #scale_color_manual(values = limn_pal_tableau10()) +
+  scale_colour_viridis_d(direction = -1) +
+  guides(color = FALSE) +
+  labs(caption = "tSNE") +
+  theme(aspect.ratio = 1) +
+  theme_light()
 
-limn_tour_link(
-  tsne_df,
+## ----highlight-customer--------------------------------------------------------
+
+library(plotly)
+tsne_plotly <- tsne_xy %>% ggplotly(tooltip = "text")
+
+
+## ----tour----------------------------------------------------------
+
+a <- limn_tour_link(
+  tsne_df[,1:2],
   data_356cust_pc10,
   cols = PC1:PC6
 )
+
 
 # +
 #   stat_ellipse(data=tSNE.plot,
