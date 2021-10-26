@@ -116,7 +116,7 @@ We are motivated by the residential smart meter data. These long time series are
 - When the time series is long (high dimensionality), some clustering algorithms become intractable. By applying dimensionality reduction via characterising probability distributions, we are able to cluster long length time series efficiently;
 
 - When the clustering algorithm is based on a distance metric (i.e. Euclidean distance), it cannot handle time series with missing data or of different lengths if actual points are used as inputs. However, by
-using probability distribution, we can trim the tails and bypass that problem.
+using Jensen-Shannon distances we are measuring the distance between two distributions, rather than raw data which are more likely to be affected by missing observations and outliers;
 
 - We recognize that most clustering algorithms provide profiles across only one temporal granularity, but this approach provides a wider approach to the issue, seeking to group observations with similar shapes over all important cyclic granularities. Since cyclic granularities are considered instead of linear granularities, clustering would group customers that have similar repetitive behavior across more than one cyclic granularities across which patterns are expected to be significant. 
 
