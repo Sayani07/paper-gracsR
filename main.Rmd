@@ -104,6 +104,25 @@ theme_bw() +
 ```
 
 
+```{r mytheme-application}
+theme_application <- function() {
+  
+  theme_light() + # setting theme
+    #theme(strip.text = element_text(margin = margin(b = 0, t = 0))) + # narrow facet space
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + # no axis ticks 
+  theme(panel.spacing =unit(0, "lines")) +  # to ensure no gap between facets
+    theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank()) + # no x-axis labels to further reduce the gap between facets
+    #theme(axis.text.x = element_text(angle=90, hjust=1, size = 9)) + # rotate the x-axis text
+  theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
+  #theme(axis.text.x = element_text(size=5)) +
+    theme(strip.background = element_blank(),
+  strip.text.x = element_blank())
+}
+```
+
 # Introduction
 
 <!-- time series clustering and its challenges -->
@@ -591,12 +610,47 @@ empty_as_na <- function(x){
 In supervised learning, a training set containing previously known information is used to categorize new occurrences. Acceptable classification rates may be obtained by discarding instances which are not helpful for classification; this process is known as instance selection (@olvera2010review). This is similar to subsetting the population along all dimensions of importance such that the sampled data is representative of the main characteristics of the underlying distribution. Instance selection in unsupervised learning has received limited attention in the literature, but could serve as an useful way to sample evaluation data set to measure the performance of a model or method. One such procedure is suggested in @Fan2021-bq that selects similar instances (neighbors) for each instance (anchor) and treats the anchor and its neighbors as the same class. In this section, a similar idea is used to select customers with prototype behaviors
 that serves as evaluation data sets for our proposed methodology.
 
-First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. We obtain the $wpd$ for all cyclic granularities considered for these customers and found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weeknd/weekday) are coming out to be significant for most customers. This implies that for most customers, there is some interesting pattern across these three granularities. Potentially this could be done for the entire data set. This step is time consuming and hence has been only run for the $600$ sampled customers. As a second step, we remove customers for which data in any category for the significant granularities are empty. For example, in this data set, if a customer do not have data for an entire month, they have been removed as their monthly behavior could not be studied in that case. Further, we also remove customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study. Finally, we are left with $356$ customers. From this set we select $4$ "anchor" customers which are far apart from each other and $5$ neighboring customers for each of these anchors. These selections were done using the granularity $hod$ space. It is important to note that when we use our proposed methodologies, it is based on all dimensions `hod`, `moy` and `wkndwday`.Fig \ref{fig:mds} shows the MDS of these 356 customers in a 2D space basis their distance on individual granularities and when all of them are combined. Our methodolgies are run on these $24$ customers, which act as a way to evaluate the proposed methodologies.
+
+_Pre-processing steps_
+
+P1. We randomly select a sample of $600$ customers which do not have any implicit missing values and filtered their data for the year 2013.
+
+P2. Obtain $wpd$ for all cyclic granularities considered for these customers. It was found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weeknd/weekday) are coming out to be significant for most customers. This implies that for most customers, there is some interesting pattern across these three granularities.
+
+P3. Remove customers from this list for which data in any category for the significant granularities are empty. For example, in this data set, if a customer do not have data for an entire month, they have been removed as their monthly behavior could not be studied in that case.
+
+P4. Remove customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study.
+
+Finally, we are left with $356$ customers from which we run our prototype search. There are different methods of going ahead with this. For example, one approach could be to use any Non-linear dimensionality reduction technique like MDS or PCA and project the data in a 2-dimensional space. One can then look at few "anchor" customers which are far apart in the 2D space and pick few neighbors for each of the anchor customers. Paradoxically, the curse of dimensionality inverts for dimension reduction, resulting in an excessive amount of observations near the center of the distribution. This affects visualizations made on low-dimensional projections. [Ursula's paper] explains why points tend to be away from the center in the high-dimensional space, but crowd the center in low-dimensional projections, it is helpful to consider the projected volume relative to high-dimensional volume. 
+
+<!-- From this set we select $4$ "anchor" customers which are far apart from each other and $5$ neighboring customers for each of these anchors. These selections were done using the granularity $hod$ space. It is important to note that when we use our proposed methodologies, it is based on all dimensions `hod`, `moy` and `wkndwday`.Fig \ref{fig:mds} shows the MDS of these 356 customers in a 2D space basis their distance on individual granularities and when all of them are combined. Our methodolgies are run on these $24$ customers, which act as a way to evaluate the proposed methodologies.  -->
+
+
+S1. Robust scaling is applied to each customer.
+
+S2. $50^{th}$ percentile for each category for each granularity is obtained for each customers. So we have a data structure with  $356$ rows and $(24 + 12 + 2)$ variables corresponding to $50^{th}$ percentile for each hour-of-day, month-of-year and weekend-weekday.
+
+S3. Apply principal components and restrict the results down to the first six principal components (which makes up approximately 85% of the variance explained in the data) to use with the grand tour.
+
+S4. Run t-SNE using the default arguments on the complete data (sets the perplexity to equal 30 and performs random initialisation). We then create a linked tour with t-SNE layout with liminal as shown in Figure 4.
+
+S5. We inspect of the subspace generated by the set of low-dimensional projections in tour by looking for a simplex shape while the visualization moves from one basis to another. When we brush the corners of the simplex, we find they fall on the edge of the t-SNE point cloud.
+Hall, Marron, and Neeman (2005) have shown that in the extreme case of high-dimension, low-sample size data, observations are on the vertices of a simplex.
+
+
+This is because in high-dimensional data analysis the curse of dimensionality reasons that points tend to be far away from the center of the distribution and on the edge of high-dimensional space. Contrary to this, is that projected data tends to clump at the center.
+
+
+S6. These points should ideally correspond to different behavior with respect to all the variables considered while running PCA. 
 
 
 
-```{r mds, out.width="100%", fig.cap="Instance selection with respect to `hod` such that there are two distinct group and two overlapping groups."}
-knitr::include_graphics("figs/mds_plot.png")
+<!-- First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. We obtain the $wpd$ for all cyclic granularities considered for these customers and found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weeknd/weekday) are coming out to be significant for most customers. This implies that for most customers, there is some interesting pattern across these three granularities. Potentially this could be done for the entire data set. This step is time consuming and hence has been only run for the $600$ sampled customers. As a second step, we remove customers for which data in any category for the significant granularities are empty. For example, in this data set, if a customer do not have data for an entire month, they have been removed as their monthly behavior could not be studied in that case. Further, we also remove customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study.  -->
+
+
+
+```{r mds, out.width="100%", fig.cap="Instance selection using tours and projecting the points in a lower dimensional tsne cloud."}
+knitr::include_graphics("figs/liminal_view.png")
 ```
 
 
@@ -608,252 +662,234 @@ knitr::include_graphics("figs/mds_plot.png")
 
 
 <!-- Fig \ref{fig:data-heatmap-hod}, \ref{fig:} and \ref{fig:} shows the distribution of 24 customers across hour-of-day, month-of-year and wknd-wday respectively. Every row in \ref{fig:} shows different shapes across hour-of-day and across columns show similar shapes for each row. We use our methodology to see if the customers are allocated to same group have similar shapes across one or more significant granularity. -->
-
-
-
-```{r data-pick}
-
+```{r}
 quantile_prob_graph <- c(0.25, 0.5, 0.75)
 
-wkndwday <- read_rds(here("data/dist_gran_wkndwday_356cust_robust.rds")) 
-#%>% broom::tidy()
-
-moy <- read_rds(here("data/dist_gran_moy_356cust.rds")) 
-#%>% broom::tidy()
-
-hod <- read_rds(here("data/dist_gran_hod_356cust_robust.rds")) 
-#%>% broom::tidy()
-
-distance <- wkndwday %>% 
-  left_join(moy, by = c("item1", "item2")) %>% 
-  left_join(hod, by = c("item1", "item2")) %>% 
-  rename("wkndwday" ="distance.x",
-         "moy" = "distance.y",
-         "hod" = "distance") %>%
-  mutate(item1 = as.integer(as.character(item1)),
-         item2 = as.integer(as.character(item2))) 
-
-total_distance <- distance %>% 
-  mutate(total = hod)
-  #mutate(total = wkndwday/2 + moy/12 + hod/24) 
-
-  
-# 8454221 10420689
-data_pick_one <- total_distance %>% filter(item1 %in% 
-                            c(8454221)) %>% 
-  #group_by(item1) %>%
-  arrange(total) %>% 
-  head(5) %>% 
-  mutate(item1 = as.integer(as.character(item1)),
-         item2 = as.integer(as.character(item2)))
-
-data_pick_ch <-  total_distance %>% filter(item1 %in% 
-                            c(9393696)) %>% group_by(item1) %>% arrange(total) %>% head(5) %>% 
-  mutate(item1 = as.integer(as.character(item1)),
-         item2 = as.integer(as.character(item2)))
+# data_pick_one <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble %>% set_names("customer_id")
+# data_pick_two <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble %>% set_names("customer_id")
+# data_pick_three <- c(8221762, 8273636, 10359424, 8232822)%>% as_tibble %>% set_names("customer_id")
 
 
-
-#11013154  8181071 11048034
-data_pick_two <- total_distance %>% filter(item1 %in% 
-                            c(8181071)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>% 
-  mutate(item1 = as.integer(as.character(item1)),
-         item2 = as.integer(as.character(item2)))
-
-
-data_pick_three <- total_distance %>% filter(item1 %in% 
-                            c(11013154)) %>%
-  #group_by(item1) %>%
-  arrange(total) %>% head(5)%>% 
-  mutate(item1 = as.integer(as.character(item1)),
-         item2 = as.integer(as.character(item2)))
-
-# data_pick_three <- total_distance %>% filter(item1 %in%
-#                             c(11013154)) %>% group_by(item1) %>% arrange(total) %>% head(5)%>%
-#   mutate(item1 = as.integer(as.character(item1)),
-#          item2 = as.integer(as.character(item2)))
-
-# 8653709
-data_pick_four <- total_distance %>% filter(item1 %in%
-                            c(8184707)) %>% 
-  #group_by(item1) %>% 
-  arrange(total) %>% head(5)%>%
-  mutate(item1 = as.integer(as.character(item1)),
-         item2 = as.integer(as.character(item2)))
-
-
-# c(11013154, 8495194, 8627007,10109182,10677705,8952846)
-
-data_pick_cust <- bind_rows(
-unique(c(data_pick_one$item1,data_pick_one$item2)) %>% as_tibble(),    unique(c(data_pick_two$item1,data_pick_two$item2)) %>% as_tibble(), 
-c(11013154, 9345642, 8328008, 8636035,8627007,8454235) %>% as_tibble(),
-unique(c(data_pick_four$item1,data_pick_four$item2)) %>% as_tibble(),
-.id = "design")
-
-data_pick_cust$design <- paste("design", data_pick_cust$design, sep = "-")
-
-data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds"))%>%
-  filter(customer_id %in% data_pick_cust$value) %>% 
-  gracsr::scale_gran( method = "robust", response = "general_supply_kwh")
+data_pick_one <- c(8541744, 9355808, 8603880, 8619309, 10542667) %>% as_tibble %>% set_names("customer_id")
+#data_pick_two <- c(8688242, 8643837, 8184707, 10534355, 8684420) %>% as_tibble%>% set_names("customer_id")
+data_pick_three <- c(9792072, 8589936, 8454235, 10692366, 8603828)%>% as_tibble%>% set_names("customer_id")
+data_pick_four <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble %>% set_names("customer_id")
+data_pick_five <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble %>% set_names("customer_id")
+data_pick_six <- c(8221762, 8273636, 10359424, 8232822, 11450499)%>% as_tibble %>% set_names("customer_id")
 
 
 ```
 
+```{r assemble}
+data_pick_cust <- bind_rows(
+data_pick_one, 
+#data_pick_two, 
+data_pick_three,
+data_pick_four,
+data_pick_five, 
+data_pick_six,
+.id = "design") %>% 
+  mutate(customer_id = as.character(customer_id))
 
-<!-- # ```{r} -->
-<!-- # data_pick %>% ggplot() + geom_line(aes(x=reading_datetime, y = general_supply_kwh)) + -->
-<!-- #   facet_wrap(~customer_id, ncol= 2) +  -->
-<!-- # ``` -->
+```
+
+
+
+```{r}
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+  mutate(customer_id = as.character(customer_id)) %>% 
+  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
+  gracsr::scale_gran( method = "nqt",
+                      response = "general_supply_kwh")
+```
 
 
 ```{r clustering}
-filtered_distance <- distance %>% filter(item1 %in% data_pick_cust$value) %>% 
-  filter(item2 %in% data_pick_cust$value)
+hod <- suppressMessages(data_pick %>% 
+  dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
 
+moy <- suppressMessages(data_pick %>% 
+  dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
 
-total_distance <- filtered_distance %>% 
-mutate(total = wkndwday/2 + moy/12 + hod/24) 
-#mutate(total = hod) 
+wkndwday <- suppressMessages(data_pick %>% 
+  dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
 
-total_distance_wide <- total_distance %>% pivot_wider(-c(2:5), 
-                               names_from = item2,
-                               values_from = total)
-#total_distance_wide$`11013154` <- NA
+distance <- wkndwday/2 + moy/12 + hod/24
 
-rownames(total_distance_wide) <- total_distance_wide$item1
+f = as.dist(distance)
 
-mds_data <- total_distance_wide %>% 
-  mutate_all(~replace(., is.na(.), 0)) %>%
-   tibble::rownames_to_column() %>%  
-   select(-item1) %>% 
-   pivot_longer(-rowname) %>% 
-   pivot_wider(names_from=rowname, values_from=value) 
-
-rownames(mds_data) <- total_distance_wide$item1
-
-# group <- mds_data[-1] %>% clust_gran(kopt=4)
-# 
-
-df <- mds_data[-1] %>% as.matrix()
-DM <- matrix(0, ncol(mds_data), ncol(mds_data))
-DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)]
-
-f = as.dist(DM)
-
-#f %>% hclust %>% cutree(k=4)
-
-
-first_lot <- mds_data %>% names()
-# because distance matrix is such  that 1:23 appears in columns and 2:24 appears in rows such that 1st customer is missing from row and last customer is missing from variables
-id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
-
-group <- f %>% hclust (method = "ward.D") %>% cutree(k=4)
-
-cluster_result <- bind_cols(id = id, group = group) 
-
-mds  = cmdscale(f)
-rownames(mds) = id
-colnames(mds) = c("mds1", "mds2")
-
-# ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result$group), 
-#        aes(x = mds1, y = mds2, color = as.factor(group))) +
-#   geom_point() +
-#   geom_text(aes(label = id))
-
-# cluster_result %>% filter(group==1)
-# cluster_result %>% filter(group==2)
-# cluster_result %>% filter(group==3)
-# cluster_result %>% filter(group==4)
-
-  #x = ~mds1.hod, y = ~ mds2.hod, text = ~customer_id
+cluster_result <- suppressMessages(f %>% 
+  clust_gran(kopt = 5)) %>% 
+  rename("customer_id" = "id")
 ```
-```{r heatmap-hod}
 
-data_heatmap_hod <- quantile_gran(data_pick,
-                                  "hour_day", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
-  left_join(data_pick_cust, by = c("customer_id"="value"))
+
+```{r hod-data}
+data_hod <- quantile_gran(data_pick,
+                                  "hour_day",
+                                  quantile_prob_val = quantile_prob_graph) %>% 
+  pivot_wider(names_from = quantiles,
+              values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id")) %>% 
+  left_join(cluster_result, by = c("customer_id"))
   
 #data_heatmap_hod$customer_id = factor(data_heatmap_hod$customer_id, levels = data_pick_cust$value)
-data_heatmap_hod$category <- factor(data_heatmap_hod$category, levels = 0:23)
+data_hod$category <- factor(data_hod$category, levels = 0:23)
 
+# lev <- data_hod %>% distinct(customer_id, design) %>% arrange(design) %>% pull(customer_id)
 ```
 
 
-```{r data-heatmap-hod-new, fig.cap="The distribution of electricity demand for the selected 24 customers across hour-of-day. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. According to our prototype selection method, each row represents a distinct shape of daily load, and all customers in the same row should have similar daily profile.After clustering these consumers, all customers with the same colour represent the same group. Except for customer id 8269176, there is unanimity across design and groups. Even though their daily form resembles Group 2, our clustering approach places them in Group 3 (which is design 4 in our case). Because our method uses hod, moy, and wkndwday, there may be some mismatches depending on only one variable."}
+```{r hod-ind-design}
 
-legend_title <- "group"
+# data_hod$customer_id <- factor(data_hod$customer_id, levels = lev)
 
-data_heatmap_hod %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+hod_ind_design <- data_hod %>% 
+  left_join(cluster_result,by = c("customer_id", "group")) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`,
-                  group=customer_id,
-                  fill = as.factor(group)),
+                  group=customer_id, 
+                  fill = design),
               alpha = 0.5) +
   geom_line(aes(y = `50%`,
-                group=customer_id, 
-                color = as.factor(group)), size = 1) +
+                group=customer_id,
+                color = design), 
+            size = 1) +
   facet_wrap(design~customer_id, 
-             scales = "free_y", 
-             labeller = "label_value",
-             ncol = 6) +
-    theme_bw() +
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) +
-    theme(strip.text = element_text(size = 10,
-                                    margin = margin(b = 0, t = 0))) +
-  ylab("demand (in Kwh)")  + 
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ 
-  #theme() strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +
-  scale_x_discrete(breaks = seq(0,23, 4)) +
-  scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  xlab("hour-of-day") 
+             scales = "free_y",
+             ncol=24) + 
+ theme_application() +
+  xlab("hour-of-day") +
+  scale_fill_viridis_d()+
+  scale_color_viridis_d()+
+  scale_x_discrete(breaks = seq(0, 23, 3))
 ```
 
 
-```{r data-heatmap-moy, fig.cap = "The distribution of electricity demand for the selected 24 customers across month-of-year. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Intriguingly, customer id 8269176 appears to be in the appropriate group (Group 3) because its monthly profile is more similar to Group 3 than Design 4. So, while our clustering approach failed to place the customer in the correct hour-of-day group, it did so for month-of-year. When contrasting the moy to hod profile, there are greater behavioural differences across customers within a group."}
+```{r hod-ind-group}
+hod_ind_group <- data_hod %>% 
+  left_join(cluster_result) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=customer_id, fill = as.factor(group)),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=customer_id, color = as.factor(group)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y",
+              ncol=24) + theme_application()+
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black")) +    xlab("hour-of-day")  +
+  scale_x_discrete(breaks = seq(0, 23, 3))
+# + scale_y_continuous(breaks = NULL) 
+# 
+# 
+(hod_ind_design/hod_ind_group)* theme(legend.position = "none")
 
-data_heatmap_moy <- quantile_gran(data_pick, "month_year", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
-  left_join(data_pick_cust, by = c("customer_id"="value"))
+```
+
+
+
+```{r data-heatmap-moy-design}
+
+data_moy <- quantile_gran(data_pick,
+                                  "month_year", 
+                                  quantile_prob_val = quantile_prob_graph) %>% 
+  pivot_wider(names_from = quantiles, 
+              values_from = quantiles_values) %>% 
+  left_join(data_pick_cust, by = c("customer_id"))
   
-data_heatmap_moy$category <- factor(data_heatmap_moy$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+data_moy$category <- factor(data_moy$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
-
-data_heatmap_moy %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
+moy_ind_design <- data_moy %>% 
+  left_join(cluster_result, by = c("customer_id")) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`, 
-                  group=customer_id, 
-              fill = as.factor(group)), alpha = 0.5) +
+                  group=customer_id, fill = as.factor(design)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(design)), size = 1) +
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             ncol = 24) +
+    ylab("demand (in Kwh)") +
+    xlab("month-of-year")  +
+  theme_application() +
+  scale_fill_viridis_d(direction = 1)+
+  scale_color_viridis_d(direction = 1)
+```
+
+
+```{r data-heatmap-moy-group-ind}
+
+moy_ind_group <- data_moy %>% 
+  left_join(cluster_result, by = c("customer_id")) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, 
+                  group=customer_id, fill = as.factor(group)), alpha = 0.5) +
   geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y", 
+             ncol = 24) +
+    ylab("demand (in Kwh)") +
+    xlab("month-of-year")  +
+  theme_application() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))
+
+(moy_ind_design/moy_ind_group)*theme(legend.position = "none")
+
+```  
+
+```{r data-heatmap-wkndwday-group2}
+
+data_wkndwday <- data_pick  %>%
+  left_join(cluster_result)%>% create_gran("wknd_wday")  %>% 
+  left_join(data_pick_cust, by = c("customer_id"))
+
+ylim1 = boxplot.stats(data_wkndwday$general_supply_kwh)$stats[c(1, 5)]
+
+wkndwday_ind_design <- data_wkndwday%>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  #lvplot::geom_lv(aes(fill = as.factor(design), 
+   #                   color = as.factor(design)), k=5, alpha = 0.5) +
+  geom_boxplot(aes(fill = as.factor(group), color = as.factor(group)),alpha = 0.5)+
+  #geom_boxplot(outlier.shape = NA) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
              labeller = "label_value",
-             ncol = 6) +
-    theme(strip.text = element_text(size = 10,
-                                    margin = margin(b = 0, t = 0))) + xlab("month-of-year") +
-  ylab("demand (in Kwh)")  +
-  theme_bw() +
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) + 
-  theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )+
-  scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  xlab("month-of-year") +  theme(axis.text.x = element_text(size=5))
+              ncol = 24)  +
+  theme_application() +
+  scale_fill_viridis_d(direction = 1)+
+  scale_color_viridis_d(direction = 1)
+  
+
 ```
+
+
+```{r}
+wkndwday_ind_group <- data_wkndwday%>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  #lvplot::geom_lv(aes(fill = as.factor(group), 
+          #            color = as.factor(group)), k=5, alpha = 0.5) +
+  geom_boxplot(aes(fill = as.factor(group), color = as.factor(group)),alpha = 0.5)+
+  #geom_boxplot(outlier.shape = NA) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  facet_wrap(design~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 24)  +
+  theme_application() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00",  "grey", "black"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))
+
+
+(wkndwday_ind_design / wkndwday_ind_group)* theme(legend.position = "none")
+```
+
 
 ##  JS-based clustering
 
@@ -863,11 +899,233 @@ The distribution of electricity demand for the selected 24 customers across hour
 \noindent The distribution of electricity demand for the selected 24 customers across month-of-year is shown in Figure \ref{fig:data-heatmap-moy}. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Intriguingly, customer id 8269176 appears to be in the appropriate group (Group 3) because its monthly profile is more similar to Group 3 than Design 4. So, while our clustering approach failed to place the customer in the correct hour-of-day group, it did so for month-of-year. When contrasting the `moy` to `hod` profile, there are greater behavioral differences across customers within a group, which implies that `hod` has the minimum within-cluster variation.
 
 
-```{r data-heatmap-hod-group}
 
-data_group <- data_pick %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result, by = c("customer_id" = "id"))
+Characterization of clusters both statistically and qualitatively is an important stage of a cluster analysis. A potential way is to look at the findings from all the groups in graphs, and enhance our qualitative descriptions of the groupings. Figure \ref{fig:combined} shows the distribution of the summarized groups and help us to characterise each of the clusters. All of these may be validated with further information about the customer.
+
+_Group 1:_ This includes consumers who work 9-5, get up and conduct morning activities from 7-10am, and then depart. Then they return home in the evening to cook supper and perform other activities, giving the evening a greater peak than the morning. These users in this cluster are insensitive to high temperature but have their heaters on in the winter months May-Aug.
+
+_Group 2:_  This is the group that rushes out of the house in the morning to get to work. They only return at night and do all activities at night, so there is no morning peak. In addition, the users in this cluster are insensitive to high temperature, but sensitive to lower temperature.
+
+_Group 3:_  This group a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls. They have heaters on in the winter but consume less energy in the summer. Winter usage may also be due to increased usage of heaters at night when they are up.
+
+_Group 4:_ Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. They have a flat monthly profile, indicating the usage across all months are similar. It seems that the users in this group are more concerned about the comfort and quality of life than the cost of electricity as opposed to Group 1 and 3, who do not consume more electricity in the summer.
+
+\noindent The plotting scales are not displayed since we want to emphasise comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behavior may be quite similar to a customer with high usage. \noindent The third panel of Figure \ref{fig:combined} shows that the wknd-wday groups exhibit no significant changes across clusters, indicating that they may be a nuisance variable for these consumers.
+```
+
+```{r combined, fig.cap = "The distribution of electricity demand for the clusters across hour-of-day. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Each cluster is characterised by unique shape across the granularity it is plotted against. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters. This fact we will be re-established when we see the importance of each granularity throough the parallel coordinate plot.", eval = FALSE}
+
+combined <- hod_group + moy_group + wkndwday_group & theme(legend.position = "bottom")
+combined + plot_layout(guides = "collect")
+
+```
+
+
+```{r validation}
+data_validation <- (hod/24) %>% broom::tidy() %>% 
+  rename("hod" = "distance") %>% 
+  left_join((moy/12) %>% 
+              broom::tidy(), 
+            by = c("item1", "item2")) %>% 
+  rename("moy" = "distance") %>% 
+  left_join((wkndwday/2) %>% 
+              broom::tidy(), 
+            by = c("item1", "item2"))%>% 
+  rename("wkndwday" = "distance") %>% 
+  left_join(cluster_result, by = c("item1" = "customer_id")) %>% 
+  rename("group_item1" = "group") %>% 
+  left_join(cluster_result, by = c("item2" = "customer_id")) %>%  
+  rename("group_item2" = "group") %>% 
+  pivot_longer(3:5,names_to="gran",
+               values_to = "distance")
+```
+
+
+```{r validation-data}
+
+hod_cat <- suppressMessages(
+data_pick %>% 
+  dist_gran_cat(gran1 = "hour_day", response = "general_supply_kwh")) %>% 
+  mutate(gran = "hod")
+
+moy_cat <- suppressMessages(data_pick %>% 
+  dist_gran_cat(gran1 = "month_year", response = "general_supply_kwh"))%>%
+  mutate(gran = "moy")
+
+wkndwday_cat <- suppressMessages(data_pick %>% 
+  dist_gran_cat(gran1 = "wknd_wday", response = "general_supply_kwh"))%>% 
+  mutate(gran = "wnwd")
+
+
+data_validation_cat <- bind_rows(hod_cat, moy_cat, wkndwday_cat)
+
+
+gran_cat_dist <- data_validation_cat %>% 
+  left_join(cluster_result, by = c("customer_from" = "customer_id")) %>% 
+  rename("group_from" = "group") %>% 
+  left_join(cluster_result, by = c("customer_to" = "customer_id")) %>%  
+  rename("group_to" = "group") %>% 
+  group_by(gran,
+           category,
+           group_from, 
+           group_to) %>% 
+  summarise(sum = sum(distance),.groups = 'drop') %>% 
+  pivot_wider(names_from = group_to, values_from = sum) %>% 
+  mutate(distance = sum(`1`, `2`, `3`, `4`, `5`)) %>% 
+  select(-(4:8)) %>% 
+  arrange(-distance) 
+
+```
+
+
+
+```{r hod-bubble}
+gran_cat_hod <-   gran_cat_dist %>% 
+  filter(gran=="hod")
+
+gran_cat_hod$category <- factor(gran_cat_hod$category, levels = 0:23)
+
+group_total <- gran_cat_hod %>% 
+  ungroup() %>% 
+    group_by(group_from) %>% 
+    summarise(group_total = sum(distance),.groups = 'drop')
+
+
+gran_cat_hod %>% 
+ungroup %>% 
+    left_join(group_total, by = "group_from") %>% 
+    mutate(cat_contibution = distance*100/group_total) %>% 
+    group_by(group_from) %>% 
+    arrange(-distance) %>% slice(c(1:4)) %>% 
+      ggplot(aes(group_from, category, color = as.factor(group_from))) +
+      geom_point(aes(size = distance)) +
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+ theme_light()
+```
+
+```{r hod-cont}
+data_pcp <- gran_cat_hod %>% 
+    ungroup %>% 
+    left_join(group_total, by = "group_from") %>% 
+    mutate(cat_contibution = distance*100/group_total) %>% 
+    group_by(group_from) %>% 
+    arrange(-distance) %>% 
+  select(group_from, category, cat_contibution) %>% 
+  pivot_wider(names_from = "category", values_from = "cat_contibution") %>% mutate(group_from = as.factor(group_from))
+  
+
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 2:ncol(data_pcp),
+                   groupColumn = "group_from",
+                   showPoints = TRUE, 
+                   alphaLines = 1,
+                   order = "anyClass",
+                   scale = "globalminmax"
+) + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd")+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black")) + theme_bw()
+   parcoord 
+```
+
+# Contribution of individual category for moy
+
+
+```{r moy-bubble}
+gran_cat_moy <-   gran_cat_dist %>% 
+  filter(gran=="moy")
+
+gran_cat_moy$category <- factor(gran_cat_moy$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+group_total <- gran_cat_moy %>% 
+  ungroup() %>% 
+    group_by(group_from) %>% 
+    summarise(group_total = sum(distance),.groups = 'drop')
+
+
+gran_cat_moy %>% 
+ungroup %>% 
+left_join(group_total, by = "group_from") %>% 
+mutate(cat_contibution = distance*100/group_total) %>% 
+group_by(group_from) %>% 
+arrange(-distance) %>% slice(c(1:3)) %>% 
+    ggplot(aes(group_from, category, color = as.factor(group_from))) +
+      geom_point(aes(size = distance))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+ theme_light()
+
+```
+
+```{r moy-contr}    
+    
+data_pcp <- gran_cat_moy %>% 
+ungroup %>% 
+left_join(group_total, by = "group_from") %>% 
+mutate(cat_contibution = distance*100/group_total) %>% 
+group_by(group_from) %>% 
+arrange(-distance) %>% 
+  select(group_from, category, cat_contibution) %>% 
+  pivot_wider(names_from = "category", values_from = "cat_contibution") %>% mutate(group_from = as.factor(group_from))
+
+
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 2:ncol(data_pcp),
+                   groupColumn = "group_from",
+                   showPoints = TRUE, 
+                   alphaLines = 1,
+                   order = "anyClass",
+                   scale = "globalminmax"
+) + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd")+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black")) + theme_bw()
+    parcoord 
+
+
+```
+
+
+
+# Contribution of individual category for wknwday
+
+
+```{r wkndwday-bubble}
+gran_cat_wkndwday <-   gran_cat_dist %>% 
+  filter(gran=="wnwd")
+
+gran_cat_wkndwday$category <- factor(gran_cat_wkndwday$category, levels = c("Weekday", "Weekend"))
+
+group_total <- gran_cat_wkndwday %>% 
+  ungroup() %>% 
+    group_by(group_from) %>% 
+    summarise(group_total = sum(distance),.groups = 'drop')
+
+gran_cat_wkndwday %>% 
+ungroup %>% 
+left_join(group_total, by = "group_from") %>% 
+mutate(cat_contibution = distance*100/group_total) %>% 
+group_by(group_from) %>% 
+arrange(-distance) %>% slice(c(1)) %>% 
+ ggplot(aes(group_from, category, color = as.factor(group_from))) +
+ geom_point(aes(size = distance))+
+ scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+ theme_light()
+```
+
+# Show aggregate group behavior
+
+```{r data-heatmap-hod-group}
+legend_title <- "group"
+
+data_group <- data_pick  %>% 
+  left_join(cluster_result, by = c("customer_id"))
 
 data_heatmap_hod_group <- quantile_gran(data_group,
                                   gran1="hour_day",
@@ -877,14 +1135,6 @@ data_heatmap_hod_group <- quantile_gran(data_group,
 
   
 data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
-
-# data_heatmap_hod_group <- data_heatmap_hod_group %>%
-#   mutate(group = case_when(group==1 ~"Group 2",
-#                            group==2 ~"Group 4",
-#                            group==3 ~"Group 1",
-#                            group==4 ~"Group 3"))
-
-# data_heatmap_hod_group$group <- factor(data_heatmap_hod_group$group, levels = c("Group 1", "Group 2", "Group 3", "Group 4"))
 
 data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
 
@@ -900,7 +1150,7 @@ hod_group <- data_heatmap_hod_group %>%
                 color = as.factor(group)), size = 1)+
   facet_wrap(~group, 
              scales = "free_y",  
-             nrow = 4) + 
+             ncol = 5) + 
               #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
   ylab("demand (in Kwh)") + 
@@ -913,46 +1163,14 @@ hod_group <- data_heatmap_hod_group %>%
   scale_x_discrete(breaks = seq(1, 24, 3))+ 
   #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
   theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
-   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) +
+  scale_fill_manual(legend_title, values = c("#E69F00",
+  "#009E73","#0072B2", "#D55E00", "grey")) + 
   theme(legend.position = "bottom") 
 
-# 
-
-# 
-# data_pick_cust <- data_pick_cust %>% mutate(value = as.character(value))
-# 
-# data_pick_cust %>% left_join(cluster_result, by = c("value" = "id")) %>% group_by(group)
 ```
 
-
-Characterization of clusters both statistically and qualitatively is an important stage of a cluster analysis. A potential way is to look at the findings from all the groups in graphs, and enhance our qualitative descriptions of the groupings. Figure \ref{fig:combined} shows the distribution of the summarized groups and help us to characterise each of the clusters. All of these may be validated with further information about the customer.
-
-<!-- We quantify them by producing statistics for each variable. We may look at the findings in graphs, and enhance our qualitative descriptions of the groupings. -->
-
-<!-- \noindent We discover 4 qualitative clusters of varying shapes in the distribution of all consumers in the first panel of Figure \ref{fig:combined}. Group-1 includes consumers who work 9-5, get up and conduct morning activities from 7-10am, and then depart. Then they return home in the evening to cook supper and perform other activities, giving the evening a greater peak than the morning. Group 2 is the group that rushes out of the house in the morning to get to work. They only return at night and do all activities at night, so there is no morning peak. The third one has a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls. Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. All of this may be validated with further information about the customer.  -->
-
-<!-- \noindent The second panel of Figure \ref{fig:combined} shows that month-of-year qualitative clusters are not as distinguishable as hour-of-day. Group 2 is the most distinct and uses the most power during the summer, possibly owing to the use of air conditioners. Group 4 has a flat profile, indicating no significant month-to-month changes. Groups 1 and 3 have heaters on in the winter but consume less energy in the summer. Since gas is not available in all of NSW LGAs, it is possible that customers' heater usage is recorded in electricity rather than gas. -->
-
-<!-- \noindent The third panel of Figure \ref{fig:combined} shows that the wknd-wday groups exhibit no significant changes across clusters, indicating that they may be a nuisance variable for these consumers. -->
-
-_Group 1:_ This includes consumers who work 9-5, get up and conduct morning activities from 7-10am, and then depart. Then they return home in the evening to cook supper and perform other activities, giving the evening a greater peak than the morning. These users in this cluster are insensitive to high temperature but have their heaters on in the winter months May-Aug.
-
-_Group 2:_  This is the group that rushes out of the house in the morning to get to work. They only return at night and do all activities at night, so there is no morning peak. In addition, the users in this cluster are insensitive to high temperature, but sensitive to lower temperature.
-
-_Group 3:_  This group a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls. They have heaters on in the winter but consume less energy in the summer. Winter usage may also be due to increased usage of heaters at night when they are up.
-
-_Group 4:_ Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. They have a flat monthly profile, indicating the usage across all months are similar. It seems that the users in this group are more concerned about the comfort and quality of life than the cost of electricity as opposed to Group 1 and 3, who do not consume more electricity in the summer.
-
-\noindent The plotting scales are not displayed since we want to emphasise comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behavior may be quite similar to a customer with high usage. \noindent The third panel of Figure \ref{fig:combined} shows that the wknd-wday groups exhibit no significant changes across clusters, indicating that they may be a nuisance variable for these consumers.
-
-
 ```{r data-heatmap-moy-group}
-
-data_group <- data_pick %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result, by = c("customer_id" = "id"))
-
 data_heatmap_moy_group <- quantile_gran(data_group,
                                   gran1="month_year",
                                   quantile_prob_val = c(0.25, 0.5, 0.75),
@@ -973,7 +1191,7 @@ moy_group <- data_heatmap_moy_group %>%
   facet_wrap(~group, 
              scales = "free_y", 
              labeller = "label_value",
-             nrow = 4) +
+             ncol = 5) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
   ylab("demand (in Kwh)") +
   theme_bw() +
@@ -982,134 +1200,54 @@ moy_group <- data_heatmap_moy_group %>%
         axis.ticks.y=element_blank()) + 
   theme(panel.spacing =unit(0, "lines")) + 
   theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) + 
+   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) +
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) + 
   theme(legend.position = "bottom") +
   theme(panel.spacing =unit(0, "lines")) + 
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
 ```
 
 
-```{r data-heatmap-wkndwday}
-
-data_heatmap_wkndwday <- quantile_gran(data_pick, "wknd_wday", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
-  left_join(data_pick_cust, by = c("customer_id"="value"))
-  
-data_heatmap_wkndwday$category <- factor(data_heatmap_wkndwday$category, levels = c("Weekday", "Weekend"))
-
-
-p1 <- data_heatmap_wkndwday %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result, by = c("customer_id" = "id")) %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, group=customer_id), fill = "lightblue") +
-  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
-  facet_wrap(design~customer_id, 
-             scales = "free_y", 
-             labeller = "label_value",
-             ncol = 6) +
-    theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) + xlab("wknd_wday") + ylab("demand (in Kwh)")  + theme_bw() +
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) +
-  theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +
-  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))+
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))+
-  theme(legend.position = "bottom")
-
+```{r combined-groups}
+combined <- (hod_group/moy_group) & theme(legend.position = "bottom")
+combined + plot_layout(guides = "collect")
 ```
 
 
-```{r data-heatmap-wkndwday-group}
-data_group <- data_pick %>%
-  mutate(customer_id = as.character(customer_id)) %>%
-  left_join(cluster_result, by = c("customer_id" = "id"))
+```{r}
+wkndwday_data <- data_group %>% create_gran("wknd_wday") %>% 
+  create_gran("hour_day")
 
-
-data_group %>% filter(group==1) %>% 
-  prob_plot("hour_day",
-            "month_year", 
-            response = "general_supply_kwh", plot_type = "quantile")
-
-# data_heatmap_wkndwday_group <- quantile_gran(data_group,
-#                                   gran1="wknd_wday",
-#                                   quantile_prob_val = c(0.25, 0.5, 0.75),
-#                                   group="group") %>%
-#   pivot_wider(names_from = quantiles, values_from = quantiles_values)
-# 
-# data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$category, levels = c("Weekday", "Weekend"))
-# 
-# data_heatmap_wkndwday_group$group <- paste("group", data_heatmap_wkndwday_group$group, sep = "-")
-# 
-# 
-# wkndwday_group <- data_heatmap_wkndwday_group %>%
-#   ggplot(aes(x = category)) +
-#   geom_ribbon(aes(ymin = `25%`,
-#                   ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
-#   geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
-#   facet_wrap(~group,
-#              #scales = "free_y",
-#              labeller = "label_value",
-#              nrow = 4)+
-#     #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0)))
-#     xlab("wknd-wday") +
-#   ylab("demand (in Kwh)") +
-#   theme_bw() +
-#    theme(axis.title.y=element_blank(),
-#         axis.text.y=element_blank(),
-#         axis.ticks.y=element_blank()) +
-#   theme(panel.spacing =unit(0, "lines")) +
-#   theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-#    scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-#   scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-#   theme(legend.position = "bottom") +
-#   theme(panel.spacing =unit(0, "lines")) +
-#   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
-
-
-wkndwday_data<- data_group %>% create_gran("wknd_wday") 
 ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
 
 wkndwday_group <- wkndwday_data%>% 
-  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  ggplot(aes(x=hour_day, y = general_supply_kwh)) +
   #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
   geom_boxplot(aes(fill = as.factor(group), color = as.factor(group)),alpha = 0.5)+
-  #geom_boxplot(outlier.shape = NA) + 
+  #geom_boxplot(outlier.size = 1) + 
   coord_cartesian(ylim = ylim1*1.05)+
   #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
 #geom_boxplot(aes(fill = as.factor(group))) +
   #scale_fill_lv() +
  xlab("wknd-wday") + 
   ylab("demand (in Kwh)") +
-   facet_wrap(~group, 
+   facet_grid(wknd_wday~group, 
              scales = "free_y", 
-             labeller = "label_both",
-             nrow = 4)+
+             labeller = "label_both") + 
   theme_bw() +
    theme(axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()) + 
   theme(panel.spacing =unit(0, "lines")) + 
   theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
-  scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) +
+  scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) +
   theme(legend.position = "bottom") +
   theme(panel.spacing =unit(0, "lines")) + 
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
-
+wkndwday_group
 ```
 
-
-```{r combined, fig.cap="The distribution of electricity demand for the clusters across hour-of-day. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Each cluster is characterised by unique shape across the granularity it is plotted against. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters. This fact we will be re-established when we see the importance of each granularity throough the parallel coordinate plot."}
-
-combined <- hod_group + moy_group + wkndwday_group & theme(legend.position = "bottom")
-combined + plot_layout(guides = "collect")
-
-```
 
 ##  wpd-based clustering
 
@@ -1119,7 +1257,7 @@ combined + plot_layout(guides = "collect")
 elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
 
 elec_pick <- elec_600_wpd %>% 
-  filter(customer_id %in% data_pick_cust$value)
+  filter(customer_id %in% data_pick_cust$customer_id)
 
 elec_pick_wide <- elec_pick %>% pivot_wider(-c(1, 2), names_from = "x_variable", values_from = wpd)
 
@@ -1130,31 +1268,16 @@ elec_pick_wide <- elec_pick %>% pivot_wider(-c(1, 2), names_from = "x_variable",
 
 ```{r, fig.cap=" A ggpairsplot and parallel coordinate plot are used to depict each of the 24 customers. The ggpairs plot four distinct clusters across the month-of-year, which are less prominent across the hour-of-day and wknd-wday. The parallel coordinate plot ranks the variables in order of importance, indicating that the month-of-year is the most important in identifying clusters, whereas wkdn-wday is the least significant and has the least variability among the three variables.", message=FALSE, warning=FALSE}
 
-# robust_scale <-  function(x){
-#   (x - stats::median(x))/(stats::IQR(x))
-# }
-
-#scaled_var <- apply(elec_pick_wide[-c(1)], 2, robust_scale) %>% as_tibble()
 
 scaled_var <- elec_pick_wide
 
 f <- elec_pick_wide[-1] %>% dist() 
 
 
-group <- f%>% hclust (method = "ward.D") %>% cutree(k=4)
+group <- f%>% hclust (method = "ward.D") %>% cutree(k=5)
 
 
 cluster_result_wpd <- bind_cols(id = elec_pick_wide$customer_id, group = group) 
-
-mds  = cmdscale(f)
-rownames(mds) = id
-colnames(mds) = c("mds1", "mds2")
-
-# ggplot(data = mds %>% as_tibble() %>% mutate(group = cluster_result_wpd$group), 
-#        aes(x = mds1, y = mds2, color = as.factor(group))) +
-#   geom_point() +
-#   geom_text(aes(label = id))
-
 
 data_pcp <- scaled_var %>% 
   #bind_cols(customer_id =  elec_pick_wide$customer_id) %>%
@@ -1165,14 +1288,12 @@ data_pcp <- scaled_var %>%
 
 pairsplot <- ggpairs(data_pcp, 
                      columns = 3:5,
-                     aes(fill=group, color = group), alpha = 0.5) +
+                     aes(fill=group, 
+                     color = group)) +
   scale_fill_viridis_d(direction = -1) +
   scale_color_viridis_d(direction = -1) +
   theme_light()
   
-  
-  # 
-  # scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00")) +   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))
 
 parcoord <- GGally::ggparcoord(data_pcp ,
                    columns = 3:ncol(data_pcp),
@@ -1199,255 +1320,6 @@ pairsplot
 parcoord
 ```
 
-```{r data-heatmap-hod-new-wpd, fig.cap="The distribution of electricity demand for the selected 24 customers across hour-of-day. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. According to our prototype selection method, each row represents a distinct shape of daily load, and all customers in the same row should have similar daily profile.After clustering these consumers, all customers with the same colour represent the same group. Except for customer id 8269176, there is unanimity across design and groups. Even though their daily form resembles Group 2, our clustering approach places them in Group 3 (which is design 4 in our case). Because our method uses hod, moy, and wkndwday, there may be some mismatches depending on only one variable."}
-
-
-
-cluster_result_wpd$id <- as.character(cluster_result_wpd$id)
-
-data_group <- data_pick %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
-
-data_heatmap_hod %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result_wpd, by = c("customer_id" = "id")) %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`,
-                  group=customer_id,
-                  fill = as.factor(group)),
-              alpha = 0.5) +
-  geom_line(aes(y = `50%`,
-                group=customer_id, 
-                color = as.factor(group)), size = 1) +
-  facet_wrap(design~customer_id, 
-             scales = "free_y", 
-             labeller = "label_value",
-             ncol = 6) +
-  theme_light() +
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) +
-    theme(strip.text = element_text(size = 10,
-                                    margin = margin(b = 0, t = 0))) +
-  ylab("demand (in Kwh)")  + 
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ 
-  #theme() strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +
-  scale_x_discrete(breaks = seq(0,23, 4)) +
-  scale_fill_viridis_d(direction = -1) +
-  scale_color_viridis_d(direction = -1) + 
-  theme(legend.position = "bottom") +
-  xlab("hour-of-day") 
-```
-
-
-```{r data-heatmap-moy-wpd, fig.cap = "The distribution of electricity demand for the selected 24 customers across month-of-year. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Intriguingly, customer id 8269176 appears to be in the appropriate group (Group 3) because its monthly profile is more similar to Group 3 than Design 4. So, while our clustering approach failed to place the customer in the correct hour-of-day group, it did so for month-of-year. When contrasting the moy to hod profile, there are greater behavioural differences across customers within a group."}
-
-data_heatmap_moy <- quantile_gran(data_pick, "month_year", quantile_prob_val = c(0.25, 0.5, 0.75)) %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) %>% 
-  left_join(data_pick_cust, by = c("customer_id"="value"))
-  
-data_heatmap_moy$category <- factor(data_heatmap_moy$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-
-
-data_heatmap_moy %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result_wpd, by = c("customer_id" = "id")) %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, 
-                  group=customer_id, 
-              fill = as.factor(group)), alpha = 0.5) +
-  geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
-  facet_wrap(design~customer_id, 
-             scales = "free_y", 
-             labeller = "label_value",
-             ncol = 6) +
-    theme(strip.text = element_text(size = 10,
-                                    margin = margin(b = 0, t = 0))) + xlab("month-of-year") +
-  ylab("demand (in Kwh)")  +
-  theme_light() +
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) + 
-  theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm")) + scale_fill_viridis_d(direction = -1) +
-  scale_color_viridis_d(direction = -1) + 
-  xlab("month-of-year") +
-  theme(axis.text.x = element_text(size=5)) +
-  theme(legend.position = "bottom")
-```
-
-
-
-
-```{r data-heatmap-hod-group-wpd}
-
-cluster_result_wpd$id <- as.character(cluster_result_wpd$id)
-
-data_group <- data_pick %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
-
-data_heatmap_hod_group <- quantile_gran(data_group,
-                                  gran1="hour_day",
-                                  quantile_prob_val = c(0.25, 0.5, 0.75),
-                                  group="group") %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
-
-  
-data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
-
-# data_heatmap_hod_group <- data_heatmap_hod_group %>%
-#   mutate(group = case_when(group==1 ~"Group 2",
-#                            group==2 ~"Group 4",
-#                            group==3 ~"Group 1",
-#                            group==4 ~"Group 3"))
-
-# data_heatmap_hod_group$group <- factor(data_heatmap_hod_group$group, levels = c("Group 1", "Group 2", "Group 3", "Group 4"))
-
-data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
-
-hod_group_wpd <- data_heatmap_hod_group %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`,
-                  group=group,
-                  fill = as.factor(group), alpha = 0.5),
-              alpha = 0.5) +
-  geom_line(aes(y = `50%`,
-                group=group, 
-                color = as.factor(group)), size = 1)+
-  facet_wrap(~group, 
-             scales = "free_y",  
-             nrow = 4) + 
-              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
-    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
-  ylab("demand (in Kwh)") + 
-  theme_light() +
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank())+
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
-  scale_x_discrete(breaks = seq(1, 24, 3))+ 
-  #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"))+ scale_fill_viridis_d(direction = -1) +
-  scale_color_viridis_d(direction = -1) + 
-  theme(legend.position = "bottom") 
-
-# 
-
-# 
-# data_pick_cust <- data_pick_cust %>% mutate(value = as.character(value))
-# 
-# data_pick_cust %>% left_join(cluster_result, by = c("value" = "id")) %>% group_by(group)
-```
-
-
-```{r data-heatmap-moy-group-wpd}
-
-
-data_group <- data_pick %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
-
-data_heatmap_moy_group <- quantile_gran(data_group,
-                                  gran1="month_year",
-                                  quantile_prob_val = c(0.25, 0.5, 0.75),
-                                  group="group") %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
-
-data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-
-
-data_heatmap_moy_group$group <- paste("group", data_heatmap_moy_group$group, sep = "-")
-
-
-moy_group_wpd <- data_heatmap_moy_group %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
-  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
-  facet_wrap(~group, 
-             scales = "free_y", 
-             labeller = "label_value",
-             nrow = 4) +
-    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
-  ylab("demand (in Kwh)") +
-  theme_light() + 
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) + 
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-scale_fill_viridis_d(direction = -1) +
-  scale_color_viridis_d(direction = -1) + 
-  theme(legend.position = "bottom") +
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
-```
-
-
-
-
-```{r data-heatmap-wkndwday-group-new2-wpd}
-data_group <- data_pick %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result_wpd, by = c("customer_id" = "id"))
-
-data_heatmap_wkndwday_group <- quantile_gran(data_group,
-                                  gran1="wknd_wday",
-                                  quantile_prob_val = c(0.25, 0.5, 0.75),
-                                  group="group") %>% 
-  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
-
-data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$category, levels = c("Weekday", "Weekend"))
-
-data_heatmap_wkndwday_group$group <- paste("group", data_heatmap_wkndwday_group$group, sep = "-")
-
-wkndwday_data<- data_group %>% create_gran("wknd_wday") 
-ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
-
-wkndwday_group_wpd <- wkndwday_data%>% 
-  ggplot(aes(x=wknd_wday, y = general_supply_kwh))+
-  geom_boxplot(aes(fill = as.factor(group),color = as.factor(group)),alpha = 0.5) + 
-  coord_cartesian(ylim = ylim1*1.05) +
-  #ggplot(aes(x = category)) + 
-  # geom_ribbon(aes(ymin = `25%`, 
-  #                 ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
-  # geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
-  facet_wrap(~group, 
-             scales = "free_y", 
-             labeller = "label_both",
-             nrow = 4)+
-    #theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) 
-    xlab("wknd-wday") + 
-  ylab("demand (in Kwh)") +
-  theme_light() + 
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) + 
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"))+ scale_fill_viridis_d(direction = -1) +
-  scale_color_viridis_d(direction = -1) + 
-  theme(legend.position = "bottom") +
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
-```
-
-
-```{r combined-wpd, fig.cap="The distribution of electricity demand for the clusters across hour-of-day. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Each cluster is characterised by unique shape across the granularity it is plotted against. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters. This fact we will be re-established when we see the importance of each granularity throough the parallel coordinate plot."}
-
-combined <- hod_group_wpd + moy_group_wpd + wkndwday_group_wpd & theme(legend.position = "bottom")
-combined + plot_layout(guides = "collect")
-
-```
-
 
 A parallel coordinate plot with the three significant cyclic granularities used for wpd-based clustering. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that moy is the most important variable in distinguishing the designs followed by hod and wkndwday. It can be observed that cluster 3 and 4 are distinguished by moy while 1 and 2 are distinguished by hod. Here, wkndwday is still acting as the nuisance variable. The ggpairs plot four distinct clusters across the month-of-year, which are less prominent across the hour-of-day and wknd-wday. The parallel coordinate plot ranks the variables in order of importance, indicating that the month-of-year is the most important in identifying clusters, whereas wkdn-wday is the least significant and has the least variability among the three variables.
 
@@ -1470,3 +1342,10 @@ We propose different clustering methodology for grouping noisy, patchy time seri
 <!-- This section will cover some drawback of this clustering method and potential extensions of this work. -->
 
 <!-- There are many cluster analysis methods that can produce quite different clusterings on the same dataset. Cluster validation is about the evaluation of the quality of a clustering; “relative cluster validation” is about using such criteria to compare clusterings. This can be used to select one of a set of clusterings from different methods, or from the same method ran with different parameters such as different numbers of clusters. There are many cluster validation indexes in the literature. Most of them attempt to measure the overall quality of a clustering by a single number, but this can be inappropriate. There are various different characteristics of a clustering that can be relevant in practice, depending on the aim of clustering, such as low within-cluster distances and high between-cluster separation. In this paper, a number of validation criteria will be introduced that refer to different desirable characteristics of a clustering, and that characterise a clustering in a multidimensional way. In specific applications the user may be interested in some of these criteria rather than others. A focus of the paper is on methodology to standardise the different characteristics so that users can aggregate them in a suitable way specifying weights for the various criteria that are relevant in the clustering application at hand. -->
+
+```{r}
+library(ochRe)
+  scale_colour_ochre(
+    palette="nolan_ned")
+```
+

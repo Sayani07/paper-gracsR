@@ -54,7 +54,7 @@ theme_characterisation <- function() {
 
 _Set number of anchors_
 ```{r anchor}
-kopt <- 6# number of clusters
+kopt <- 5# number of clusters
 ```
 
 _Load the customers you want to cluster_

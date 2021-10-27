@@ -76,6 +76,7 @@ data_356cust_wide <- left_join(data_356cust_hod_wide,
 # write_rds(data_356cust_wide, "data/data_356cust_wide.rds")
 
 save(data_356cust_wide, file="data/data_356cust_wide.rda")
+load("data/data_356cust_wide")
 
 # cluster_result <- cluster_result %>% mutate(customer_id = as.integer(id))
 
@@ -110,33 +111,33 @@ sort(abs(data_356cust_pc$rotation[,1]))
 
 library(Rtsne)
 set.seed(2099)
+
 tSNE_fit <- data_356cust_wide%>% 
   select(-customer_id) %>% 
   Rtsne(pca = FALSE,
-         Rtsne(Y_init = clamp_sd(as.matrix(dplyr::select(data_356cust_pc10, PC1, PC2)), sd = 1e-4)),
          perplexity = 30)
 
-data_pick_one <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble 
-data_pick_two <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble
-data_pick_three <- c(8221762, 8273636, 10359424, 8232822)%>% as_tibble
-
-#data_pick_four <- c(10590714,8495194,8589936, 8454235) %>% as_tibble
-
-
-data_pick_one <- c(8541744, 9355808, 8603880, 8619309, 10542667) %>% as_tibble 
-data_pick_two <- c(8688242, 8643837, 8184707, 10534355, 8684420) %>% as_tibble
-data_pick_three <- c(9792072, 8589936, 8454235, 10692366, 8603828)%>% as_tibble
+# data_pick_one <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble 
+# data_pick_two <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble
+# data_pick_three <- c(8221762, 8273636, 10359424, 8232822)%>% as_tibble
+# 
+# #data_pick_four <- c(10590714,8495194,8589936, 8454235) %>% as_tibble
+# 
+# 
+# data_pick_one <- c(8541744, 9355808, 8603880, 8619309, 10542667) %>% as_tibble 
+# data_pick_two <- c(8688242, 8643837, 8184707, 10534355, 8684420) %>% as_tibble
+# data_pick_three <- c(9792072, 8589936, 8454235, 10692366, 8603828)%>% as_tibble
 
 
 data_pick_one <- c(8541744, 9355808, 8603880, 8619309, 10542667) %>% as_tibble %>% set_names("customer_id")
-data_pick_two <- c(8688242, 8643837, 8184707, 10534355, 8684420) %>% as_tibble%>% set_names("customer_id")
+#data_pick_two <- c(8688242, 8643837, 8184707, 10534355, 8684420) %>% as_tibble%>% set_names("customer_id")
 data_pick_three <- c(9792072, 8589936, 8454235, 10692366, 8603828)%>% as_tibble%>% set_names("customer_id")
 data_pick_four <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble %>% set_names("customer_id")
 data_pick_five <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble %>% set_names("customer_id")
-data_pick_six <- c(8221762, 8273636, 10359424, 8232822)%>% as_tibble %>% set_names("customer_id")
+data_pick_six <- c(8221762, 8273636, 10359424, 8232822, 11450499)%>% as_tibble %>% set_names("customer_id")
 
 data_pick_cust <- bind_rows(
-  data_pick_one, data_pick_two, data_pick_three,data_pick_four,data_pick_five, data_pick_six,
+  data_pick_one, data_pick_three,data_pick_four,data_pick_five, data_pick_six,
   .id = "design") %>% 
   mutate(customer_id = as.character(customer_id))
 
@@ -145,7 +146,9 @@ data_pick_cust <- bind_rows(
 #   .id = "design")
 
 
-tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], tsneY = tSNE_fit$Y[, 2], customer_id = as.character(data_356cust_wide$customer_id)) %>% left_join(
+tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
+                      tsneY = tSNE_fit$Y[, 2], 
+                      customer_id = as.character(data_356cust_wide$customer_id)) %>% left_join(
   data_pick_cust, by = c("customer_id"
 )) %>% mutate(design = if_else(is.na(design), "0", design))
 
@@ -155,7 +158,7 @@ rownames(data_356cust_pc10) <- data_356cust_wide$customer_id
 
 ## ----tsne-xy--------------------------------------------------------
 tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY, color = design)) +
-  geom_point(aes(text = customer_id)) +
+  geom_point(aes(text = customer_id), size =2) +
   #scale_color_manual(values = limn_pal_tableau10()) +
   scale_colour_viridis_d(direction = -1) +
   guides(color = FALSE) +
@@ -171,7 +174,7 @@ tsne_plotly <- tsne_xy %>% ggplotly(tooltip = "text")
 
 ## ----tour----------------------------------------------------------
 
-a <- limn_tour_link(
+limn_tour_link(
   tsne_df[,1:2],
   data_356cust_pc10,
   cols = PC1:PC6
