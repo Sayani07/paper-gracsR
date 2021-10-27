@@ -1023,6 +1023,7 @@ p1 <- data_heatmap_wkndwday %>%
 
 ```
 
+
 ```{r data-heatmap-wkndwday-group}
 data_group <- data_pick %>%
   mutate(customer_id = as.character(customer_id)) %>%
@@ -1459,8 +1460,6 @@ A parallel coordinate plot with the three significant cyclic granularities used 
 
 <!-- \noindent The plotting scales are not displayed since we want to emphasise comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behaviour may be quite similar to a customer with high usage. That places them in the same group. -->
 
-
-## Classifying the 356 customers
 
 
 # Discussion {#sec:discussion}

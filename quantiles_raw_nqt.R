@@ -4,55 +4,15 @@ library(readr)
 library(tsibble)
 library(gravitas)
 
-# no scaling
-
-data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) 
-
-data_356cust_hod <- quantile_gran(data_pick,
-                                  "hour_day", 
-                                  quantile_prob_val = seq(0.1, 0.9, 0.1))
-
-data_356cust_moy <- quantile_gran(data_pick,
-                                  "month_year", 
-                                  quantile_prob_val = seq(0.1, 0.9, 0.1))
-
-data_356cust_wkndwday <- quantile_gran(data_pick,
-                                       "wknd_wday", 
-                                       quantile_prob_val = seq(0.1, 0.9, 0.1))
 
 
-write_rds(data_356cust_hod, here::here("data/quantile_data_356cust_hod_noscale.rds"))
-write_rds(data_356cust_moy,here::here("data/quantile_data_356cust_moy_noscale.rds"))
-write_rds(data_356cust_wkndwday, here::here("data/quantile_data_356cust_wkndwday_noscale.rds"))
-
-
-
-# robust scaling
-
-data_pick_robust <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>% 
-  gracsr::scale_gran( method = "robust",
-                      response = "general_supply_kwh")
-
-# data_356cust_hod <- quantile_gran(data_pick_robust,
-#               "hour_day", 
-#               quantile_prob_val = seq(0.1, 0.9, 0.1))
-# 
-# data_356cust_moy <- quantile_gran(data_pick_robust,
-#                                   "month_year", 
-#                                   quantile_prob_val = seq(0.1, 0.9, 0.1))
-# 
-# data_356cust_wkndwday <- quantile_gran(data_pick_robust,
-#                                   "wknd_wday", 
-#                                   quantile_prob_val = seq(0.1, 0.9, 0.1))
-# 
-
-data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds") %>% 
+data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_nqt.rds") %>% 
   filter(quantiles %in% "50%")
 
-data_356cust_moy <- read_rds("data/quantile_data_356cust_moy_robust.rds") %>% 
+data_356cust_moy <- read_rds("data/quantile_data_356cust_moy_nqt.rds") %>% 
   filter(quantiles %in% "50%")
 
-data_356cust_wkndwday <- read_rds("data/quantile_data_356cust_wkndwday_robust.rds") %>% 
+data_356cust_wkndwday <- read_rds("data/quantile_data_356cust_wkndwday_nqt.rds") %>% 
   filter(quantiles %in% "50%")
 
 
@@ -71,11 +31,9 @@ data_356cust_wkndwday_wide <- data_356cust_wkndwday %>%
 data_356cust_wide <- left_join(data_356cust_hod_wide,
                                data_356cust_moy_wide, by="customer_id") %>% 
   left_join(data_356cust_wkndwday_wide,  by="customer_id"
-                              )
+  )
 
-# write_rds(data_356cust_wide, "data/data_356cust_wide.rds")
-
-save(data_356cust_wide, file="data/data_356cust_wide.rda")
+save(data_356cust_wide, file="data/data_356cust_wide_nqt.rda")
 
 # cluster_result <- cluster_result %>% mutate(customer_id = as.integer(id))
 
@@ -100,9 +58,9 @@ plot(data_356cust_pc, type="l", npcs=50)
 library(liminal)
 
 set.seed(2935)
-data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:6])
+data_356cust_pc10 <- as_tibble(data_356cust_pc$x[,1:10])
 # %>%   mutate(group = data_356cust_wide_group$group)
-limn_tour(data_356cust_pc10, PC1:PC6)
+limn_tour(data_356cust_pc10, PC1:PC10)
 
 sort(abs(data_356cust_pc$rotation[,1]))
 
@@ -112,20 +70,22 @@ library(Rtsne)
 set.seed(2099)
 tSNE_fit <- data_356cust_wide%>% 
   select(-customer_id) %>% 
-  Rtsne(pca = FALSE,
-         Rtsne(Y_init = clamp_sd(as.matrix(dplyr::select(data_356cust_pc10, PC1, PC2)), sd = 1e-4)),
+  Rtsne(PCA = FALSE,
+    Y_init = clamp_sd(as.matrix(dplyr::select(data_356cust_pc10, PC1, PC2)), sd = 1e-4),
          perplexity = 30)
 
-data_pick_one <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble 
-data_pick_two <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble
-data_pick_three <- c(8221762, 8273636, 10359424, 8232822)%>% as_tibble
 
-#data_pick_four <- c(10590714,8495194,8589936, 8454235) %>% as_tibble
-
-
-data_pick_one <- c(8541744, 9355808, 8603880, 8619309, 10542667) %>% as_tibble 
-data_pick_two <- c(8688242, 8643837, 8184707, 10534355, 8684420) %>% as_tibble
-data_pick_three <- c(9792072, 8589936, 8454235, 10692366, 8603828)%>% as_tibble
+# data_pick_one <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble 
+# data_pick_two <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble
+# data_pick_three <- c(8221762, 8273636, 10359424, 8232822)%>% as_tibble
+# 
+# 
+# #data_pick_four <- c(10590714,8495194,8589936, 8454235) %>% as_tibble
+# 
+# 
+# data_pick_one <- c(8541744, 9355808, 8603880, 8619309, 10542667) %>% as_tibble 
+# data_pick_two <- c(8688242, 8643837, 8184707, 10534355, 8684420) %>% as_tibble
+# data_pick_three <- c(9792072, 8589936, 8454235, 10692366, 8603828)%>% as_tibble
 
 
 data_pick_one <- c(8541744, 9355808, 8603880, 8619309, 10542667) %>% as_tibble %>% set_names("customer_id")
@@ -145,9 +105,11 @@ data_pick_cust <- bind_rows(
 #   .id = "design")
 
 
-tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], tsneY = tSNE_fit$Y[, 2], customer_id = as.character(data_356cust_wide$customer_id)) %>% left_join(
+tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
+                      tsneY = tSNE_fit$Y[, 2],
+                      customer_id = as.character(data_356cust_wide$customer_id)) %>% left_join(
   data_pick_cust, by = c("customer_id"
-)) %>% mutate(design = if_else(is.na(design), "0", design))
+  )) %>% mutate(design = if_else(is.na(design), "0", design))
 
 #rownames(tsne_df) <- data_356cust_wide$customer_id
 
@@ -174,7 +136,7 @@ tsne_plotly <- tsne_xy %>% ggplotly(tooltip = "text")
 a <- limn_tour_link(
   tsne_df[,1:2],
   data_356cust_pc10,
-  cols = PC1:PC6
+  cols = PC1:PC10
 )
 
 

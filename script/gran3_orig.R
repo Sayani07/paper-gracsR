@@ -8,6 +8,7 @@ library(gravitas)
 library(dplyr)
 library(here)
 
+
 # fix parameters
 
 # niter
@@ -17,6 +18,13 @@ niter <- c(5, 50, 100) #number of series you are clustering
 nT <-  c(300, 1000, 5000) # length of the time series
 mean_diff <- c(1, 2, 5) # difference between consecutive categories
 
+# number of iterations corresponding to
+# niter <- c(5) #number of series you are clustering
+# nT <-  c(300, 1000, 5000) # length of the time series
+# mean_diff <- c(1) # difference between consecutive categories
+
+#time_series <- c("ar1", "arma22")
+
 simtable <- expand.grid(mean_diff = mean_diff,
                         niter = niter,
                         #time_series = time_series, 
@@ -24,8 +32,8 @@ simtable <- expand.grid(mean_diff = mean_diff,
 
 # parallel::mclapply(seq_len(nrow(simtable)), function(scen){
 
-#scen<-as.numeric(commandArgs()[[6]]) # If running batch job uncomment this
-scen <- 1
+scen<-as.numeric(commandArgs()[[6]]) # If running batch job uncomment this
+#scen <- 27
 
 
 simj<-simtable[scen,] #Extract row of table
@@ -138,44 +146,21 @@ generate_design <- function(n = 300, #length of time series
 }
 
 
+
+
 set.seed(123)
 
 ##----bind-designs for many iterations
 bind_data_iter <- map(seq_len(niterj), 
                       function(x){
                         #set.seed(seed_len[x])  
-                        # design1 <- generate_design(n=nTj) # null design
-                        # design2 <- generate_design(n=nTj,
-                        #                            mu31 = mean_diffj) 
-                        #                            
-                        # 
-                        # design3 <- generate_design(n=nTj, 
-                        #                            mu32=mean_diffj) 
-                        #                       
-                        # 
-                        # design4 <- generate_design(n=nTj,
-                        #                            mu33 = mean_diffj)
-                        #                  
-                        # design5 <- generate_design(n=nTj,
-                        #                            mu32 = mean_diffj,
-                        #                            mu33 = mean_diffj)
-                        # bind_design <- bind_rows(design1, design2, design3, design4, design5,  .id = "design")
-                        # 
+                        design1 <- generate_design(n=nTj) # null design
+                        design2 <- generate_design(n=nTj,mu12=mean_diffj)
+                        design3 <- generate_design(n=nTj,mu22=mean_diffj, mu23 =2*mean_diffj)
+                        design4 <- generate_design(n=nTj,mu32 = mean_diffj,mu33 = 2*mean_diffj,mu34 = mean_diffj)
+                        design5 <- generate_design(n=nTj,mu12=mean_diffj, mu22=mean_diffj, mu23 =2*mean_diffj, mu32 = mean_diffj,mu33 = 2*mean_diffj, mu34 = mean_diffj)
                         
-                        design1 <- generate_design(n=nTj) 
-     
-                        
-                        design2 <- generate_design(n=nTj, 
-                                                   mu32=mean_diffj) 
-                       
-                        design3 <- generate_design(n=nTj,
-                                                   mu35 = mean_diffj)
-       
-                        design4 <- generate_design(n=nTj,
-                                                   mu32 = mean_diffj,
-                                                   mu33 = mean_diffj)
-                        
-                        data_bind <- bind_rows(design1, design2, design3, design4,  .id = "design")
+                        bind_design <- bind_rows(design1, design2, design3, design4, design5, .id = "design")
                       }) %>% bind_rows(.id = "seed_id") %>% 
   mutate(customer_id = paste(design,seed_id, sep ="-"))
 
@@ -193,11 +178,7 @@ dist_mat <- bind_data_iter_tsibble %>%
   #scale_gran(method = "robust", response = "sim_data") %>%
   dist_wpd(harmony_tbl, response = "ts", nperm=100)
 
-write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_wpd_", scen, ".rds")))
-
-groups = dist_mat%>% clust_gran(kopt = 4)
-
-
+groups = dist_mat%>% clust_gran(kopt = 5)
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
 actual_group = as.factor(bind_data_iter_tsibble %>%as_tibble %>% select(customer_id, design) %>% distinct() %>% pull(design))
@@ -206,11 +187,11 @@ xtab <- caret::confusionMatrix(pred_group, actual_group)
 
 pred_ref_table <- xtab$table %>% as_tibble() %>% mutate(simj)
 
-write_rds(pred_ref_table, here(paste0("wpd/1gran_change_5D/pred_ref_table_", scen, ".rds")))
+write_rds(pred_ref_table, here(paste0("wpd/3gran_change_5D/pred_ref_table_", scen, ".rds")))
 
 confmatrix <- xtab %>% broom::tidy(by_class = FALSE) %>% mutate(simj)
 
-write_rds(confmatrix, here(paste0("wpd/1gran_change_5D/confmatrix_", scen, ".rds")))
+write_rds(confmatrix, here(paste0("wpd/3gran_change_5D/confmatrix_", scen, ".rds")))
 # 
 # xtab %>% broom::tidy(by_class = FALSE)
 # 
@@ -232,27 +213,10 @@ dist_mat_g3 <- bind_data_iter_tsibble %>%
   scale_gran(method = "nqt", response = "ts") %>%
   dist_gran(gran1 = "g3", response= "ts")
 
-dist_mat <- dist_mat_g1/2 + dist_mat_g2/3 + dist_mat_g3/5
-
-write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_nqt_", scen, ".rds")))
+dist_mat <- dist_mat_g1 + dist_mat_g2 + dist_mat_g3
 
 groups = dist_mat %>% 
-  clust_gran(kopt = 4)
-
-data_validation <- (dist_mat_g1/2) %>% broom::tidy() %>% 
-  rename("g1" = "distance") %>% 
-  left_join((dist_mat_g2/3) %>% broom::tidy(), by = c("item1", 
-                                                      "item2")) %>% 
-  rename("g2" = "distance") %>% left_join((dist_mat_g3/5) %>% broom::tidy(), by = c("item1", "item2"))%>% 
-  rename("g3" = "distance") %>% 
-  left_join(groups, by = c("item1" = "id")) %>% 
-  rename("group_item1" = "group") %>% 
-  left_join(groups, by = c("item2" = "id")) %>%  
-  rename("group_item2" = "group") %>% 
-  pivot_longer(3:5,names_to="gran",
-               values_to = "distance")
-
-write_rds(data_validation, here(paste0("js-nqt/1gran_change_5D/data_validation_", scen, ".rds")))
+  clust_gran(kopt = 5)
 
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
@@ -265,12 +229,14 @@ xtab <- caret::confusionMatrix(pred_group, actual_group)
 
 pred_ref_table <- xtab$table %>% as_tibble() %>% mutate(simj)
 
-write_rds(pred_ref_table, here(paste0("js-nqt/1gran_change_5D/pred_ref_table_", scen, ".rds")))
+write_rds(pred_ref_table, here(paste0("js-nqt/3gran_change_5D/pred_ref_table_", scen, ".rds")))
 
 
 confmatrix <- xtab %>% broom::tidy(by_class = FALSE) %>% mutate(simj)
 
-write_rds(confmatrix, here(paste0("js-nqt/1gran_change_5D/confmatrix_", scen, ".rds")))
+write_rds(confmatrix, here(paste0("js-nqt/3gran_change_5D/confmatrix_", scen, ".rds")))
+
+
 
 
 ##----Robust scaling
@@ -288,28 +254,10 @@ dist_mat_g3 <- bind_data_iter_tsibble %>%
   scale_gran(method = "robust", response = "ts") %>%
   dist_gran(gran1 = "g3", response= "ts")
 
-dist_mat <- dist_mat_g1/2 + dist_mat_g2/3 + dist_mat_g3/5
-
-
-write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_robust_", scen, ".rds")))
+dist_mat <- dist_mat_g1 + dist_mat_g2 + dist_mat_g3
 
 groups = dist_mat %>% 
-  clust_gran(kopt = 4)
-
-data_validation <- (dist_mat_g1/2) %>% broom::tidy() %>% 
-  rename("g1" = "distance") %>% 
-  left_join((dist_mat_g2/3) %>% broom::tidy(), by = c("item1", 
-                                                      "item2")) %>% 
-  rename("g2" = "distance") %>% left_join((dist_mat_g3/5) %>% broom::tidy(), by = c("item1", "item2"))%>% 
-  rename("g3" = "distance") %>% 
-  left_join(groups, by = c("item1" = "id")) %>% 
-  rename("group_item1" = "group") %>% 
-  left_join(groups, by = c("item2" = "id")) %>%  
-  rename("group_item2" = "group") %>% 
-  pivot_longer(3:5,names_to="gran",
-               values_to = "distance")
-
-write_rds(data_validation, here(paste0("js-robust/1gran_change_5D/data_validation_", scen, ".rds")))
+  clust_gran(kopt = 5)
 
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
@@ -322,11 +270,11 @@ xtab <- caret::confusionMatrix(pred_group, actual_group)
 
 pred_ref_table <- xtab$table %>% as_tibble() %>% mutate(simj)
 
-write_rds(pred_ref_table, here(paste0("js-robust/1gran_change_5D/pred_ref_table_", scen, ".rds")))
+write_rds(pred_ref_table, here(paste0("js-robust/3gran_change_5D/pred_ref_table_", scen, ".rds")))
 
 confmatrix <- xtab %>% broom::tidy(by_class = FALSE) %>% mutate(simj)
 
-write_rds(confmatrix, here(paste0("js-robust/1gran_change_5D/confmatrix_", scen, ".rds")))
+write_rds(confmatrix, here(paste0("js-robust/3gran_change_5D/confmatrix_", scen, ".rds")))
 # 
 # }, mc.cores = parallel::detectCores() - 1, mc.preschedule = FALSE, mc.set.seed = FALSE)
 

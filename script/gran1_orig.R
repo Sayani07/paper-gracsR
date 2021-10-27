@@ -24,8 +24,8 @@ simtable <- expand.grid(mean_diff = mean_diff,
 
 # parallel::mclapply(seq_len(nrow(simtable)), function(scen){
 
-#scen<-as.numeric(commandArgs()[[6]]) # If running batch job uncomment this
-scen <- 1
+scen<-as.numeric(commandArgs()[[6]]) # If running batch job uncomment this
+#scen <- 1
 
 
 simj<-simtable[scen,] #Extract row of table
@@ -197,8 +197,6 @@ write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_wpd_", scen, ".rd
 
 groups = dist_mat%>% clust_gran(kopt = 4)
 
-
-
 pred_group = paste(groups$group,sep = "") %>% as.factor()
 actual_group = as.factor(bind_data_iter_tsibble %>%as_tibble %>% select(customer_id, design) %>% distinct() %>% pull(design))
 
@@ -238,21 +236,6 @@ write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_nqt_", scen, ".rd
 
 groups = dist_mat %>% 
   clust_gran(kopt = 4)
-
-data_validation <- (dist_mat_g1/2) %>% broom::tidy() %>% 
-  rename("g1" = "distance") %>% 
-  left_join((dist_mat_g2/3) %>% broom::tidy(), by = c("item1", 
-                                                      "item2")) %>% 
-  rename("g2" = "distance") %>% left_join((dist_mat_g3/5) %>% broom::tidy(), by = c("item1", "item2"))%>% 
-  rename("g3" = "distance") %>% 
-  left_join(groups, by = c("item1" = "id")) %>% 
-  rename("group_item1" = "group") %>% 
-  left_join(groups, by = c("item2" = "id")) %>%  
-  rename("group_item2" = "group") %>% 
-  pivot_longer(3:5,names_to="gran",
-               values_to = "distance")
-
-write_rds(data_validation, here(paste0("js-nqt/1gran_change_5D/data_validation_", scen, ".rds")))
 
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
@@ -295,22 +278,6 @@ write_rds(dist_mat, here(paste0("data/1gran_change_5D/dist_mat_robust_", scen, "
 
 groups = dist_mat %>% 
   clust_gran(kopt = 4)
-
-data_validation <- (dist_mat_g1/2) %>% broom::tidy() %>% 
-  rename("g1" = "distance") %>% 
-  left_join((dist_mat_g2/3) %>% broom::tidy(), by = c("item1", 
-                                                      "item2")) %>% 
-  rename("g2" = "distance") %>% left_join((dist_mat_g3/5) %>% broom::tidy(), by = c("item1", "item2"))%>% 
-  rename("g3" = "distance") %>% 
-  left_join(groups, by = c("item1" = "id")) %>% 
-  rename("group_item1" = "group") %>% 
-  left_join(groups, by = c("item2" = "id")) %>%  
-  rename("group_item2" = "group") %>% 
-  pivot_longer(3:5,names_to="gran",
-               values_to = "distance")
-
-write_rds(data_validation, here(paste0("js-robust/1gran_change_5D/data_validation_", scen, ".rds")))
-
 
 pred_group = paste(groups$group,sep = "") %>% as.factor()
 
