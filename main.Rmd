@@ -758,7 +758,7 @@ hod_ind_design <- data_hod %>%
             size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y",
-             ncol=24) + 
+             ncol=6) + 
  theme_application() +
   xlab("hour-of-day") +
   scale_fill_viridis_d()+
@@ -779,14 +779,16 @@ hod_ind_group <- data_hod %>%
                 group=customer_id, color = as.factor(group)), size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y",
-              ncol=24) + theme_application()+
+              ncol=6) + theme_application()+
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black")) +    xlab("hour-of-day")  +
   scale_x_discrete(breaks = seq(0, 23, 3))
 # + scale_y_continuous(breaks = NULL) 
 # 
-# 
-(hod_ind_design/hod_ind_group)* theme(legend.position = "none")
+```
+
+```{r hod-combined, fig.cap = "The energy demand distribution for the prototype designs (left) and clustering (right) is given for each hour of the day. Customer design grouping and clustering strategies complement one other well. For a one-to-one comparison, both sides have the same order of consumers. Design-4 has a low morning peak and a strong evening peak. Because other members of group-1 have higher late-night usage, group-2 adopts this design and assigns customer B to it rather than group-1."}
+(hod_ind_design + hod_ind_group)* theme(legend.position = "bottom")
 
 ```
 
@@ -841,9 +843,7 @@ moy_ind_group <- data_moy %>%
 ```
 
 
-The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile.
-
-```{r moy-combined, fig.cap = "The energy demand distribution for the prototype designs (left) and clustering (right) are shown. The customer grouping by design and the clustering approach largely match. To compare one-to-one, the customers are organised in the same order on both sides. Except for some customers, design 1, 2, 3, 4 and 5 match to group 4, 5, 1, 3, 2. Except in group 3, where consumers are categorised by greater usage in the middle of the year, which corresponds to winter in Australia. Since the designs are selected only based on 50th percentile, the clustering approach outperforms the design in a few circumstances."}
+```{r moy-combined, fig.cap = "The energy demand distribution for the prototype designs (left) and clustering (right) are shown. The customer grouping by design and the clustering approach largely match, except for some exceptions. For example, in group 3, consumers are categorised by greater usage in the middle of the year, which corresponds to winter in Australia. This is a better grouping in terms of similar month-of-year pattern than originally proposed by the prototype design."}
 
 (moy_ind_design+moy_ind_group)*theme(legend.position = "bottom")
 ```  
@@ -898,12 +898,7 @@ wkndwday_ind_group <- data_wkndwday%>%
 
 ##  JS-based clustering
 
-The distribution of electricity demand for the selected 24 customers across hour-of-day is shown in \ref{fig:data-heatmap-hod-new}. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. According to our prototype selection method, each row represents a distinct shape of daily load, and all customers in the same row should have similar daily profile. After clustering these consumers, all customers with the same color represent the same group. Except for customer id 8269176, there is unanimity across design and groups. Even though their daily form resembles Group 2, our clustering approach places them in Group 3 (which is design 4 in our case). Because our method uses hod, moy, and wkndwday, there may be some mismatches depending on only one variable.
-
-
-\noindent The distribution of electricity demand for the selected 24 customers across month-of-year is shown in Figure \ref{fig:data-heatmap-moy}. The median is represented by a line and shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Intriguingly, customer id 8269176 appears to be in the appropriate group (Group 3) because its monthly profile is more similar to Group 3 than Design 4. So, while our clustering approach failed to place the customer in the correct hour-of-day group, it did so for month-of-year. When contrasting the `moy` to `hod` profile, there are greater behavioral differences across customers within a group, which implies that `hod` has the minimum within-cluster variation.
-
-
+The $24$ prototypes are clustered using the methodology described in \ref{Sec:methodology}. The distribution of electricity demand for the selected $24$ customers across hour-of-day and month-of-year are shown in the right panel of Figures \ref{fig:hod-combined} and \ref{fig:moy-combined} respectively. The median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$. Customers are placed in the same order on both sides for both figures to simplify one-to-one comparison. All customers with the same color represent the same design (left) or cluster (right). Overall, the clustering method has been able to capture the shapes in each designs quite well, irrespective of the fact that the designs are only selected based on the $50^{th}$ percentile with Designs $1$, $2$, $3$, $4$, and $5$ correspond to groups $4$, $5$, $1$, $3$, $2$ and, in most situations.Because our method uses distribution across hod, moy, and wknd-wday, there may be some mismatches from the designs; nonetheless, visualising individual customers can help us determine whether the grouping by clustering is better than the planned grouping through designs. In a few circumstances, for example, as shown in Figures \ref{fig:hod-combined} and \ref{fig:moy-combined}, the clustering approach outperforms the design.
 
 Characterization of clusters both statistically and qualitatively is an important stage of a cluster analysis. A potential way is to look at the findings from all the groups in graphs, and enhance our qualitative descriptions of the groupings. Figure \ref{fig:combined} shows the distribution of the summarized groups and help us to characterise each of the clusters. All of these may be validated with further information about the customer.
 
