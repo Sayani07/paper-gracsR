@@ -812,7 +812,7 @@ moy_ind_design <- data_moy %>%
   geom_line(aes(y = `50%`, group=customer_id, color = as.factor(design)), size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y", 
-             ncol = 24) +
+             ncol = 6) +
     ylab("demand (in Kwh)") +
     xlab("month-of-year")  +
   theme_application() +
@@ -832,15 +832,20 @@ moy_ind_group <- data_moy %>%
   geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y", 
-             ncol = 24) +
+             ncol = 6) +
     ylab("demand (in Kwh)") +
     xlab("month-of-year")  +
   theme_application() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))
+```
 
-(moy_ind_design/moy_ind_group)*theme(legend.position = "none")
 
+The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile.
+
+```{r moy-combined, fig.cap = "The energy demand distribution for the prototype designs (left) and clustering (right) are shown. The customer grouping by design and the clustering approach largely match. To compare one-to-one, the customers are organised in the same order on both sides. Except for some customers, design 1, 2, 3, 4 and 5 match to group 4, 5, 1, 3, 2. Except in group 3, where consumers are categorised by greater usage in the middle of the year, which corresponds to winter in Australia. Since the designs are selected only based on 50th percentile, the clustering approach outperforms the design in a few circumstances."}
+
+(moy_ind_design+moy_ind_group)*theme(legend.position = "bottom")
 ```  
 
 ```{r data-heatmap-wkndwday-group2}
