@@ -1292,7 +1292,7 @@ wkndwday_group <- wkndwday_data%>%
   #scale_fill_lv() +
  xlab("wknd-wday") + 
   ylab("demand (in Kwh)") +
-   facet_grid(wknd_wday~group, 
+   facet_grid(group~wknd_wday, 
              scales = "free_y", 
              labeller = "label_both") + 
   theme_bw() +
@@ -1306,7 +1306,7 @@ wkndwday_group <- wkndwday_data%>%
   theme(legend.position = "bottom") +
   theme(panel.spacing =unit(0, "lines")) + 
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
-wkndwday_group
+  wkndwday_group
 ```
 
 

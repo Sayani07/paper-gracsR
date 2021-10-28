@@ -307,6 +307,7 @@ wkndwday_ind_group <- data_wkndwday%>%
 
 ```
 
+Cluster characterization is a crucial aspect of cluster analysis. Figure ref\{fig:combined-groups-js} depicts the summarized distributions across groups and assists us in characterizing each cluster. All of these may be validated only with further information about the customer. Figure \ref{fig: Groups 2 and 5 show a stronger hour-of-day pattern, whereas groups 1, 3, and 5 show a month-of-year pattern. Differences in wknd-wday between groups are not discernible, implying that it may not be a relevant variable in distinguishing various clusters.
 
 
 ```{r data-heatmap-hod-group}
@@ -342,18 +343,12 @@ hod_group <- data_heatmap_hod_group %>%
               #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
   ylab("demand (in Kwh)") + 
-  theme_bw() +
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank())+
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  theme_bw()  +
   scale_x_discrete(breaks = seq(1, 24, 3))+ 
   #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
-   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) +
-  scale_fill_manual(legend_title, values = c("#E69F00",
-  "#009E73","#0072B2", "#D55E00", "grey")) + 
+  theme_application() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
   theme(legend.position = "bottom") 
 
 ```
@@ -382,25 +377,52 @@ moy_group <- data_heatmap_moy_group %>%
              nrow = 5) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
   ylab("demand (in Kwh)") +
-  theme_bw() +
-   theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) + 
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
-   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) +
-  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) + 
-  theme(legend.position = "bottom") +
-  theme(panel.spacing =unit(0, "lines")) + 
-  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
+  theme_bw() + theme_application() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
+  theme(legend.position = "bottom") 
 ```
 
 
 
+```{r}
+wkndwday_data <- data_group %>% create_gran("wknd_wday") %>% 
+  create_gran("hour_day")
 
-```{r combined-groups-js, fig.cap = "The distribution of electricity demand for the clusters across hour-of-day, month-of-year and wknd-wday. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Group 2 and 5 have a stronger hour-of-day pattern, while group 1, 3, 5 have a month-of-year pattern. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters."}
-hod_group + moy_group
+ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
+
+wkndwday_group <- wkndwday_data%>% 
+  ggplot(aes(x=hour_day, y = general_supply_kwh)) +
+  #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
+  geom_boxplot(aes(fill = as.factor(group)),alpha = 0.5)+
+  #geom_boxplot(outlier.size = 1) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
+#geom_boxplot(aes(fill = as.factor(group))) +
+  #scale_fill_lv() +
+ xlab("wknd-wday") + 
+  ylab("demand (in Kwh)") +
+   facet_grid(group~wknd_wday, 
+             scales = "free_y", 
+             labeller = "label_both") + 
+  theme_bw() + theme_application() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
+  theme(legend.position = "bottom") 
 ```
+
+
+
+```{r combined-groups-js, fig.cap = "The distribution of electricity demand for the clusters across hour-of-day, month-of-year and wknd-wday. Group 2 and 5 have a stronger hour-of-day pattern, while group 1, 3, 5 have a month-of-year pattern. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters."}
+(hod_group + moy_group + wkndwday_group) +  plot_layout(guides = "collect")
+```
+
+
+Things become far more complicated when we consider a larger data set with more uncertainty, as they do with any clustering problem. Summarizing distributions across clusters with varied or outlying customers can result in a shape that does not represent the group. Furthermore, combining hetergeneous customers may result in similar-looking final clusters that are not effective for visually differentiating them. It is also worth noting that the wknd-wday behavior in the given case does not characterize any cluster. This, however, will not be true for all of the customers in the data set. If more extensive prototype selection is used, resulting in more comprehensive prototypes in the data set, this method might be used to classify the entire data set into these prototype behaviors. However, the goal of this section was to have a few customers that have significant patterns over one or more cyclic granularities, apply our clustering methodology to cluster them, and demonstrate that the method produces useful clusters.
+
+
+
+
 
 ### Using wpd-based distances
 
@@ -408,11 +430,6 @@ hod_group + moy_group
 ```
 
 A parallel coordinate plot with the three significant cyclic granularities used for wpd-based clustering. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the designs followed by $hod$ and $wkndwday$. It can be observed that clusters are well separated by $moy$, while $hod$ and $wkndwday$ are not useful distinguishing the clusters produced with this clustering method. The parallel coordinate plot ranks the variables in order of importance, indicating that the month-of-year is the most important in identifying clusters, whereas wkdn-wday is the least significant and has the least variability among the three variables. However, there is only one customer who has significant $wpd$ across $wkndwday$ and stands out from the rest of the customers. The ggpairs plot also shows five distinct clusters across the $moy$.
-
-- Discussion
-
-As with any clustering method, things become much more complicated when we consider a larger data set with more uncertainty. The methodology run on several customers together might not be useful to given distinct shapes across granularities. Moreover, the groupings from two different appraoches lead to different results, both of which are useful but needs careful considering the context before choosing one over another. Also, note that the customers chosen here do not have a weekend-weekday effect, which might not be true for all customers in the data set. Ideally there are other groups of customers in the entire dataset which can act as prototypes in our problem. Ideally, if these prototypes are not outliers, we can use them for a classification problem for external validation of the clustering problem.
-
 
 
 
