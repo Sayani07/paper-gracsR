@@ -88,18 +88,18 @@ theme_validation <- function() {
 
 
 theme_characterisation <- function() {
-theme_bw() + 
-      theme(strip.text = element_text(size = 7, margin = margin(b = 0, t = 0))) +  + theme_bw() +
+  
+  theme_bw() + # seeting theme
+    theme(strip.text = element_text(size = 10,
+                                    margin = margin(b = 0, t = 0))) + # narrow facet space
    theme(axis.title.y=element_blank(),
         axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) +
-  theme(panel.spacing =unit(0, "lines")) + 
-    theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(legend.position = "bottom")+ theme(
-    strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+        axis.ticks.y=element_blank()) + # no axis ticks 
+  theme(panel.spacing =unit(0, "lines")) +  # to ensure no gap between facets
+    theme(axis.text.x = element_text(angle=90, hjust=1, size = 10)) + # rotate the x-axis text
+    theme(legend.position = "bottom")+
   theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
-  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))+
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00"))+
-  theme(legend.position = "bottom")
+  theme(axis.text.x = element_text(size=5))
 }
 ```
 
@@ -648,7 +648,6 @@ S6. These points should ideally correspond to different behavior with respect to
 <!-- First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. We obtain the $wpd$ for all cyclic granularities considered for these customers and found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weeknd/weekday) are coming out to be significant for most customers. This implies that for most customers, there is some interesting pattern across these three granularities. Potentially this could be done for the entire data set. This step is time consuming and hence has been only run for the $600$ sampled customers. As a second step, we remove customers for which data in any category for the significant granularities are empty. For example, in this data set, if a customer do not have data for an entire month, they have been removed as their monthly behavior could not be studied in that case. Further, we also remove customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study.  -->
 
 
-
 ```{r mds, out.width="100%", fig.cap="Instance selection using tours and projecting the points in a lower dimensional tsne cloud."}
 knitr::include_graphics("figs/liminal_view.png")
 ```
@@ -891,33 +890,135 @@ wkndwday_ind_group <- data_wkndwday%>%
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00",  "grey", "black"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))
 
-
 (wkndwday_ind_design / wkndwday_ind_group)* theme(legend.position = "none")
 ```
 
-
 ##  JS-based clustering
 
-The $24$ prototypes are clustered using the methodology described in \ref{Sec:methodology}. The distribution of electricity demand for the selected $24$ customers across hour-of-day and month-of-year are shown in the right panel of Figures \ref{fig:hod-combined} and \ref{fig:moy-combined} respectively. The median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$. Customers are placed in the same order on both sides for both figures to simplify one-to-one comparison. All customers with the same color represent the same design (left) or cluster (right). Overall, the clustering method has been able to capture the shapes in each designs quite well, irrespective of the fact that the designs are only selected based on the $50^{th}$ percentile with Designs $1$, $2$, $3$, $4$, and $5$ correspond to groups $4$, $5$, $1$, $3$, $2$ and, in most situations.Because our method uses distribution across hod, moy, and wknd-wday, there may be some mismatches from the designs; nonetheless, visualising individual customers can help us determine whether the grouping by clustering is better than the planned grouping through designs. In a few circumstances, for example, as shown in Figures \ref{fig:hod-combined} and \ref{fig:moy-combined}, the clustering approach outperforms the design.
+The $24$ prototypes are clustered using the methodology described in \ref{Sec:methodology}. The distribution of electricity demand for the selected $24$ customers across hour-of-day and month-of-year are shown in the right panel of Figures \ref{fig:hod-combined} and \ref{fig:moy-combined} respectively. The median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$. Customers are placed in the same order on both sides for both figures to simplify one-to-one comparison. All customers with the same color represent the same design (left) or cluster (right). Overall, the clustering method has been able to capture the shapes in each designs quite well, irrespective of the fact that the designs are only selected based on the $50^{th}$ percentile with Designs $1$, $2$, $3$, $4$, and $5$ correspond to groups $4$, $5$, $1$, $3$, $2$ and, in most situations.Because our method uses distribution across hod, moy, and wknd-wday, there may be some mismatches from the designs; nonetheless, visualising individual customers can help us determine whether the grouping by clustering is better than the planned grouping through designs. In a few circumstances, for example, as shown in Figures \ref{fig:hod-combined} and \ref{fig:moy-combined}, the clustering approach outperforms the design. The plotting scales are not displayed since we want to emphasize comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behavior may be quite similar to a customer with high usage. \noindent 
+
+<!-- The third panel of Figure \ref{fig:combined} shows that the wknd-wday groups exhibit no significant changes across clusters, indicating that they may be a nuisance variable for these consumers. -->
+
 
 Characterization of clusters both statistically and qualitatively is an important stage of a cluster analysis. A potential way is to look at the findings from all the groups in graphs, and enhance our qualitative descriptions of the groupings. Figure \ref{fig:combined} shows the distribution of the summarized groups and help us to characterise each of the clusters. All of these may be validated with further information about the customer.
 
-_Group 1:_ This includes consumers who work 9-5, get up and conduct morning activities from 7-10am, and then depart. Then they return home in the evening to cook supper and perform other activities, giving the evening a greater peak than the morning. These users in this cluster are insensitive to high temperature but have their heaters on in the winter months May-Aug.
+_Group 1:_ This group a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls.
+Their day time usage has high variability. They have heaters on in the winter but consume less energy in the summer. Winter usage may also be due to increased usage of heaters at night when they are up, but typically very less variability in other months.
 
-_Group 2:_  This is the group that rushes out of the house in the morning to get to work. They only return at night and do all activities at night, so there is no morning peak. In addition, the users in this cluster are insensitive to high temperature, but sensitive to lower temperature.
+_Group 2:_ They appear to work 9-5, get up and perform morning activities from 7-10, and then go. Evenings are busier than mornings as people return home to cook supper and perform other activities. During the fall (March-June), these consumers' average energy use declines, before rising again during the winter. However, energy behaviour varies more in the winter than in the summer and a bit in the fall months.
 
-_Group 3:_  This group a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls. They have heaters on in the winter but consume less energy in the summer. Winter usage may also be due to increased usage of heaters at night when they are up.
+_Group 3:_ Presence of children or stay-at-home parents is indicated by the group's almost equivalent morning, afternoon and evening median use and variability across all hours. They have low usage for winter months (or maybe due to use of gas heaters, it is not reflected in electricity usage).
+It seems that the users in this group are more concerned about the comfort and quality of life than the cost of electricity as we see their electricity demand peaking up in the spring and summer.
 
-_Group 4:_ Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. They have a flat monthly profile, indicating the usage across all months are similar. It seems that the users in this group are more concerned about the comfort and quality of life than the cost of electricity as opposed to Group 1 and 3, who do not consume more electricity in the summer.
+_Group 4:_ These users have an opposite monthly profile to Group 3, with more usage during summer months (probably due to increased use of air conditioners) and demand decreasing across the year with least demand in winter months. The users in this cluster are sensitive to high temperature, but insensitive to lower temperature or their heater usage is not reflected in their electricity usage.
 
-\noindent The plotting scales are not displayed since we want to emphasise comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behavior may be quite similar to a customer with high usage. \noindent The third panel of Figure \ref{fig:combined} shows that the wknd-wday groups exhibit no significant changes across clusters, indicating that they may be a nuisance variable for these consumers.
+_Group 5:_ Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. This group is more typical in their monthly energy behavior with more energy usage in winter and moderately decreasing for fall and spring months. The pattern in the variability is similar to that of the median.
+
+
+<!-- _Group 5:_ Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. They have a flat monthly profile except for winter months, with higher median usage and variability than typically seen in other seasons. -->
+
+<!-- It seems that the users in this group are more concerned about the comfort and quality of life than the cost of electricity as opposed to Group 1 and 3, who do not consume more electricity in the summer. -->
+
+<!-- insensitive to high temperature but have their heaters on in the winter months May-Aug. -->
+
+<!-- _Group 2:_  This is the group that rushes out of the house in the morning to get to work. They only return at night and do all activities at night, so there is no morning peak. In addition, the users in this cluster are insensitive to high temperature, but sensitive to lower temperature. -->
+
+<!-- _Group 3:_  This group a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls. They have heaters on in the winter but consume less energy in the summer. Winter usage may also be due to increased usage of heaters at night when they are up. -->
+
+<!-- _Group 4:_ Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. They have a flat monthly profile, indicating the usage across all months are similar. It seems that the users in this group are more concerned about the comfort and quality of life than the cost of electricity as opposed to Group 1 and 3, who do not consume more electricity in the summer. -->
+
+
+```{r data-heatmap-hod-group-new}
+legend_title <- "group"
+
+data_group <- data_pick  %>% 
+  left_join(cluster_result, by = c("customer_id"))
+
+data_heatmap_hod_group <- quantile_gran(data_group,
+                                  gran1="hour_day",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+  
+data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
+
+# data_heatmap_hod_group <- data_heatmap_hod_group %>%
+#   mutate(group = case_when(group==1 ~"Group 2",
+#                            group==2 ~"Group 4",
+#                            group==3 ~"Group 1",
+#                            group==4 ~"Group 3"))
+
+# data_heatmap_hod_group$group <- factor(data_heatmap_hod_group$group, levels = c("Group 1", "Group 2", "Group 3", "Group 4"))
+
+data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
+
+hod_group <- data_heatmap_hod_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=group,
+                  fill = as.factor(group), alpha = 0.5),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=group, 
+                color = as.factor(group)), size = 1)+
+  facet_wrap(~group, 
+             scales = "free_y",  
+             nrow = 5) + 
+              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
+  ylab("demand (in Kwh)") + 
+  theme_bw() +
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())+
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
+  scale_x_discrete(breaks = seq(1, 24, 3))+ 
+  #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
+   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) +
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) + 
+  theme(legend.position = "bottom") 
+
 ```
 
-```{r combined, fig.cap = "The distribution of electricity demand for the clusters across hour-of-day. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Each cluster is characterised by unique shape across the granularity it is plotted against. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters. This fact we will be re-established when we see the importance of each granularity throough the parallel coordinate plot.", eval = FALSE}
+```{r data-heatmap-moy-group-new}
+data_heatmap_moy_group <- quantile_gran(data_group,
+                                  gran1="month_year",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
 
-combined <- hod_group + moy_group + wkndwday_group & theme(legend.position = "bottom")
-combined + plot_layout(guides = "collect")
+data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
+
+data_heatmap_moy_group$group <- paste("group", data_heatmap_moy_group$group, sep = "-")
+
+
+moy_group <- data_heatmap_moy_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 5) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
+  ylab("demand (in Kwh)") +
+  theme_bw() +
+   theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + 
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(plot.margin = margin(0, 0, 0, 0, "cm"))  +
+   scale_color_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) +
+  scale_fill_manual(legend_title, values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey")) + 
+  theme(legend.position = "bottom") +
+  theme(panel.spacing =unit(0, "lines")) + 
+  theme(axis.text.x = element_text(angle=90, hjust=1, size = 7))
 ```
 
 
@@ -1032,10 +1133,9 @@ parcoord <- GGally::ggparcoord(data_pcp ,
    parcoord 
 ```
 
-# Contribution of individual category for moy
 
 
-```{r moy-bubble}
+```{r moy-bubble, eval = FALSE}
 gran_cat_moy <-   gran_cat_dist %>% 
   filter(gran=="moy")
 
@@ -1059,7 +1159,7 @@ arrange(-distance) %>% slice(c(1:3)) %>%
 
 ```
 
-```{r moy-contr}    
+```{r moy-contr, eval = FALSE}    
     
 data_pcp <- gran_cat_moy %>% 
 ungroup %>% 
@@ -1094,10 +1194,9 @@ parcoord <- GGally::ggparcoord(data_pcp ,
 
 
 
-# Contribution of individual category for wknwday
 
 
-```{r wkndwday-bubble}
+```{r wkndwday-bubble, eval = FALSE}
 gran_cat_wkndwday <-   gran_cat_dist %>% 
   filter(gran=="wnwd")
 
@@ -1119,7 +1218,7 @@ arrange(-distance) %>% slice(c(1)) %>%
  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+ theme_light()
 ```
 
-# Show aggregate group behavior
+
 
 ```{r data-heatmap-hod-group}
 legend_title <- "group"
@@ -1212,7 +1311,6 @@ moy_group <- data_heatmap_moy_group %>%
 combined <- (hod_group/moy_group) & theme(legend.position = "bottom")
 combined + plot_layout(guides = "collect")
 ```
-
 
 ```{r}
 wkndwday_data <- data_group %>% create_gran("wknd_wday") %>% 

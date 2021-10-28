@@ -173,6 +173,12 @@ cluster_result <- f %>% clust_gran(kopt = 5) %>%
 
 
 ```{r hod-data}
+# data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+#   mutate(customer_id = as.character(customer_id)) %>% 
+#   filter(customer_id %in% data_pick_cust$customer_id) %>% 
+#   gracsr::scale_gran( method = "robust",
+#                       response = "general_supply_kwh")
+
 data_hod <- quantile_gran(data_pick,
                                   "hour_day",
                                   quantile_prob_val = quantile_prob_graph) %>% 
@@ -206,7 +212,7 @@ hod_ind_design <- data_hod %>%
             size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y",
-             ncol=24) + theme_characterisation()+
+             ncol=6) + theme_characterisation()+
   xlab("hour-of-day") +
   scale_fill_viridis_d()+
   scale_color_viridis_d()+
@@ -226,20 +232,22 @@ hod_ind_group <- data_hod %>%
                 group=customer_id, color = as.factor(group)), size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y",
-              ncol=24) + theme_characterisation()+
+              ncol=6) + theme_characterisation()+
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black")) +    xlab("hour-of-day")  +
   scale_x_discrete(breaks = seq(0, 23, 3))
 # + scale_y_continuous(breaks = NULL) 
 # 
 # 
-(hod_ind_design/hod_ind_group)* theme(legend.position = "none")
+(hod_ind_design+hod_ind_group)* theme(legend.position = "bottom")
 
 ```
 
 
 
 ```{r data-heatmap-moy-design}
+
+
 
 data_moy <- quantile_gran(data_pick,
                                   "month_year", 
@@ -259,7 +267,7 @@ moy_ind_design <- data_moy %>%
   geom_line(aes(y = `50%`, group=customer_id, color = as.factor(design)), size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y", 
-             ncol = 24) +
+             ncol = 6) +
     ylab("demand (in Kwh)") +
     xlab("month-of-year")  +
   theme_characterisation() +
@@ -279,14 +287,14 @@ moy_ind_group <- data_moy %>%
   geom_line(aes(y = `50%`, group=customer_id, color = as.factor(group)), size = 1) +
   facet_wrap(design~customer_id, 
              scales = "free_y", 
-             ncol = 24) +
+             ncol = 6) +
     ylab("demand (in Kwh)") +
     xlab("month-of-year")  +
   theme_characterisation() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))
 
-(moy_ind_design/moy_ind_group)*theme(legend.position = "none")
+(moy_ind_design + moy_ind_group)*theme(legend.position = "none")
 
 ```  
 
@@ -308,7 +316,7 @@ wkndwday_ind_design <- data_wkndwday%>%
   facet_wrap(design~customer_id, 
              scales = "free_y", 
              labeller = "label_value",
-              ncol = 24)  +
+              ncol = 6)  +
   theme_characterisation() +
   scale_fill_viridis_d(direction = 1)+
   scale_color_viridis_d(direction = 1)
@@ -328,13 +336,13 @@ wkndwday_ind_group <- data_wkndwday%>%
   facet_wrap(design~customer_id, 
              scales = "free_y", 
              labeller = "label_value",
-             ncol = 24)  +
+             ncol = 6)  +
   theme_characterisation() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00",  "grey", "black"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "grey", "black"))
 
 
-(wkndwday_ind_design / wkndwday_ind_group)* theme(legend.position = "none")
+(wkndwday_ind_design + wkndwday_ind_group)* theme(legend.position = "none")
 ```
 
 # contribution of each levels
@@ -455,8 +463,6 @@ data_pcp <- gran_cat_hod %>%
     arrange(-distance) %>% 
   select(group_from, category, cat_contibution) %>% 
   pivot_wider(names_from = "category", values_from = "cat_contibution") %>% mutate(group_from = as.factor(group_from))
-  
-
     
 parcoord <- GGally::ggparcoord(data_pcp ,
                    columns = 2:ncol(data_pcp),
@@ -567,6 +573,12 @@ group_total <- gran_cat_wkndwday %>%
 
 ```{r data-heatmap-hod-group}
 legend_title <- "group"
+
+# data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+#   mutate(customer_id = as.character(customer_id)) %>% 
+#   filter(customer_id %in% data_pick_cust$customer_id) %>% 
+#   gracsr::scale_gran( method = "robust",
+#                       response = "general_supply_kwh")
 
 data_group <- data_pick  %>% 
   left_join(cluster_result, by = c("customer_id"))
