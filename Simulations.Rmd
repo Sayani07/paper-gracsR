@@ -526,7 +526,6 @@ data_heatmap_hod_group %>%
 
 ```
 
-
 ```{r data-heatmap-moy}
 data_heatmap_moy %>% 
   mutate(customer_id = as.character(customer_id)) %>% 

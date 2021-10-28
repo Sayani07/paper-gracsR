@@ -113,13 +113,15 @@ theme_application <- function() {
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()) + # no axis ticks 
   theme(panel.spacing =unit(0, "lines")) +  # to ensure no gap between facets
-    theme(axis.ticks.x = element_blank(),
-        axis.text.x = element_blank()) + # no x-axis labels to further reduce the gap between facets
+    #theme(axis.ticks.x = element_blank(),
+     #   axis.text.x = element_blank()) + # no x-axis labels to further reduce the gap between facets
     #theme(axis.text.x = element_text(angle=90, hjust=1, size = 9)) + # rotate the x-axis text
   theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
+    theme(axis.text.x = element_text(angle=90, hjust=1, size = 10))+
+      theme(plot.background = element_blank(), panel.grid = element_blank())+
   #theme(axis.text.x = element_text(size=5)) +
     theme(strip.background = element_blank(),
-  strip.text.x = element_blank())
+  strip.text.x = element_blank()) 
 }
 ```
 
@@ -543,16 +545,12 @@ The use of our methodology is illustrated on smart meter energy usage for a samp
 
 <!-- ## Characteristics of raw data -->
 
-In Figure \ref{fig:raw-data-50}, the time series of energy consumption is plotted along the y-axis against time from past to future for $50$ sampled households. Each of these series correspond to a single customer. For each customer, the energy consumption is available at fine temporal resolution (every 30 minutes) for a long period of time (~ 2 years) resulting in 27,000 (median) observations for each customer. Some customers' electricity use may be unavailable owing to power outages or improper recording, resulting in implied missing numbers in the database. For this data set it was found that out of 13,735 customers in total, 8,685 customers do not have any implicit missing observations, while the rest 5,050 customers had missing values. With further exploration, it was found that there is no structure in the missing-ness, that is missing observations can occur at any time point (see Appendix). Moreover, the data for these customers are characterized by unequal length, different start and end dates. Since our proposed methods consider probability distribution instead of raw data, both of these characteristics would not pose any threat to our methodology unless of course there is any structure or systematic patterns in them.  
+In Figure \ref{fig:raw-data-50}, the time series of energy consumption is plotted along the y-axis against time from past to future for $50$ sampled households. Each of these series correspond to a single customer. For each customer, the energy consumption is available at fine temporal resolution (every 30 minutes) for a long period of time (~ 2 years). Some customers' electricity use may be unavailable owing to power outages or improper recording, resulting in implied missing numbers in the database. For this data set it was found that out of 13,735 customers in total, 8,685 customers do not have any implicit missing observations, while the rest 5,050 customers had missing values. With further exploration, it was found that there is no structure in the missing-ness, that is missing observations can occur at any time point (see Appendix). Moreover, the data for these customers are characterized by unequal length, different start and end dates. Since our proposed methods consider probability distribution instead of raw data, both of these characteristics would not pose any threat to our methodology unless of course there is any structure or systematic patterns in them.  
 
 
 \noindent It can be expected that energy consumption vary substantially between customers, which is a reflection of their varied  behavior owing to differences in profession, family size, geographical or physical characteristics. Since the linear time series plot has too many measurements all squeezed in this linear representation, it hinders us to discern any repetitive behavioral pattern for even one customers (let alone many customers together). In most cases, electricity data will have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior.    
 
 
-```{r raw-data-50, out.width = "100%", fig.cap="The raw data for 50 households are shown. It looks like there is a lot of missing values and unequal length of time series along with asynchronous periods for which data is observed. No insightful behavioral pattern could be discerned from this view other than when the customer is not at home."}
-
-knitr::include_graphics("figs/raw_plot_cust.png") # look at smart-meter.R for the code
-```
 
 
 <!-- ### Missing Data -->
@@ -623,44 +621,9 @@ P4. Remove customers for which all the deciles of the energy consumption is zero
 
 Finally, we are left with $356$ customers from which we run our prototype search. There are different methods of going ahead with this. For example, one approach could be to use any Non-linear dimensionality reduction technique like MDS or PCA and project the data in a 2-dimensional space. One can then look at few "anchor" customers which are far apart in the 2D space and pick few neighbors for each of the anchor customers. Paradoxically, the curse of dimensionality inverts for dimension reduction, resulting in an excessive amount of observations near the center of the distribution. This affects visualizations made on low-dimensional projections. [Ursula's paper] explains why points tend to be away from the center in the high-dimensional space, but crowd the center in low-dimensional projections, it is helpful to consider the projected volume relative to high-dimensional volume. 
 
-<!-- From this set we select $4$ "anchor" customers which are far apart from each other and $5$ neighboring customers for each of these anchors. These selections were done using the granularity $hod$ space. It is important to note that when we use our proposed methodologies, it is based on all dimensions `hod`, `moy` and `wkndwday`.Fig \ref{fig:mds} shows the MDS of these 356 customers in a 2D space basis their distance on individual granularities and when all of them are combined. Our methodolgies are run on these $24$ customers, which act as a way to evaluate the proposed methodologies.  -->
-
-
-S1. Robust scaling is applied to each customer.
-
-S2. $50^{th}$ percentile for each category for each granularity is obtained for each customers. So we have a data structure with  $356$ rows and $(24 + 12 + 2)$ variables corresponding to $50^{th}$ percentile for each hour-of-day, month-of-year and weekend-weekday.
-
-S3. Apply principal components and restrict the results down to the first six principal components (which makes up approximately 85% of the variance explained in the data) to use with the grand tour.
-
-S4. Run t-SNE using the default arguments on the complete data (sets the perplexity to equal 30 and performs random initialisation). We then create a linked tour with t-SNE layout with liminal as shown in Figure 4.
-
-S5. We inspect of the subspace generated by the set of low-dimensional projections in tour by looking for a simplex shape while the visualization moves from one basis to another. When we brush the corners of the simplex, we find they fall on the edge of the t-SNE point cloud.
-Hall, Marron, and Neeman (2005) have shown that in the extreme case of high-dimension, low-sample size data, observations are on the vertices of a simplex.
-
-
-This is because in high-dimensional data analysis the curse of dimensionality reasons that points tend to be far away from the center of the distribution and on the edge of high-dimensional space. Contrary to this, is that projected data tends to clump at the center.
-
-
-S6. These points should ideally correspond to different behavior with respect to all the variables considered while running PCA. 
 
 
 
-<!-- First, we select the customers which do not have any implicit missing values and filtered their data for the year 2013. From this set, we randomly sample a set of $600$ customers. We obtain the $wpd$ for all cyclic granularities considered for these customers and found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weeknd/weekday) are coming out to be significant for most customers. This implies that for most customers, there is some interesting pattern across these three granularities. Potentially this could be done for the entire data set. This step is time consuming and hence has been only run for the $600$ sampled customers. As a second step, we remove customers for which data in any category for the significant granularities are empty. For example, in this data set, if a customer do not have data for an entire month, they have been removed as their monthly behavior could not be studied in that case. Further, we also remove customers for which all the deciles of the energy consumption is zero. These are the customers whose consumption remain mostly flat and is expected to have no interesting repetitive patterns that is our interest of study.  -->
-
-
-```{r mds, out.width="100%", fig.cap="Instance selection using tours and projecting the points in a lower dimensional tsne cloud."}
-knitr::include_graphics("figs/liminal_view.png")
-```
-
-
-<!-- However, if `hod` is and not only `hod`, but if `hod` is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers. -->
-
-<!-- from which we wanted to do instance selection. Since this is unlabeled data, there is no way to do external validation of our methodologies. Thus, we chose this way to see how well our methodology works in a cleaner data set as this one to classify customers who have similar behavior across all significant granularities. Next we select $4$ customers which are far apart from each other and $5$ customers which are lying closest in distance to each of these $4$ customers. These selection was done using the granularity $hod$. When we use our methodologies, it is based on all significant granularities and not only hod, but if $hod$ is significant we can expect that the grouping would be similar to how we have initially chosen the set of customers.  -->
-
-<!-- . Instances may be distributed in the representation space in a reasonable manner, revealing their similarities, using this instance wise discriminative learning. A dual-level progressive similar instance selection (DPSIS) approach could also be used -->
-
-
-<!-- Fig \ref{fig:data-heatmap-hod}, \ref{fig:} and \ref{fig:} shows the distribution of 24 customers across hour-of-day, month-of-year and wknd-wday respectively. Every row in \ref{fig:} shows different shapes across hour-of-day and across columns show similar shapes for each row. We use our methodology to see if the customers are allocated to same group have similar shapes across one or more significant granularity. -->
 ```{r}
 quantile_prob_graph <- c(0.25, 0.5, 0.75)
 
@@ -905,7 +868,7 @@ Characterization of clusters both statistically and qualitatively is an importan
 _Group 1:_ This group a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls.
 Their day time usage has high variability. They have heaters on in the winter but consume less energy in the summer. Winter usage may also be due to increased usage of heaters at night when they are up, but typically very less variability in other months.
 
-_Group 2:_ They appear to work 9-5, get up and perform morning activities from 7-10, and then go. Evenings are busier than mornings as people return home to cook supper and perform other activities. During the fall (March-June), these consumers' average energy use declines, before rising again during the winter. However, energy behaviour varies more in the winter than in the summer and a bit in the fall months.
+_Group 2:_ They appear to work 9-5, get up and perform morning activities from 7-10, and then go. Evenings are busier than mornings as people return home to cook supper and perform other activities. During the fall (March-June), these consumers' average energy use declines, before rising again during the winter. However, energy behavior varies more in the winter than in the summer and a bit in the fall months.
 
 _Group 3:_ Presence of children or stay-at-home parents is indicated by the group's almost equivalent morning, afternoon and evening median use and variability across all hours. They have low usage for winter months (or maybe due to use of gas heaters, it is not reflected in electricity usage).
 It seems that the users in this group are more concerned about the comfort and quality of life than the cost of electricity as we see their electricity demand peaking up in the spring and summer.
@@ -1307,7 +1270,7 @@ moy_group <- data_heatmap_moy_group %>%
 ```
 
 
-```{r combined-groups}
+```{r combined-groups, fig.cap = The distribution of electricity demand for the clusters across hour-of-day, month-of-year and wknd-wday. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Group 1 and 3 have a stronger hour-of-day pattern, while group 2, 3, 4 have a month-of-year pattern. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters."}
 combined <- (hod_group/moy_group) & theme(legend.position = "bottom")
 combined + plot_layout(guides = "collect")
 ```
@@ -1419,7 +1382,7 @@ parcoord
 ```
 
 
-A parallel coordinate plot with the three significant cyclic granularities used for wpd-based clustering. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that moy is the most important variable in distinguishing the designs followed by hod and wkndwday. It can be observed that cluster 3 and 4 are distinguished by moy while 1 and 2 are distinguished by hod. Here, wkndwday is still acting as the nuisance variable. The ggpairs plot four distinct clusters across the month-of-year, which are less prominent across the hour-of-day and wknd-wday. The parallel coordinate plot ranks the variables in order of importance, indicating that the month-of-year is the most important in identifying clusters, whereas wkdn-wday is the least significant and has the least variability among the three variables.
+A parallel coordinate plot with the three significant cyclic granularities used for wpd-based clustering. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that moy is the most important variable in distinguishing the designs followed by hod and wkndwday. It can be observed that clusters are well separated by month-of-year, while hour-of-day and weekend-weekday are not useful distinguishing the clusters produced with this clustering method. There is only one customer who has significant wpd across weekend-weekday and stands out from the rest of the customers. 3 and 4 are distinguished by moy while 1 and 2 are distinguished by hod. Here, wkndwday is still acting as the nuisance variable. The ggpairs plot four distinct clusters across the month-of-year, which are less prominent across the hour-of-day and wknd-wday. The parallel coordinate plot ranks the variables in order of importance, indicating that the month-of-year is the most important in identifying clusters, whereas wkdn-wday is the least significant and has the least variability among the three variables.
 
 
 <!-- \noindent We discover 4 qualitative clusters of varying shapes in the distribution of all consumers in the first panel of Figure \ref{fig:combined}. Group-1 includes consumers who work 9-5, get up and conduct morning activities from 7-10am, and then depart. Then they return home in the evening to cook supper and perform other activities, giving the evening a greater peak than the morning. Group 2 is the group that rushes out of the house in the morning to get to work. They only return at night and do all activities at night, so there is no morning peak. The third one has a strong early morning and late night hours. These consumers may be flexible students or elderly retirees who are night owls. Presence of children or stay-at-home parents is indicated by Group-4's almost equivalent morning, afternoon and evening profile. All of this may be validated with further information about the customer.  -->
