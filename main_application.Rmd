@@ -264,7 +264,7 @@ hod_ind_group <- data_hod %>%
   theme_application()+
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +    xlab("hour-of-day")  +
-  scale_x_discrete(breaks = seq(0, 23, 3))
+  scale_x_discrete(breaks = seq(0, 23, 3))+ theme(legend.position = "bottom")
 # + scale_y_continuous(breaks = NULL) 
 
 moy_ind_group <- data_moy %>% 
@@ -281,7 +281,7 @@ moy_ind_group <- data_moy %>%
     xlab("month-of-year")  +
   theme_application() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) 
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) + theme(legend.position = "bottom")
 
 
 
@@ -300,7 +300,7 @@ wkndwday_ind_group <- data_wkndwday%>%
              nrow=24)  +
   theme_application()+
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) 
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7"))  + theme(legend.position = "none")
 
 (hod_ind_group + moy_ind_group + wkndwday_ind_group)  +
   plot_layout(guides = "collect")
@@ -394,7 +394,7 @@ ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
 wkndwday_group <- wkndwday_data%>% 
   ggplot(aes(x=hour_day, y = general_supply_kwh)) +
   #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
-  geom_boxplot(aes(fill = as.factor(group)),alpha = 0.5)+
+  geom_boxplot(aes(fill = group, color = group),alpha = 0.5)+
   #geom_boxplot(outlier.size = 1) + 
   coord_cartesian(ylim = ylim1*1.05)+
   #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
@@ -408,13 +408,14 @@ wkndwday_group <- wkndwday_data%>%
   theme_bw() + theme_application() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
-  theme(legend.position = "bottom") 
+  theme(legend.position = "none") 
 ```
 
 
 
 ```{r combined-groups-js, fig.cap = "The distribution of electricity demand for the clusters across hour-of-day, month-of-year and wknd-wday. Group 2 and 5 have a stronger hour-of-day pattern, while group 1, 3, 5 have a month-of-year pattern. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters."}
-(hod_group + moy_group + wkndwday_group) +  plot_layout(guides = "collect")
+(hod_group + moy_group + wkndwday_group) + 
+  plot_layout(guides = "collect")
 ```
 
 
