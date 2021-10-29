@@ -23,6 +23,7 @@ library(patchwork)
 library(GGally)
 library(distributional)
 library(viridis)
+library(pals)
 ```
 
 
@@ -490,4 +491,209 @@ Things become far more complicated when we consider a larger data set with more 
 
 
 
+```{r data-load-entire}
+# Read the nqt distances
+
+wkndwday <- read_rds(here("data/dist_gran_wkndwday_356cust_nqt.rds")) %>% broom::tidy()
+
+moy <- read_rds(here("data/dist_gran_moy_356cust_nqt.rds")) %>% broom::tidy()
+
+hod <- read_rds(here("data/dist_gran_hod_356cust_nqt.rds")) %>% broom::tidy()
+
+
+# Make the distance metrics
+
+distance <- wkndwday %>% 
+  left_join(moy, by = c("item1", "item2")) %>% 
+  left_join(hod, by = c("item1", "item2")) %>% 
+  rename("wkndwday" ="distance.x",
+         "moy" = "distance.y",
+         "hod" = "distance") %>%
+  mutate(item1 = as.integer(as.character(item1)),
+         item2 = as.integer(as.character(item2))) 
+
+filtered_distance <- distance %>%
+  filter(!(item1 %in% c(8196183, 8508008, 8680538))) %>% 
+  filter(!(item2 %in% c(8196183, 8508008, 8680538)))
+
+total_distance <- filtered_distance %>% 
+  mutate(total = wkndwday/2 + moy/12 + hod/24) 
+
+
+total_distance_wide <- total_distance %>% pivot_wider(-c(2:5), 
+                                                      names_from = item2,
+                                                      values_from = total)
+
+
+rownames(total_distance_wide) <- total_distance_wide$item1
+
+mds_data <- total_distance_wide %>% 
+  mutate_all(~replace(., is.na(.), 0)) %>%
+  tibble::rownames_to_column() %>%  
+  select(-item1) %>% 
+  pivot_longer(-rowname) %>% 
+  pivot_wider(names_from=rowname, values_from=value) 
+
+rownames(mds_data) <- total_distance_wide$item1
+
+df <- mds_data[-1] %>% as.matrix()
+DM <- matrix(0, ncol(mds_data), ncol(mds_data))
+DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)] # distance metric
+f = as.dist(DM)
+
+
+first_lot <- mds_data %>% names()
+
+id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
+
+
+# Find optimal number of clusters
+
+library(fpc)
+library(cluster)
+k = array()
+for(i in 5:50)
+{
+  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
+  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+  k[i]=p$sindex
+}
+
+# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 50, 2))
+# 
+# 
+# plot(k, type = "l")
+# 6 coming as the number of clusters with maximum silwidth
+
+group <- f %>% hclust (method = "ward.D") %>% cutree(k=16)
+cluster_result <- bind_cols(customer_id = id, group = group) 
+
+# cluster_result %>% group_by(group) %>% count()
+
+```
+
+
+
+```{r data-heatmap-hod-group-entire}
+legend_title <- "group"
+
+data_group <- data_pick  %>% 
+  mutate(customer_id = as.character(customer_id)) %>% 
+   gracsr::scale_gran( method = "robust",
+                       response = "general_supply_kwh") %>% 
+  left_join(cluster_result, by = c("customer_id"))
+
+data_heatmap_hod_group <- quantile_gran(data_group,
+                                  gran1="hour_day",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+  
+data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
+
+data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
+
+hod_group_entire <- data_heatmap_hod_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=group,
+                  fill = as.factor(group), alpha = 0.5),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=group, 
+                color = as.factor(group)), size = 1)+
+  facet_wrap(~group, 
+             scales = "free_y",  
+             ncol = 16) + 
+              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
+  ylab("demand (in Kwh)") + 
+  theme_bw()  +
+  scale_x_discrete(breaks = seq(1, 24, 3))+ 
+  #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme_application() +
+  scale_fill_manual(values=as.vector(polychrome(17)))+
+  scale_color_manual(values=as.vector(polychrome(17)))+
+  theme(legend.position = "bottom")
+
+```
+
+```{r data-heatmap-moy-group-entire}
+data_heatmap_moy_group <- quantile_gran(data_group,
+                                  gran1="month_year",
+                                  quantile_prob_val = c(0.25, 0.5, 0.75),
+                                  group="group") %>% 
+  pivot_wider(names_from = quantiles, values_from = quantiles_values) 
+
+data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
+
+
+data_heatmap_moy_group$group <- paste("group", data_heatmap_moy_group$group, sep = "-")
+
+
+moy_group_entire <- data_heatmap_moy_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol = 16) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
+  ylab("demand (in Kwh)") +
+  theme_bw() + theme_application() +
+  scale_fill_manual(values=as.vector(polychrome(17)))+
+  scale_color_manual(values=as.vector(polychrome(17)))+
+  theme(legend.position = "bottom")
+```
+
+
+```{r data-wnwd-group-entire}
+wkndwday_data <- data_group %>%
+  create_gran("wknd_wday") 
+wkndwday_data$group <- as.factor(wkndwday_data$group)
+# %>% 
+#   create_gran("hour_day")
+
+ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
+
+wkndwday_group_entire <- wkndwday_data%>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
+  geom_boxplot(aes(fill = group, color = group),alpha = 0.5, outlier.alpha = 0.05)+
+  #geom_boxplot(outlier.size = 1) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
+#geom_boxplot(aes(fill = as.factor(group))) +
+  #scale_fill_lv() +
+ xlab("wknd-wday") + 
+  ylab("demand (in Kwh)") +
+   facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_both",
+             ncol = 16) + 
+  theme_bw() + theme_application() +
+  scale_fill_manual(values=as.vector(polychrome(17)))+
+  scale_color_manual(values=as.vector(polychrome(17)))+
+  theme(legend.position = "none")
+```
+
+
+```{r combined-groups-js-entire, fig.cap = "The distribution of electricity demand for the clusters across hod (a), moy (b) and wkndwday (c). It seems like group 2 and 5 have a hod pattern across its members, while group 1, 3, 5 have a moy pattern. Wknd-wday variations across groups are not distinguishable, indicating that it is not a critical variable for clustering. It is helpful to compare the summarised distributions of groups to that of individuals to confirm that the most of individuals in the group have the same characterisation."}
+
+ (hod_group_entire/moy_group_entire/ wkndwday_group_entire) +
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
+  plot_layout(guides = "collect")& theme(legend.position = 'bottom')
+```
+
+```{r, eval=FALSE}
+library(ochRe)
+  scale_colour_ochre(
+    palette="nolan_ned")
+  
+  scale_color_pals
+```
 

@@ -66,22 +66,6 @@ id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
 # Find optimal number of clusters
 
 library(fpc)
-cluster.stats(f, clustering = group)
-
-koptimal = koptimal$kopt
-
-# Cluster them
-# 
-
-k = array()
-for(i in 5:50)
-{
-group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
-p <- cluster.stats(f, clustering = group)
-k[i]=p$avg.silwidth
-}
-
-library(fpc)
 library(cluster)
 k = array()
 for(i in 5:50)
@@ -91,11 +75,13 @@ for(i in 5:50)
   k[i]=p$sindex
 }
 
+ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 50, 2))
+
 
 plot(k, type = "l")
 # 6 coming as the number of clusters with maximum silwidth
 
-group <- f %>% hclust (method = "ward.D") %>% cutree(k=16)
+group <- f %>% hclust (method = "ward.D") %>% cutree(k=17)
 cluster_result <- bind_cols(customer_id = id, group = group) 
 
 cluster_result %>% group_by(group) %>% count()
@@ -136,14 +122,16 @@ data_heatmap_hod_group %>%
   facet_wrap(~group, 
              scales = "free_y", 
              labeller = "label_value",
-             nrow = 3) +
+             ncol = 17) +
   theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) +
   xlab("hour-of-day") + ylab("demand (in Kwh)") + 
   theme_bw() + theme(panel.spacing =unit(0, "lines")) +
   theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) +
   scale_x_discrete(breaks = seq(1, 24, 3))+ theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) + theme(legend.position = "bottom")
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) + theme(legend.position = "bottom") +
+  scale_fill_manual(values=as.vector(polychrome(17)))+
+  theme_application() +theme(legend.position = "bottom")
 
 
 
@@ -164,10 +152,12 @@ data_heatmap_moy_group %>%
   facet_wrap(~group, 
              scales = "free_y", 
              labeller = "label_value",
-             nrow = 3) +
+             ncol = 17) +
   theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +
+  scale_fill_manual(values=as.vector(polychrome(17)))+
+  theme_application() +theme(legend.position = "bottom")
 
 
 data_heatmap_wkndwday_group <- quantile_gran(data_group,
@@ -181,7 +171,7 @@ data_heatmap_wkndwday_group$category <- factor(data_heatmap_wkndwday_group$categ
 
 data_wkndwday <- data_pick  %>%
   mutate(customer_id = as.character(customer_id)) %>% 
-  left_join(cluster_result)%>% 
+  left_join(cluster_result, by = "customer_id")%>% 
   create_gran("wknd_wday")  %>% 
   create_gran("hour_day")
 
@@ -193,10 +183,13 @@ data_wkndwday%>%
   #lvplot::geom_lv(aes(fill = as.factor(design), 
   #                   color = as.factor(design)), k=5, alpha = 0.5) +
   geom_boxplot(aes(fill = as.factor(group), color = as.factor(group)),alpha = 0.5)+
+  coord_cartesian(ylim = ylim1*1.05)+
   facet_wrap(~group, 
              scales = "free_y", 
              labeller = "label_value") +
   theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("wknd_wday") + ylab("demand (in Kwh)") + theme_bw() + theme(panel.spacing =unit(0, "lines")) + theme(axis.text.x = element_text(angle=90, hjust=1, size = 7)) + theme(
     strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme(plot.margin = margin(0, 0, 0, 0, "cm") )
+  theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +
+  scale_fill_manual(values=as.vector(polychrome(17)))+
+  theme_application() +theme(legend.position = "bottom")
 
