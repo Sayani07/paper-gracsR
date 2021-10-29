@@ -121,7 +121,7 @@ theme_application <- function() {
       theme(plot.background = element_blank(), panel.grid = element_blank())+
   #theme(axis.text.x = element_text(size=5)) +
     theme(strip.background = element_blank(),
-  strip.text.x = element_blank()) 
+  strip.text.x = element_blank())  + theme(legend.position = "bottom")
 }
 ```
 
@@ -1270,7 +1270,7 @@ moy_group <- data_heatmap_moy_group %>%
 ```
 
 
-```{r combined-groups, fig.cap = The distribution of electricity demand for the clusters across hour-of-day, month-of-year and wknd-wday. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Group 1 and 3 have a stronger hour-of-day pattern, while group 2, 3, 4 have a month-of-year pattern. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters."}
+```{r combined-groups, fig.cap = "The distribution of electricity demand for the clusters across hour-of-day, month-of-year and wknd-wday. The median is represented by a line and the shaded region represents the area between $25^{th}$ and $75^{th}$ percentile. Group 1 and 3 have a stronger hour-of-day pattern, while group 2, 3, 4 have a month-of-year pattern. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters."}
 combined <- (hod_group/moy_group) & theme(legend.position = "bottom")
 combined + plot_layout(guides = "collect")
 ```

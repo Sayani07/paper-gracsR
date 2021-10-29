@@ -46,14 +46,7 @@ theme_application <- function() {
 ```
 ## What data you have, what are their features. What you doing in this section.
 
-The use of our methodology is illustrated on smart meter energy usage for a sample of customers from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) which was available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee) and Data61 CSIRO. It contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. No additional information about the customers is used for the application.
-
-The linear view of the time series data generally has too many measurements all squeezed in that representation, it hinders us to discern any repetitive behavioral pattern for even one customers (let alone many customers together). In most cases, electricity data will have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior. The raw data for these consumers is of unequal length, with varying start and finish dates. Because our proposed methods evaluate probability distributions rather than raw data, neither of these data features would pose any threat to our methodology unless they contained any structure or systematic patterns. Additionally, there were missing values in the database but further investigation revealed that there is no structure in the missingness (see Supplementary paper for raw data features and missingness). 
-
-## Prototype selection
-
-<!-- Why instance selection -->
-Supervised learning uses a training set of known information to categorize new events. Instance selection (@olvera2010review) is a method of rejecting instances that are not helpful for classification. This is equivalent to subsetting the population along all dimensions of interest such that the sampled data reflects the underlying distribution's primary features. Instance selection in unsupervised learning has received little attention in the literature, yet it could be a useful tool for evaluating model or method performance. @Fan2021-bq proposes one such process that picks related examples (neighbours) for each instance (anchor) and considers them as the same class. In this part, consumers with prototype behaviors are chosen to serve as study population for our suggested methodology.
+The use of our methodology is illustrated on smart meter energy usage for a sample of customers from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) which was available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee) and Data61 CSIRO. It contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. In most cases, electricity data is expected to have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view because too many measurements all squeezed in that representation. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior. The raw data for these consumers is of unequal length, with varying start and finish dates. Because our proposed methods evaluate probability distributions rather than raw data, neither of these data features would pose any threat to our methodology unless they contained any structure or systematic patterns. Additionally, there were missing values in the database but further investigation revealed that there is no structure in the missingness (see Supplementary paper for raw data features and missingness). The study begins by subsetting a data set along all dimensions of interest using data filtering and prototyping. By grouping the prototypes using our methods and assessing their meaning, the study hopes to unravel some of the heterogeneities observed in energy usage data. Because our application does not employ additional customer data, we cannot explain why consumption varies, but rather try to identify how it varies.
 
 _Data filtering and variable selection_
 
@@ -65,9 +58,12 @@ _Data filtering and variable selection_
 
 - Remove customers whose energy consumption is 0 in all deciles. These are the clients whose consumption is likely to remain essentially flat and with no intriguing repeated patterns that we are interested in studying.
 
-<!-- - can be done in several ways -->
 
-\noindent There are several ways to approach the prototype selection. Use any dimensionality reduction techniques like MDS or PCA to project the data into a 2-dimensional space. Then pick a few "anchor" customers who are far apart in 2D space and pick a few neighbors for each. Unfortunately, this does not assure that consumers with significant patterns across all variables are chosen. We perform a linked tour with t-SNE layout and (liminal) to identify customers who are more likely to have distinct patterns across the variables studied. Tours can help us see separation between variables that was not obvious in the single variable display. Please see the Supplementary article for further details on how the prototypes are chosen. Figure \ref{fig:protypes} shows the raw time plot, distribution across `hod`, `moy` and `wkndwday` for the set of chosen $24$ customers. Few of these customers have similar distribution across `moy` and some are similar in their `hod` distribution. These $24$ prototypes are clustered using the methodology described in \ref{Sec:methodology} to see if the grouping is useful.
+_Prototype selection_
+
+<!-- Why instance selection -->
+Supervised learning uses a training set of known information to categorize new events through instance selection. Instance selection (@olvera2010review) is a method of rejecting instances that are not helpful for classification. This is analogous to subsampling the population along all dimensions of interest such that the sampled data represents the primary features of the underlying distribution. Instance selection in unsupervised learning has received little attention in the literature, yet it could be a useful tool for evaluating model or method performance. There are several ways to approach the prototype selection.
+Following @Fan2021-bq's idea of picking related examples (neighbours) for each instance (anchor), we can first use any dimensionality reduction techniques like MDS or PCA to project the data into a 2-dimensional space. Then pick a few "anchor" customers who are far apart in 2D space and pick a few neighbors for each. Unfortunately, this does not assure that consumers with significant patterns across all variables are chosen. Tours can reveal variable separation that was hidden in a single variable display. Hence we perform a linked tour with t-SNE layout (using the R package @R-liminal) to identify customers who are more likely to have distinct patterns across the variables studied. Please see the Supplementary article for further details on how the prototypes are chosen. Figure \ref{fig:protypes} shows the raw time plot, distribution across `hod`, `moy` and `wkndwday` for the set of chosen $24$ customers. Few of these customers have similar distribution across `moy` and some are similar in their `hod` distribution. 
 
 ```{r prototype-data-pick}
 quantile_prob_graph <- c(0.25, 0.5, 0.75)
@@ -188,16 +184,17 @@ wkndwday_ind_design <- data_wkndwday%>%
     aes(group = 1), size = 1, color = "black")+
   theme_application()
 
-(hod_ind_design + moy_ind_design + wkndwday_ind_design) 
+
 
 ```
 
 ## Clustering
 
-### Using JS-based distances
+Cluster characterization is a crucial aspect of cluster analysis. The $24$ prototypes and the data subset consisting of $353$ customers are clustered using the methodology described in \ref{Sec:methodology} and results are reported below. In the following plots, the median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$. All customers with the same color represent same clustered groups. The plotting scales are not displayed since we want to emphasize comparable shapes rather than scales. The idea is that a customer in a cluster may have low total energy usage, but their behavior may be quite similar to a customer with high usage with respect to shape or significance across cyclic granularities.
 
-The $24$ prototypes are first clustered using the methodology described in \ref{Sec:methodology}. We chose the optimal number of clusters using (@Henning-2013) as $5$. The distribution of electricity demand for the selected $24$ customers across hour-of-day and month-of-year are shown in \ref{fig:hod-combined} respectively. The median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$. All customers with the same color represent the same design (left) or cluster (right). The plotting scales are not displayed since we want to emphasize comparable shapes rather than scales. A customer in the cluster may have low daily or total energy usage, but their behavior may be quite similar to a customer with high usage.
+### JS-based distances
 
+We chose the optimal number of clusters using (@Hennig2014-ah) as $5$. The distribution of electricity demand for the selected $24$ customers across hour-of-day and month-of-year are shown in \ref{fig:hod-combined} respectively. Figure ref\{fig:combined-groups-js} depicts the summarized distributions across groups and assists us in characterizing each cluster. All of these may be validated only with further information about the customer. Figure ref\{fig:combined-groups-js} shows Groups 2 and 5 show a stronger hour-of-day pattern with a typical morning and evening peak, whereas groups 1, 3, and 5 show a month-of-year pattern  with higher usage in winter months. Differences in wknd-wday between groups are not discernible, implying that it may not be a relevant variable in distinguishing various clusters.
 
 ```{r all-data}
 data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
@@ -235,7 +232,7 @@ p <- cluster.stats(f, clustering = group, silhouette = TRUE)
 k[i]=p$sindex
 }
 # 
-# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line()
+# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1))
 ```
 
 ```{r groups-24}
@@ -246,10 +243,10 @@ cluster_result <- suppressMessages(f %>%
 ```
 
 
-```{r hod-ind-group, fig.cap="The distribution across moy, hod and wkndwday of each customer is shown. The same color represents same group.Our clustering methodology is useful for grouping together comparable distributions over hod and moy. Of course, certain consumers in each group have distributions that differ from the distributions for other customers in the same group. However, it appears that the goal of finding similar distribution across significant cyclic granularities has been established."  }
+```{r hod-ind-group, fig.cap="The distribution of selected consumers over hod (a, d), moy (b, e), and wkndwday (d, f). In each case, the same colour denotes the same group in plots (d), (e), (f) and are placed together to facilitate comparison. That means the customer orderings are different for (a, b, c) and (d, e, f). Our clustering methodology is useful for grouping similar distributions over hod and moy. Of course, certain customers in each group have distributions that differ from those of other members in the same group. However, it appears that the aim of grouping comparable distributions over considered variables has been accomplished to some extent." }
 
 hod_ind_group <- data_hod %>% 
-  left_join(cluster_result) %>% 
+  left_join(cluster_result, by = c("customer_id")) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`,
@@ -291,7 +288,7 @@ wkndwday_ind_group <- data_wkndwday%>%
   ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
   #lvplot::geom_lv(aes(fill = as.factor(group), 
           #            color = as.factor(group)), k=5, alpha = 0.5) +
-  geom_boxplot(aes(fill = group, color = group),alpha = 0.5)+
+  geom_boxplot(aes(color = group, fill = group),alpha = 0.5)+
   #geom_boxplot(outlier.shape = NA) + 
   coord_cartesian(ylim = ylim1*1.05)+
   facet_wrap(group~customer_id, 
@@ -302,12 +299,10 @@ wkndwday_ind_group <- data_wkndwday%>%
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7"))  + theme(legend.position = "none")
 
-(hod_ind_group + moy_ind_group + wkndwday_ind_group)  +
-  plot_layout(guides = "collect")
-
+hod_ind_design + moy_ind_design + wkndwday_ind_design + hod_ind_group + moy_ind_group + wkndwday_ind_group +  plot_layout(guides = "collect", ncol = 6) + plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = 'none')
 ```
 
-Cluster characterization is a crucial aspect of cluster analysis. Figure ref\{fig:combined-groups-js} depicts the summarized distributions across groups and assists us in characterizing each cluster. All of these may be validated only with further information about the customer. Figure \ref{fig: Groups 2 and 5 show a stronger hour-of-day pattern, whereas groups 1, 3, and 5 show a month-of-year pattern. Differences in wknd-wday between groups are not discernible, implying that it may not be a relevant variable in distinguishing various clusters.
+
 
 
 ```{r data-heatmap-hod-group}
@@ -384,7 +379,6 @@ moy_group <- data_heatmap_moy_group %>%
 ```
 
 
-
 ```{r}
 wkndwday_data <- data_group %>% create_gran("wknd_wday") %>% 
   create_gran("hour_day")
@@ -394,7 +388,7 @@ ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
 wkndwday_group <- wkndwday_data%>% 
   ggplot(aes(x=hour_day, y = general_supply_kwh)) +
   #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
-  geom_boxplot(aes(fill = group, color = group),alpha = 0.5)+
+  geom_boxplot(aes(fill = group, color = group),alpha = 0.5, outlier.alpha = 0.05)+
   #geom_boxplot(outlier.size = 1) + 
   coord_cartesian(ylim = ylim1*1.05)+
   #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
@@ -412,30 +406,88 @@ wkndwday_group <- wkndwday_data%>%
 ```
 
 
+```{r combined-groups-js, fig.cap = "The distribution of electricity demand for the clusters across hod (a), moy (b) and wkndwday (c). It seems like group 2 and 5 have a hod pattern across its members, while group 1, 3, 5 have a moy pattern. Wknd-wday variations across groups are not distinguishable, indicating that it is not a critical variable for clustering. It is helpful to compare the summarised distributions of groups to that of individuals to confirm that the most of individuals in the group have the same characterisation."}
 
-```{r combined-groups-js, fig.cap = "The distribution of electricity demand for the clusters across hour-of-day, month-of-year and wknd-wday. Group 2 and 5 have a stronger hour-of-day pattern, while group 1, 3, 5 have a month-of-year pattern. For wknd-wday differences across different groups are not distinct suggesting that it might not be that important a variable to distinguish different clusters."}
-(hod_group + moy_group + wkndwday_group) + 
-  plot_layout(guides = "collect")
+ (hod_group + moy_group + wkndwday_group) +
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
+  plot_layout(guides = "collect")& theme(legend.position = 'bottom')
 ```
 
+
+### wpd-based distances
+
+We chose the optimal number of clusters using (@Hennig2014-ah) as $3$. A parallel coordinate plot with the three significant cyclic granularities used for wpd-based clustering. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the designs followed by $hod$ and $wkndwday$. There is only one customer who has significant $wpd$ across $wkndwday$ and stands out from the rest of the customers. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has the most distinct pattern across moy. Group 1 is a mixed group that has strong patterns on at least one of the three variables. The findings vary from js-based clustering, yet it is a helpful grouping.
+
+
+
+```{r data-pick-wpd}
+elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
+
+elec_pick <- elec_600_wpd %>% 
+  filter(customer_id %in% data_pick_cust$customer_id)
+
+elec_pick_wide <- elec_pick %>% pivot_wider(-c(1, 2), names_from = "x_variable", values_from = wpd)
+
+scaled_var <- elec_pick_wide
+
+f <- elec_pick_wide[-1] %>% dist() 
+
+k = array()
+for(i in 2:20)
+{
+group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
+p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+k[i]=p$sindex
+}
+# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1))
+
+group <- f%>% hclust (method = "ward.D") %>% cutree(k=3)
+
+
+cluster_result_wpd <- bind_cols(id = elec_pick_wide$customer_id, group = group) 
+
+data_pcp <- scaled_var %>% 
+  #bind_cols(customer_id =  elec_pick_wide$customer_id) %>%
+  left_join(cluster_result_wpd , by = c("customer_id" = "id")) %>% 
+  select(customer_id, group, everything()) %>% 
+  mutate(group = as.factor(group))
+
+data_table <- data_pcp %>% group_by(group) %>% 
+  summarise(nobs = n(),
+            moy = round(median(month_year),2),
+            hod = round(median(hour_day),2),
+            wnwd = round(median(wknd_wday),2))
+
+```
+
+
+```{r parcoord, fig.cap="Each of the 24 customers is represented by a parallel coordinate plot (a) with three wpd-based groupings. The plot shows that moy is the most important variable in identifying clusters, whereas wkdn-wday is the least significant and has the least fluctuation. One particular customer with high wpd across wknwday stands out in this display. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has most discernible pattern across moy. Group 1 is a mixed group with strong patterns on atleast one of the three variables. All of these could be observed from the plot or the table (b) which shows median wpd values for each group.", message=FALSE, warning=FALSE}
+
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 3:ncol(data_pcp),
+                   groupColumn = "group",
+                   showPoints = FALSE, 
+                   alphaLines = 0.8,
+                   order = "anyClass",
+                   scale = "globalminmax"
+) + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd") + scale_fill_viridis_d(direction = 1) +
+  scale_color_viridis_d(direction = 1) + theme_light()
+
+(parcoord + gridExtra::tableGrob(data_table))+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
+
+```
+
+## Entire data subset
 
 Things become far more complicated when we consider a larger data set with more uncertainty, as they do with any clustering problem. Summarizing distributions across clusters with varied or outlying customers can result in a shape that does not represent the group. Furthermore, combining hetergeneous customers may result in similar-looking final clusters that are not effective for visually differentiating them. It is also worth noting that the wknd-wday behavior in the given case does not characterize any cluster. This, however, will not be true for all of the customers in the data set. If more extensive prototype selection is used, resulting in more comprehensive prototypes in the data set, this method might be used to classify the entire data set into these prototype behaviors. However, the goal of this section was to have a few customers that have significant patterns over one or more cyclic granularities, apply our clustering methodology to cluster them, and demonstrate that the method produces useful clusters.
 
 
 
-
-
-### Using wpd-based distances
-
-```{r pcp-wpd}
-```
-
-A parallel coordinate plot with the three significant cyclic granularities used for wpd-based clustering. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the designs followed by $hod$ and $wkndwday$. It can be observed that clusters are well separated by $moy$, while $hod$ and $wkndwday$ are not useful distinguishing the clusters produced with this clustering method. The parallel coordinate plot ranks the variables in order of importance, indicating that the month-of-year is the most important in identifying clusters, whereas wkdn-wday is the least significant and has the least variability among the three variables. However, there is only one customer who has significant $wpd$ across $wkndwday$ and stands out from the rest of the customers. The ggpairs plot also shows five distinct clusters across the $moy$.
-
-
-
-
-Notice that while looking for these customers
-
-(can be used as classification method, problems in handling large dataset)
 
