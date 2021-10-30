@@ -904,7 +904,7 @@ design3 <- append_files_plot(folder_name = "js-nqt", path = "/1gran_change_5D/")
 
 
 ##----mds-plot-validation
-
+##
 mds_data <- function(data){
   total_distance <- data %>%
     group_by(item1, item2) %>% 
