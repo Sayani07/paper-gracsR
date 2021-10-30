@@ -5,11 +5,7 @@
 library(tidyverse)
 library(readr)
 
-
-
 folder_name = "js_robust"
-
-
 
 append_files <- function(folder_name){
 all_files = list.files(path = paste0(folder_name, "/3gran_change_5D/"), 

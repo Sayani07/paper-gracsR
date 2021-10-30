@@ -418,11 +418,11 @@ Each category or combination of categories from $g1$, $g2$ and $g3$ are assumed 
 _Scenario (b): Few significant granularities_
 
 \noindent This is the case where one granularity will remain the same across all designs. We consider the case where the distribution of $v$ would vary across levels of $g2$ for all designs, across levels of $g1$ for few designs and $g3$ does not change across designs. So $g3$ is not responsible for distinguishing across designs. Figure
-\ref{#fig:plot-linear}(left) shows the considered design. 
+\ref{#fig:gran2and1-clubbed}(left) shows the considered design. 
 
 _(c) One signifiant granularity_
 
-\noindent Here only one granularity is responsible for distinguishing the designs. Designs change significantly only for the granularity $g3$. Figure \ref{fig:plot-1gran}(right) shows this.
+\noindent Here only one granularity is responsible for distinguishing the designs. Designs change significantly only for the granularity $g3$. Figure \ref{fig:gran2and1-clubbed}(right) shows this.
 
 
 ```{r tab-distribution}
@@ -487,7 +487,6 @@ The proposed methods could be extended when two granularities of interest intera
 ```
 
 
-
 <!-- When two granularities of interest interact, the connection between a granularity and the measured variable is determined by the value of the other interacting granularity. This happens when the effects of the two granularities on the measured variable are not additive. For simplicity, consider a case with just two interacting granularities $g1$ and $g2$ of interest. As opposed to the last case, where we could play with the distribution of $5$ individual categories, with interaction we can play with the distribution of $6$ combination of categories. Consider $4$ designs in Figure \ref{fig:} where different distributions are assumed for different designs to get some distinction across designs. For example, in application, think about the scenario when customers need to grouped basis their joint behavior across hour-of-day and month-of-year. -->
 
 <!-- | Granularity type                                                   	| # Significant 	| # Replications 	| -->
@@ -498,7 +497,28 @@ The proposed methods could be extended when two granularities of interest intera
 
 ## Results
 
-All the methods were fitted to each data designs and results are reported through cluster statistics or plots. With increasing difference between categories, it gets easier for the methods to correctly distinguish the designs. For ${diff}=1$, the performances are pretty bad for js-robust methods and wpd method for lower nT. Although, with the kind of residential load datasets, a full year of load is the minimal requirement to capture expected variations in winter and summer profiles, for example. It is likely that $nT$ would be at least $1000$ with half-hourly data, even if data is only available just for a month. The performance is promising except when the number of observations for a customer is really small. For smaller difference between categories, it is expected that method js-nqt would preform better than the other two.
+All the methods were fitted to each data designs to check if the formed clusters matches the design, if they are separated well and have low intra-cluster variation. Many of the potentially desired features of clusterings such as separation between clusters, high density within clusters, and distributional shapes can be explored graphically in a more holistic (if subjective) way than by looking at index values. So we use mds and parallel coordinate plots to demonstrate the results. and also for understanding variable importance. Results are summarized below:
+
+- In Figure \ref{fig:mds-plot-validation}, we tried to see how separated our clusters are. We observe that in all scenarios and for different mean differences, cluster is separated. However, the separation increases with increase in mean differences across scenarios. This is intuitive because with increasing difference between categories, it gets easier for the methods to correctly distinguish the designs.
+
+- Since the designs are constructed in a way that gives importance to three, two and one granularities respectively, we plot the inter cluster differences for each group under the iterations and plot them in a parallel coordinate plot. Figure \ref{fig:parcoord-sim} shows that in the first plot, no variable stands out in the clustering, whereas for the next two designs it is clear that g1, and g1 and g2 have little role to play in the cluster and thus the inter cluster distances are small compared to those variables. For more detailed plots and tables, please refer to the supplementary paper
+Each line represents each scenario, hence the point is not to look at cluster separation but more at the fact that which variable led to the clustering. The lines are not colored by group because the goal is not to highlight class division but rather the contribution of the factors to categorization.
+
+ - The performances get worse for js-robust and wpd method for $nT=300$, after which it picks up for larger $nT$ considered in the study. Although, with the kind of residential load datasets, a full year of load is the minimal requirement to capture expected variations in winter and summer profiles, for example. It is likely that $nT$ would be at least $1000$ with half-hourly data, even if data is only available just for a month. The performance is promising except when the number of observations for a customer is really small. 
+
+- For smaller difference between categories, it is expected that method js-nqt would preform better than the other methods.
+
+
+
+```{r mds-plot-validation, fig.cap = "Observations are projected through MDS and the first two dimensions are shown to display the relative position of clusters for different simulation parameters. The rows of the grid represent the different mean differences in designs and the columns represent different designs. It can be observed that clusters become more compact and separated for higher distributional differences between categories."}
+
+```
+
+```{r  parcoord-sim, fig.cap="Parallel coordinate plots are used to identify key variables for classification. Each line in this figure represents a formed group for a certain set of simulated parameters. (a), (b) and (c) corresponds to Scenarios (a), (b) and (c). The cyclic granularities $g1$, $g2$, and $g3$ are plotted on the x-axis, while total inter-cluster distances are plotted on the y-axis. Each line in this figure represents a group for a certain configuration of the various parameters ($nT$, $diff$, $R$). (c) demonstrates that intercluster distances are only significant for the variable $g3$, meaning that the clusters formed are primarily due to $g3$. This corresponds to our design in Scenario (c), in which distributional differences were implemented solely for g3. (b) demonstrates the role of g2 and g3 in clustering. (a) depicts a heterogeneous pattern of inter-cluster distances across variables, indicating that no single variable is to account for the clusters. "}
+
+```
+
+
 <!-- A confusion table can come alive with linked brushing, so that mismatches and agreements between methods can be explored. -->
 
 
@@ -696,6 +716,7 @@ wkndwday <- suppressMessages(data_pick %>%
 distance <- wkndwday/2 + moy/12 + hod/24
 
 f = as.dist(distance)
+
 ```
 
 

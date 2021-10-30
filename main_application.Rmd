@@ -530,7 +530,7 @@ rownames(total_distance_wide) <- total_distance_wide$item1
 mds_data <- total_distance_wide %>% 
   mutate_all(~replace(., is.na(.), 0)) %>%
   tibble::rownames_to_column() %>%  
-  select(-item1) %>% 
+  dplyr::select(-item1) %>% 
   pivot_longer(-rowname) %>% 
   pivot_wider(names_from=rowname, values_from=value) 
 

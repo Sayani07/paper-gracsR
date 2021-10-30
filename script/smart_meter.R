@@ -803,3 +803,191 @@ p4 <- change_index(sim_panel_varall) %>%
 p_null +p_varf + p_varx + p_varall + plot_annotation(tag_prefix = '(', tag_levels = 'a', tag_suffix  = ')')
 
 #labels = c("Design-1", "Design-2", "Design-3", "Design-4"))
+
+
+##----parcoord-sim
+append_files_plot <- function(folder_name, path){
+  all_files = list.files(path = paste0(folder_name,path), 
+                         pattern = "data_validation_")
+  
+  names_levels <- map_dfr(all_files, 
+                          function(x){
+                            z = str_split(str_remove(x, ".rds"), "_") %>% 
+                              unlist()
+                            bind_cols(index = z[3])
+                          })
+  
+  all_files_path <- paste0(folder_name, path,
+                           all_files)  
+  
+  
+  all_data <- lapply(1:length(all_files_path), function(x){
+    
+    data = all_files_path %>% magrittr::extract2(x) %>% 
+      readRDS()
+    
+    names = names_levels %>% magrittr::extract(x,)
+    names_rep =   names %>% slice(rep(1:n(), each = nrow(data)))
+    bind_cols(names_rep, data)
+  }) %>% bind_rows() 
+  # 
+  # all_data <- append_files("js-nqt")
+  
+  # compute all inter cluster distance "from" group
+  all_mat_mat_from <- all_data%>%
+    group_by(index, gran, group_item1, group_item2) %>% 
+    filter(group_item1!= group_item2) %>% 
+    summarise(sum = sum(distance),.groups = "drop") %>% 
+    pivot_wider(names_from = group_item2, values_from = sum) %>% ungroup %>% 
+    replace(is.na(.), 0) %>% 
+    mutate(distance = rowSums(across(where(is.numeric)))) %>% 
+    dplyr::select(c(index, gran, group_item1, distance)) %>% 
+    rename("group"="group_item1")
+  
+  
+  # compute all inter cluster distance "to" group
+  
+  all_mat_mat_to <- all_data%>%
+    group_by(index, gran, group_item1, group_item2) %>% 
+    filter(group_item1!= group_item2) %>% 
+    summarise(sum = sum(distance),.groups = "drop") %>% 
+    pivot_wider(names_from = group_item1, values_from = sum) %>% ungroup %>% 
+    replace(is.na(.), 0) %>% 
+    mutate(distance = rowSums(across(where(is.numeric)))) %>% 
+    dplyr::select(c(index, gran, group_item2, distance))%>% 
+    rename("group"="group_item2")
+  
+  # compute all inter cluster distance to and from
+  
+  data_pcp <- bind_rows(all_mat_mat_from, all_mat_mat_to) %>% 
+    group_by(index, gran, group) %>% 
+    summarise(inter_distance = sum(distance),.groups = "drop") %>% 
+    pivot_wider(names_from = gran, values_from = inter_distance) %>% ungroup %>% 
+    mutate(group = as.factor(group))
+  
+  parcoord <- GGally::ggparcoord(data_pcp ,
+                                 columns = 3:ncol(data_pcp),
+                                 groupColumn = "group",
+                                 showPoints = TRUE, 
+                                 alphaLines = 0.5,
+                                 scale = "globalminmax")+ scale_colour_manual(values = rep("black", each = 5))
+  parcoord
+  
+  # 
+  # pairsplot <- ggpairs(data_pcp, 
+  #                      columns = 3:5,
+  #                      aes(fill=group, color = group), alpha = 0.5) +
+  #   scale_fill_viridis_d(direction = -1) +
+  #   scale_color_viridis_d(direction = -1) +
+  #   theme_light()
+  
+}
+design1 <- append_files_plot(folder_name = "js-nqt", path = "/3gran_change_5D/")
+design2 <- append_files_plot(folder_name = "js-nqt", path = "/2gran_change_4D/")
+design3 <- append_files_plot(folder_name = "js-nqt", path = "/1gran_change_5D/")
+
+# (design1 + design2 + design3)&theme(legend.position = "bottom") 
+# 
+# 
+# design1 <- append_files_plot(folder_name = "js-robust", path = "/3gran_change_5D/")
+# design2 <- append_files_plot(folder_name = "js-robust", path = "/2gran_change_4D/")
+# design3 <- append_files_plot(folder_name = "js-robust", path = "/1gran_change_5D/")
+# 
+# (design1 + design2 + design3)&theme(legend.position = "bottom") 
+# 
+# 
+# design1 <- append_files_plot(folder_name = "js-nqt", path = "/3gran_change_5D/")
+# design2 <- append_files_plot(folder_name = "js-nqt", path = "/2gran_change_4D/")
+# design3 <- append_files_plot(folder_name = "js-nqt", path = "/1gran_change_5D/")
+
+(design1 + design2 + design3 + plot_layout(guides = "collect")+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')'))*theme_characterisation()&theme(legend.position = "none")&xlab("")
+
+
+##----mds-plot-validation
+
+mds_data <- function(data){
+  total_distance <- data %>%
+    group_by(item1, item2) %>% 
+    summarise(total = sum(distance), .groups = "drop") %>% ungroup()
+  
+  total_distance_wide <- total_distance%>% 
+    pivot_wider(names_from = item2, values_from = total)
+  
+  rownames(total_distance_wide) <- total_distance_wide$item1
+  
+  mds_data <- total_distance_wide %>% 
+    mutate_all(~replace(., is.na(.), 0)) %>%
+    tibble::rownames_to_column() %>%  
+    dplyr::select(-item1) %>% 
+    pivot_longer(-rowname) %>% 
+    pivot_wider(names_from=rowname, values_from=value) 
+  
+  rownames(mds_data) <- total_distance_wide$item1
+  
+  df <- mds_data[-1] %>% as.matrix()
+  DM <- matrix(0, ncol(mds_data), ncol(mds_data))
+  DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)] # distance metric
+  f = as.dist(DM)
+  
+  mds <- f %>%
+    cmdscale() %>%
+    as_tibble()
+  
+  colnames(mds) <- c("Dim.1", "Dim.2")
+  
+  groups<-bind_rows(data %>%
+                      distinct(item1, group_item1) %>% 
+                      rename("item" = "item1",
+                             "group" = "group_item1"),
+                    data %>% 
+                      distinct(item2, group_item2) %>%
+                      rename("item" = "item2",
+                             "group" = "group_item2")) %>% distinct(item, group) 
+  
+  
+  
+  all_data_cluster <- cbind(groups, mds) %>%
+    mutate(group = as.factor(group)) %>% as_tibble()
+}
+
+
+# original simulation table
+niter <- c(5, 50, 100) #number of series you are clustering
+nT <-  c(300, 1000, 5000) # length of the time series
+mean_diff <- c(1, 2, 5) # difference between consecutive categories
+
+simtable <- expand.grid(mean_diff = mean_diff,
+                        niter = niter,
+                        #time_series = time_series, 
+                        nT = nT)
+
+data1 <- mds_data(read_rds("js-nqt/3gran_change_5D/data_validation_25.rds")) %>% mutate(diff = 1 , design= "a")
+data2 <-mds_data(read_rds("js-nqt/3gran_change_5D/data_validation_26.rds")) %>% mutate(diff = 2 , design= "a")
+data3 <-mds_data(read_rds("js-nqt/3gran_change_5D/data_validation_27.rds")) %>% mutate(diff = 5 , design= "a")
+
+data4 <- mds_data(read_rds("js-nqt/2gran_change_4D/data_validation_7.rds")) %>% mutate(diff = 1 , design= "b")
+data5 <- mds_data(read_rds("js-nqt/2gran_change_4D/data_validation_17.rds")) %>% mutate(diff = 2 , design= "b")
+data6 <- mds_data(read_rds("js-nqt/2gran_change_4D/data_validation_9.rds")) %>% mutate(diff = 5 , design= "b")
+
+
+data7 <- mds_data(read_rds("js-nqt/1gran_change_5D/data_validation_16.rds"))%>% mutate(diff = 1 , design= "c")
+data8 <-mds_data(read_rds("js-nqt/1gran_change_5D/data_validation_17.rds"))%>% mutate(diff = 2 , design= "c")
+data9 <-mds_data(read_rds("js-nqt/1gran_change_5D/data_validation_18.rds"))%>% mutate(diff = 5 , design= "c")
+
+all_data <- bind_rows(data1, data2, data3, data4, data5, data6, data7, data8, data9) %>% rename("Scenario" ="design")
+
+
+mds_plot_10 <- ggplot(all_data,
+                      aes(x = Dim.1,
+                          y = Dim.2,
+                          color = group)) +
+  geom_point(size = 2, alpha = 0.5, shape = 3) +
+  facet_grid(diff~Scenario, labeller = "label_both") +
+  #geom_text(check_overlap = TRUE)  +
+  theme_bw()+
+  theme(legend.position = "bottom") +
+  scale_color_brewer(palette = "Dark2")+
+  ylab("mds1") + xlab("mds2")
+
+mds_plot_10
+
