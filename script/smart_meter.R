@@ -1,13 +1,28 @@
 ## ---- load-lib
-library(tidyverse)
+
+#theme_set(theme_bw())
+library(ggplot2)
 library(lubridate)
-library(tsibble)
-library(fable)
-library(patchwork)
-library(here)
-theme_set(theme_bw())
-library(forcats)
+library(gravitas)
+library(gracsr)
+library(ggdendro)
+library(dplyr)
 library(readr)
+library(visdat)
+library(ggplot2)
+library(tidyverse)
+library(naniar)
+library(here)
+library(tsibble)
+library(knitr)
+library(patchwork)
+library(GGally)
+library(distributional)
+library(viridis)
+library(forcats)
+library(tidyr)
+library(purrr)
+library(stringr)
 
 ##----load-data
 load("data/ALL_DATA.Rdata")
@@ -882,9 +897,9 @@ append_files_plot <- function(folder_name, path){
   #   theme_light()
   
 }
-design1 <- append_files_plot(folder_name = "js-nqt", path = "/3gran_change_5D/")
-design2 <- append_files_plot(folder_name = "js-nqt", path = "/2gran_change_4D/")
-design3 <- append_files_plot(folder_name = "js-nqt", path = "/1gran_change_5D/")
+design1 <- append_files_plot(folder_name = "validation/js-nqt", path = "/3gran_change_5D/")
+design2 <- append_files_plot(folder_name = "validation/js-nqt", path = "/2gran_change_4D/")
+design3 <- append_files_plot(folder_name = "validation/js-nqt", path = "/1gran_change_5D/")
 
 # (design1 + design2 + design3)&theme(legend.position = "bottom") 
 # 
@@ -961,18 +976,18 @@ simtable <- expand.grid(mean_diff = mean_diff,
                         #time_series = time_series, 
                         nT = nT)
 
-data1 <- mds_data(read_rds("js-nqt/3gran_change_5D/data_validation_25.rds")) %>% mutate(diff = 1 , design= "a")
-data2 <-mds_data(read_rds("js-nqt/3gran_change_5D/data_validation_26.rds")) %>% mutate(diff = 2 , design= "a")
-data3 <-mds_data(read_rds("js-nqt/3gran_change_5D/data_validation_27.rds")) %>% mutate(diff = 5 , design= "a")
+data1 <- mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_25.rds")) %>% mutate(diff = 1 , design= "a")
+data2 <-mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_26.rds")) %>% mutate(diff = 2 , design= "a")
+data3 <-mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_27.rds")) %>% mutate(diff = 5 , design= "a")
 
-data4 <- mds_data(read_rds("js-nqt/2gran_change_4D/data_validation_7.rds")) %>% mutate(diff = 1 , design= "b")
-data5 <- mds_data(read_rds("js-nqt/2gran_change_4D/data_validation_17.rds")) %>% mutate(diff = 2 , design= "b")
-data6 <- mds_data(read_rds("js-nqt/2gran_change_4D/data_validation_9.rds")) %>% mutate(diff = 5 , design= "b")
+data4 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_7.rds")) %>% mutate(diff = 1 , design= "b")
+data5 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_17.rds")) %>% mutate(diff = 2 , design= "b")
+data6 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_9.rds")) %>% mutate(diff = 5 , design= "b")
 
 
-data7 <- mds_data(read_rds("js-nqt/1gran_change_5D/data_validation_16.rds"))%>% mutate(diff = 1 , design= "c")
-data8 <-mds_data(read_rds("js-nqt/1gran_change_5D/data_validation_17.rds"))%>% mutate(diff = 2 , design= "c")
-data9 <-mds_data(read_rds("js-nqt/1gran_change_5D/data_validation_18.rds"))%>% mutate(diff = 5 , design= "c")
+data7 <- mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_16.rds"))%>% mutate(diff = 1 , design= "c")
+data8 <-mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_17.rds"))%>% mutate(diff = 2 , design= "c")
+data9 <-mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_18.rds"))%>% mutate(diff = 5 , design= "c")
 
 all_data <- bind_rows(data1, data2, data3, data4, data5, data6, data7, data8, data9) %>% rename("Scenario" ="design")
 

@@ -43,33 +43,32 @@ output:
     toc: TRUE
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, cache=TRUE, messages=FALSE, warning=FALSE)
+```{r initial, echo = FALSE, cache = FALSE, include = FALSE}
+# knitr::opts_chunk$set(echo = FALSE, cache=TRUE, messages=FALSE, warning=FALSE)
 # Make sure you have the latest version of rmarkdown and bookdown
 #devtools::install_github("rstudio/rmarkdown")
 #devtools::install_github("rstudio/bookdown")
-library(ggplot2)
-library(gravitas)
-library(gracsr)
-library(ggdendro)
-library(dplyr)
-library(readr)
-library(visdat)
-library(ggplot2)
-library(tidyverse)
-library(naniar)
-library(here)
-library(tsibble)
+options("knitr.graphics.auto_pdf" = TRUE,
+    tinytex.verbose = FALSE)
 library(knitr)
-library(patchwork)
-library(GGally)
-library(distributional)
-library(viridis)
+opts_chunk$set(
+ echo = FALSE, warning = FALSE, message = FALSE, comment = "#>",
+ fig.path = "figure/", fig.align = "center", fig.show = "hold",
+ cache = TRUE, cache.path = "cache/",
+ out.width = ifelse(is_html_output(), "100%", "\\textwidth")
+)
+knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r external, include = FALSE, cache = FALSE}
-knitr::read_chunk(here('script/smart_meter.R'))
+knitr::read_chunk('script/smart_meter.R')
 ```
+
+
+```{r load-lib}
+
+```
+
 
 
 ```{r mytheme}
