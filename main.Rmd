@@ -217,14 +217,28 @@ knitr::include_graphics("figs/flowchart.png")
 
 ```
 
+- _Find significant granularities or harmonies_
+
+[@Gupta2021-hakear] proposes a method for choosing significant cyclic granularities and harmonies, which is used in this work. We define "significant" granularities as those with significant distributional differences across categories. It is better to select only those granularities because it is expected that there would be some fascinating repetitive behaviour that we are interested in studying. It is worth noting that not all of the observations in the study may have the same set of important granularities. A method for selecting a list ($S_c$) of significant granularities for all observations may be as follows:
+
+ (a) eliminate from the comprehensive list the granularities that are inconsequential for all observations.
+
+ (b) consider only those granularities which are significant for most observations.
+
+In both circumstances, there will be observations for which one or a few selected granularities are uninteresting. Even in that situation, having this group of observations that show no intriguing patterns over a granularity that frequently detects patterns may be useful. In contrast, if the granularities under consideration are indeed significant for a set of observations, distinct patterns could be detected while clustering them.
+
 
 - _Data transformation_
 
-Time series often have a somewhat skewed distribution. Furthermore, their ranges might vary greatly. It is helpful to do a statistical transformation on the data to bring all of them to the same range or at least normalise each series such that the CDF of the resultant variable is Gaussian. For the JS-based approaches, two data transformation techniques are utilised viz, Normal-Quantile Transform (NQT) and Robust scaling. NQT is a built-in transformation for computing $wpd$, which is the foundation of wpd-based distances.
+Time series often have a somewhat skewed distribution and their ranges might vary greatly. It
+is helpful to do a statistical transformation on the data to bring all of them to the same range or normalize each series. For the JS-based approaches, two data transformation techniques are utilised viz, Normal-Quantile Transform (NQT) and Robust scaling. NQT is a built-in transformation for computing $wpd$, which is the foundation of wpd-based distances.
     
-_Robust scaling_ To get a Gaussian probability distribution for an input variable, most scaling methods remove the mean from values and divide by the standard deviation (zero mean and unit variance). Standardization may be distorted or biased if the input variable contains outliers. To address this, robust scaling methods could be utilized (value – median) / (p75 – p25)) which results in a variable with a zero mean and median, as well as a standard deviation of one, while the outliers are still there with the same relative connections to other values.
-    
-_Normal-Quantile transform_ First, the original data is ranked in ascending order and the probabilities $P(Y<=y(i)) = i/(n+1)$ are attached to $y(i)$, in terms of their ranking order. A NQT based transformation is applied by computing from a standard normal distribution a variable $\eta(i)$, which corresponds to the same probability $P(\eta< \eta(i)) = i/n+1$. By doing this, the new variables $\eta(i)$ will be marginally distributed according to standard Normal, N(0,1). NQT will make the skewed distributions bell-shaped. So it's hard to tell from the modified distribution which raw distribution was which. Also, multimodality is disguised or inverted. This, however, is not a problem for this methodology as distributions are characterised by quantiles and the order of the quantiles are reserved under NQT.
+_Robust scaling_ The normalised $i^{th}$ observation is denoted by $v_{norm} = \frac{v_t - p_{0.50}}{p_{0.75}-p_{0.25}}$, where $v_t$ is the actual value at the $t^{th}$ time point and $p_{0.25}$, $p_{0.50}$ and $p_{0.75}$ are the $25^{th}$, $50^{th}$ and $75^{th}$ percentile of the time series for the $i^{th}$ observation. $v_{norm}$ has zero mean and median, as well as a standard deviation of one, while the outliers are still there with the same relative connections to other values.
+
+_Normal-Quantile transform_ The raw data for all observations is individually normal-quantile transformed (NQT) [@Krzysztofowicz1997-bv], so that the transformed data follows a standard normal distribution. NQT will make the skewed distributions bell-shaped. As a result, determining which raw distribution was used is difficult using the modified distribution. Also, multimodality is disguised or inverted. This, however, is not a problem for implementation of this methodology as distributions are characterised by quantiles and the order of the quantiles is reserved under NQT.
+
+
+<!-- First, the original data is ranked in ascending order and the probabilities $P(Y<=y(i)) = i/(n+1)$ are attached to $y(i)$, in terms of their ranking order. A NQT based transformation is applied by computing from a standard normal distribution a variable $\eta(i)$, which corresponds to the same probability $P(\eta< \eta(i)) = i/n+1$.By doing this, the new variables $\eta(i)$ will be marginally distributed according to standard Normal, N(0,1). -->
 
 
 
@@ -237,10 +251,6 @@ _Normal-Quantile transform_ First, the original data is ranked in ascending orde
 
 @wang2020tsibble introduced the tidy "tsibble" data structure to support exploration and modeling of temporal data comprising of an index, optional key(s), and measured variables. <!-- An index is a variable with inherent ordering from past to present and a key is a set of variables that define observational units over time. A linear granularity is a mapping of the index set to subsets of the time domain. For example, if the index of a tsibble is days, then a linear granularity might be weeks, months or years.--> For each key variable, the raw smart meter data is a sequence that is indexed by time and comprises values of several measurement variables at each time point. This sequence, though, could be depicted in a variety of ways. A shuffling of the raw sequence could reflect the distribution of hourly consumption over a single day, while another could indicate consumption over a week or a year. These temporal deconstructions of a time period into units such as hour-of-day, work-day/weekend are called cyclic temporal granularities. All cyclic granularities can be expressed in terms of the index set and could be augmented with the initial tsibble structure (index, key, measurements). It is worthwhile to note that the data structure changes while transporting from linear to cyclic scale of time as multiple observations of the measured variable would correspond to each category of the cyclic granularities. In this paper, quantiles are chosen to characterize the distributions for each category of the cyclic granularity. So, each category of a cyclic granularity corresponds to a list of numbers which is essentially few chosen quantiles of the multiple observations.
 
-
-- _Finding significant cyclic granularities or harmonies_
-
-\noindent These cyclic granularities are useful for exploring repetitive patterns in time series data that get lost in the linear representation of time. It is advantageous to consider only those cyclic granularities across which there is a significant repetitive pattern for the majority of customers or noteworthy in an electricity-behavior context. In that case, when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered. [@Gupta2021-hakear] proposes a way to select significant cyclic granularities and harmonies which is used for this paper.
 
 
 
@@ -274,7 +284,6 @@ Compute weighted pairwise distances $wpd$ (@Gupta2021-hakear) for all considered
 
 
 <!-- grouping probability distributions across a harmony. This clustering algorithm is adopted to remove or appropriately adjust for auto correlation and unequal length in the data. The method could be further extended by clustering probability distributions conditional on one or more cyclic granularities. The following are some of the advantages of our proposed method. -->
-
 
 
 
