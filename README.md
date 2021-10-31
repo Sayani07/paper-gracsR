@@ -1,12 +1,14 @@
 
-#  Clustering of Australian smart meter data (SGSC data set)
-
+#   Clustering time series based on probability distributions across temporal granularities
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of paper-gracsR is to cluster many time series (SGSC customers) based on their distributional differences across different time granularities.
+The paper proposes a methodology to cluster time series based on probability distributions over cyclic temporal granularities. 
 
-- Directory *Paper* contains all .Rmd and .R files to reproduce the document.
-- Directory *Supplementary* contains all code for simulation study.
+_This repository contains paper, supplementary paper, scripts and results for project `gracsr` -GRAnularity CluStering in R_
 
+- _Paper_: main.pdf
+- _Scripts (Paper)_: scripts/main.R
+- _Supplementary_: paper-supplementary.pdf
+- _Validation_: validation/
 

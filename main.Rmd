@@ -61,7 +61,7 @@ knitr::opts_knit$set(root.dir = here::here())
 ```
 
 ```{r external, include = FALSE, cache = FALSE}
-knitr::read_chunk('script/smart_meter.R')
+knitr::read_chunk('script/main.R')
 ```
 
 
