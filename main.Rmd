@@ -218,9 +218,13 @@ knitr::include_graphics("figs/flowchart.png")
 ```
 
 
+- _Data transformation_
 
-
-
+Time series often have a somewhat skewed distribution. Furthermore, their ranges might vary greatly. It is helpful to do a statistical transformation on the data to bring all of them to the same range or at least normalise each series such that the CDF of the resultant variable is Gaussian. For the JS-based approaches, two data transformation techniques are utilised viz, Normal-Quantile Transform (NQT) and Robust scaling. NQT is a built-in transformation for computing $wpd$, which is the foundation of wpd-based distances.
+    
+_Robust scaling_ To get a Gaussian probability distribution for an input variable, most scaling methods remove the mean from values and divide by the standard deviation (zero mean and unit variance). Standardization may be distorted or biased if the input variable contains outliers. To address this, robust scaling methods could be utilized (value – median) / (p75 – p25)) which results in a variable with a zero mean and median, as well as a standard deviation of one, while the outliers are still there with the same relative connections to other values.
+    
+_Normal-Quantile transform_ First, the original data is ranked in ascending order and the probabilities $P(Y<=y(i)) = i/(n+1)$ are attached to $y(i)$, in terms of their ranking order. A NQT based transformation is applied by computing from a standard normal distribution a variable $\eta(i)$, which corresponds to the same probability $P(\eta< \eta(i)) = i/n+1$. By doing this, the new variables $\eta(i)$ will be marginally distributed according to standard Normal, N(0,1). NQT will make the skewed distributions bell-shaped. So it's hard to tell from the modified distribution which raw distribution was which. Also, multimodality is disguised or inverted. This, however, is not a problem for this methodology as distributions are characterised by quantiles and the order of the quantiles are reserved under NQT.
 
 
 
@@ -239,13 +243,6 @@ knitr::include_graphics("figs/flowchart.png")
 \noindent These cyclic granularities are useful for exploring repetitive patterns in time series data that get lost in the linear representation of time. It is advantageous to consider only those cyclic granularities across which there is a significant repetitive pattern for the majority of customers or noteworthy in an electricity-behavior context. In that case, when the customers are grouped, we can expect to observe some interesting patterns across the categories of the cyclic granularities considered. [@Gupta2021-hakear] proposes a way to select significant cyclic granularities and harmonies which is used for this paper.
 
 
-- _Individual or combined categories of cyclic granularities as DGP_
-
-The existing work on clustering probability distributions assumes we have an iid sample $f_1(v),\dots,f_n(v)$, where $f_i(v)$ denotes the distribution from observation $i$ over some random variable $v = \{v_t: t = 0, 1, 2, \dots, T-1\}$ observed across $T$ time points. In our work, we are using $i$ as denoting a customer and the underlying variable as the electricity demand. So $f_i(v)$ is the distribution of household $i$ and $v$ is electricity demand. In this work, instead of considering the probability distributions of the linear time series, we assume that the measured variables across different categories of any cyclic granularity are from different data generating processes.
-Hence, we want to be able to cluster distributions of the form $f_{i,A,B \dots, {N_C}}(v)$, where $A, B$ represent the cyclic granularities under consideration such that $A = \{a_j: j=1, 2, \dots J\}$,  $B = \{b_k: k  = 1, 2, \dots K\}$ and so on. We consider individual category of a cyclic granularity ($A$) or combination of categories for interaction of cyclic granularities (for e.g. $A*B$) to have a distribution. For example, let us consider we have two cyclic  granularities of interest, $A = {0, 1, 2, \dots, 23}$ representing hour-of-day and  $B = \{Mon, Tue, Wed, \dots, Sun\}$ representing day-of-week. 
-Each customer $i$ consist of a collection of probability distributions. In case individual granularities ($A$ or $B$) are considered, there are  $J = 24$ distributions of the form $f_{i,j}(v)$ or $K = 7$ distributions of the form $f_{i,k}(v)$ for each customer $i$. In case of interaction, $J*K=168$ distributions of the form $f_{i,j, k}(v)$ could be conceived for each customer $i$. 
-
-\noindent As a result, a distance between collections of these univariate probability distributions is required. Depending on the objective of the problem, there could be many approaches to considering such distances. This paper considers two approaches, which are explained in the next segment.
 
 
 - _Distance metrics_
@@ -280,16 +277,6 @@ Compute weighted pairwise distances $wpd$ (@Gupta2021-hakear) for all considered
 
 
 
-- _Pre-processing steps_
-
-<!--Handling trend, seasonality, non-stationarity and auto-correlation:** Trend and seasonality are fundamental characteristics of time series data, and it is reasonable to define a time series according to its degree of trend and seasonality. These characteristics of the time series are lost or handled independently by considering probability distributions (trend is lost) across categories of cyclic granularities (by independently modeling all seasonal fluctuations), and so there is no need to de-trend or de-seasonalize the data before conducting the clustering method. There is no need to omit holiday or weekend patterns for similar reasons-->
-
-
-Practically most problems will have a very skewed distribution, it is often helpful to bring them to a normal-like shape before clustering. Two data transformation techniques are employed for the JS-based methods and NQT is built-in transformation used for computation of $wpd$, which forms the basis of wpd-based distances.  
-    
-_Robust scaling_ Standardizing is a common scaling method that subtracts the mean from values and divides by the standard deviation, resulting in a conventional Gaussian probability distribution for an input variable (zero mean and unit variance). If the input variable includes outlier values, standardisation may become skewed or prejudiced. To address this, robust scaling methods could be utilized  (value – median) / (p75 – p25)) which results in a variable with a zero mean and median, as well as a standard deviation of one, while the outliers are still there with the same relative connections to other values.
-    
-_Normal-Quantile transform_  First as a data pre-processing step to make all assymetrical real world variables more symmetric, we perform a quantile-normal transform on the data. This makes sure that the CDF of the resulting variable in Gaussian. The original data is ranked in ascending order and the probabilities $P(Y<=y(i)) = i/(n+1)$ are attached to $y(i)$, in terms of their ranking order. A NQT based transformation is applied by computing from a standard normal distribution a variable $\eta(i)$, which corresponds to the same probability $P(\eta< \eta(i)) = i/n+1$. By doing this, the new variables $\eta(i)$ will be marginally distributed according to standard Normal, N(0,1). NQT will transform the positively and negatively skewed distribution to a similar bell-shaped. From the transformed distribution, it is difficult to understand that raw distribution was of which shape. Also, multimodality gets hidden or magnitude get reversed with NQT. But deciles from the distribution will move in a similar manner as the raw distribution and hence the final distance matrix seem to be unaffected. Hence, this could be used. 
 
 
 - _Clustering algorithm_
