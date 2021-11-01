@@ -1011,7 +1011,19 @@ Things become far more complicated when we consider a larger data set with more 
 
 # Discussion {#sec:discussion}
 
-We propose different clustering methodology for grouping noisy, patchy time series data available at a fine temporal scale. Depending on the aim of clustering, they produce different clustering. The clustering is done based on probability distributions of the time series variable measured across several cyclic granularirties. There is issue with scaling it up to many customers as anomalies need to be removed before such classification would be useful.
+We offer two methods for calculating pairwise distances between time series based on probability distributions at various cyclic granularities. Depending on the goal of the clustering, these distance metrics, when fed into a hierarchical clustering algorithm using Ward's linkage, yield meaningful clusters. Probability distributions provide an intuitive method to characterise noisy, patchy, long, and unequal-length time series data. Distributions over cyclic granularities help to characterise the formed clusters in terms of their repeating behaviour over these cyclic granularities. Furthermore, unlike earlier efforts that group customers based on behavaior across only one cyclic granularity (such as hour-of-day), our method is more comprehensive in detecting clusters with repeated patterns at all relevant granularities. The JS-based approaches are faster than wpd-based approaches.
+
+There are few areas to extend this research. Firstly, things become far more complicated when we consider a larger data set with more uncertainty, as they do with any clustering problem. Characterising clusters with varied or outlying customers can result in a shape that does not represent the group. Furthermore, combining hetergeneous customers may result in similar-looking final clusters that are not effective for visually differentiating them. Hence, a method for appropriately scaling it up to many customers such that anomalies can be removed before implementing the clustering method, would be useful for bringing out meaningful, compact and separated groups.
+
+Secondly, we have assumed the time series to be stationary and hence the distributions are assumed to remaining constant for the observation period. In reality however, it might change. For the smart meter example, the distribution for a customer moving to a different house or changing electrical equipments can change drastically. These dynamic changes can not be picked up by our method.
+
+Thirdly, it is possible that for few customers, data for some categories from the list of significant granularities are missing. In our application, we have removed those customers and done the analysis but the metrics used should be able to incorporate those customers in the clustering by handling their missing categories. 
+
+$wpd$ is computationally heavy even under parallel computation. Future work can make the computations more efficient so that it is easily scalable to a large number of customers.
+
+
+
+
 
 
 <!-- This section will cover some drawback of this clustering method and potential extensions of this work. -->
