@@ -16,12 +16,13 @@ authors:
   affiliation: Department of Econometrics and Business Statistics, Monash University
   
 keywords:
-- data visualization
-- statistical distributions
+- clustering
 - time granularities
-- calendar algebra
+- probability distributions
+- Jensen-Shannon distances
 - periodic data
-- grammar of graphics
+- smart meter
+- electricity consumption behaviour
 - R
 
 abstract: |
