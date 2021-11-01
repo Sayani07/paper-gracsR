@@ -274,7 +274,7 @@ table <- tibble(design, g1, g2, g3)
 
 knitr::kable(
   list(tab_dist,  tibble(design, g1, g2, g3)),
-  caption = 'For Scenario (a), distributions of different categories (top), 5 designs resulting from different distributions across categories (below)',
+  caption = 'For Scenario (a), distributions of different categories when they vary (top). If distributions are fixed, they are set to N(0, 1). 5 designs resulting from different distributions across categories (below)',
   booktabs = TRUE, valign = 't'
 )
 
@@ -370,8 +370,8 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alp
   theme_validation()
 
 
-(p1 + (p2 + p3 + p4)) *
-  theme_validation() + plot_layout(widths = c(2, 1))
+(p1+ (p2 + p3 + p4 + ggtitle("(a)")) + plot_layout(widths = c(2, 1)))&theme(plot.title = element_text(hjust = -3))
+
 # 
 # plot_cyclic_data( data_bind %>% filter(design=="design2"))
 # plot_data( data_bind %>% filter(design=="design3"))
@@ -523,7 +523,8 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = ts)) + geom_boxplot(alpha =0.
   theme_validation()
 
 gran2_change <- (p2 + p3 + p4) *
-  theme_validation() +  plot_annotation('(a)')
+  theme_validation()
+#+  plot_annotation('(a)')
 
 ##----generate-design-1gran-data
 
@@ -582,12 +583,18 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = ts)) + geom_boxplot(alpha =0.
   theme_validation()
 
 gran1_change <- (p2 + p3 + p4) *
-  theme_validation()  +  plot_annotation('(b)')
+  theme_validation()
+#+  plot_annotation('(b)')
 
 
 ##----gran2and1-clubbed
 
-ggpubr::ggarrange(gran2_change, gran1_change)
+ gran2_change <- gran2_change + ggtitle("(b)")+ theme(plot.title = element_text(hjust = -2.5)) 
+ gran1_change <- gran1_change + ggtitle("(c)")+ theme(plot.title = element_text(hjust = -2.5)) 
+ ggpubr::ggarrange(gran2_change, gran1_change)
+ 
+ 
+# gran1_change + gran2_change + plot_layout(widths = c(1, 1, 1, 1, 1, 1))
 
 
 ##----interaction-gran
@@ -815,7 +822,8 @@ p4 <- change_index(sim_panel_varall) %>%
 
 #((p1 + p_null)/( p2 + p_varf)/(p3 + p_varx)/(p4 + p_varall)) 
 #p_null+ p_varf + p_varx + p_varall
-p_null +p_varf + p_varx + p_varall + plot_annotation(tag_prefix = '(', tag_levels = 'a', tag_suffix  = ')')
+p_null +p_varf + p_varx + p_varall + 
+  plot_annotation(tag_levels = list(c('D1', 'D2', 'D2', 'D4')))
 
 #labels = c("Design-1", "Design-2", "Design-3", "Design-4"))
 
