@@ -211,13 +211,14 @@ knitr::include_graphics("figs/flowchart.png")
 
 - _Find significant granularities or harmonies_
 
-[@Gupta2021-hakear] proposes a method for choosing significant cyclic granularities and harmonies, which is used in this work. We define "significant" granularities as those with significant distributional differences across categories. It is better to select only those granularities because it is expected that there would be some fascinating repetitive behaviour that we are interested in studying. It is worth noting that not all of the observations in the study may have the same set of important granularities. A method for selecting a list ($S_c$) of significant granularities for all observations may be as follows:
+[@Gupta2021-hakear] proposes a method for choosing significant cyclic granularities and harmonies (interacting granularities that can be studied together) [@Gupta2021-gravitas], which is used in this work. We define "significant" granularities as those with significant distributional differences across categories. It is preferable to choose only those granularities since it is more probable that there will be some intriguing repeated behaviour worth investigating. It should be noted that all of the observations in the study may not have the same set of important granularities. The following is a method for generating a list ($S_c$) of significant granularities for all observations:
 
- (a) eliminate from the comprehensive list the granularities that are inconsequential for all observations.
+ (a) Remove granularities from the comprehensive list that are insignificant for all observations.
 
- (b) consider only those granularities which are significant for most observations.
+ (b) select only the granularities that are significant for the majority of observations.
 
-In both circumstances, there will be observations for which one or a few selected granularities are uninteresting. Even in that situation, having this group of observations that show no intriguing patterns over a granularity that frequently detects patterns may be useful. In contrast, if the granularities under consideration are indeed significant for a set of observations, distinct patterns could be detected while clustering them.
+There will be observations in both cases where one or a few selected granularities are boring. Even in that case, having this group of observations with no interesting patterns at a granularity that regularly discovers patterns may be valuable. If, on the other hand, the granularities under examination are truly important for a group of data, unique patterns may be identified while clustering them.
+
 
 
 - _Data transformation_
