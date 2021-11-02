@@ -93,7 +93,7 @@ data_pick_six,
 
 
 ```{r tsne, eval = FALSE}
-data_356cust_wide <- read_rds("data/data_356cust_wide.rds")
+data_356cust_wide <- read_rds(here::here("data/data_356cust_wide.rds"))
 
 data_356cust_pc <- prcomp(data_356cust_wide[,-1],
                           center = FALSE, scale = FALSE, retx = TRUE)
@@ -469,7 +469,6 @@ parcoord <- GGally::ggparcoord(data_pcp ,
                    groupColumn = "group_from",
                    showPoints = TRUE, 
                    alphaLines = 1,
-                   order = "anyClass",
                    scale = "globalminmax"
 ) + 
   ggplot2::theme(

@@ -5,6 +5,9 @@ library(tidyr)
 library(tsibble)
 library(gracsr)
 library(gravitas)
+library(ggplot2)
+library(ggplot2)
+library(pals)
 
 
 # Read the nqt distances
@@ -192,4 +195,141 @@ data_wkndwday%>%
   theme(plot.margin = margin(0, 0, 0, 0, "cm") ) +
   scale_fill_manual(values=as.vector(polychrome(17)))+
   theme_application() +theme(legend.position = "bottom")
+
+
+# contribution
+
+
+data_validation <- hod %>%  
+  rename("hod" = "distance") %>% 
+  left_join(moy, 
+            by = c("item1", "item2"))%>% 
+  rename("moy" = "distance") %>% 
+  left_join((wkndwday), 
+            by = c("item1", "item2"))%>% 
+  rename("wkndwday" = "distance") %>% 
+  left_join(cluster_result, by = c("item1" = "customer_id")) %>% 
+  rename("group_item1" = "group") %>% 
+  left_join(cluster_result, by = c("item2" = "customer_id")) %>%  
+  rename("group_item2" = "group") %>% 
+  mutate(hod = hod/24, moy = moy/12, wkndwday = wkndwday/2) %>% 
+  filter(!is.na(group_item1)| !is.na(group_item2)) %>% 
+  pivot_longer(3:5,names_to="gran",
+               values_to = "distance")  
+  
+
+data_validation %>%
+  group_by(gran) %>%
+  summarise(d = sd(distance))
+
+data_validation %>%
+  group_by(gran, group_item1, group_item2) %>% 
+  summarise(sum = sum(distance)) %>% 
+  pivot_wider(names_from = group_item2, values_from = sum) %>% 
+  mutate(distance = sum(`1`, `2`, `3`, `4`, `5`,`6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`)) %>% 
+  select(c(gran, group_item1, distance)) %>% 
+  pivot_wider(names_from = group_item1, values_from = distance)
+
+
+hod_cat <- data_pick %>% 
+  dist_gran_cat(gran1 = "hour_day", response = "general_supply_kwh") %>% 
+  mutate(gran = "hod")
+
+moy_cat <- data_pick %>% 
+  dist_gran_cat(gran1 = "month_year", response = "general_supply_kwh")%>%
+  mutate(gran = "moy")
+
+wkndwday_cat <- data_pick %>% 
+  dist_gran_cat(gran1 = "wknd_wday", response = "general_supply_kwh")%>% 
+  mutate(gran = "wnwd")
+
+
+data_validation_cat <- bind_rows(hod_cat, moy_cat, wkndwday_cat) %>% 
+  mutate(customer_from = as.character(customer_from),
+         customer_to = as.character(customer_to))
+        
+
+
+gran_cat_dist <- data_validation_cat %>% 
+  left_join(cluster_result, by = c("customer_from" = "customer_id")) %>% 
+  rename("group_from" = "group") %>% 
+  left_join(cluster_result, by = c("customer_to" = "customer_id")) %>%  
+  rename("group_to" = "group") %>% 
+  group_by(gran,
+           category,
+           group_from, 
+           group_to) %>% 
+  summarise(sum = sum(distance)) %>% 
+  pivot_wider(names_from = group_to, values_from = sum) %>% 
+  mutate(distance = sum(`1`, `2`, `3`, `4`, `5`,`6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`)) %>% 
+  select(-(4:8)) %>% 
+  arrange(-distance) 
+
+
+# Contribution of individual category for hod
+
+
+gran_cat_hod <-   gran_cat_dist %>% 
+  filter(gran=="hod") %>% 
+  mutate(category = as.integer(category)) %>% 
+  arrange(group_from, category)
+
+gran_cat_hod$category <- factor(gran_cat_hod$category, levels = 0:23)
+
+# for each group, percent contribution of hours
+
+group_total <- gran_cat_hod %>% 
+  ungroup() %>% 
+  group_by(group_from) %>% 
+  summarise(group_total = sum(distance))
+
+# gran_cat_hod %>% 
+#   ungroup %>% 
+#   left_join(group_total, by = "group_from") %>% 
+#   mutate(cat_contibution = distance*100/group_total) %>% 
+#   group_by(group_from) %>% 
+#   slice(c(1:3))
+
+# gran_cat_hod %>% 
+#   ungroup %>% 
+#   left_join(group_total, by = "group_from") %>% 
+#   mutate(cat_contibution = distance*100/group_total) %>% 
+#   group_by(group_from) %>% 
+#   arrange(-distance) %>% slice(c(1:4)) %>% 
+#   ggplot(aes(group_from, category, color = as.factor(group_from))) +
+#   geom_point(aes(size = distance))+
+#   scale_fill_manual(values=as.vector(polychrome(17)))+
+#   theme_light()
+
+data_pcp <- gran_cat_hod %>% 
+  ungroup %>% 
+  left_join(group_total, by = "group_from") %>% 
+  mutate(cat_contibution = distance*100/group_total) %>% 
+  group_by(group_from) %>% 
+  #arrange(-distance) %>% 
+  select(group_from, category, cat_contibution) %>% 
+  pivot_wider(names_from = "category", 
+              values_from = "cat_contibution") %>% mutate(group_from = as.factor(group_from))
+
+parcoord <- GGally::ggparcoord(data_pcp ,
+                               columns = 2:ncol(data_pcp),
+                               groupColumn = "group_from",
+                               showPoints = TRUE, 
+                               alphaLines = 1,
+                               scale = "globalminmax"
+) + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd")+
+  scale_fill_manual(values=as.vector(polychrome(17)))+
+  theme_bw()
+parcoord 
+
+
+
+
 

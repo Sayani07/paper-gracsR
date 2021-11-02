@@ -559,9 +559,9 @@ for(i in 5:50)
   k[i]=p$sindex
 }
 
-# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 50, 2))
-# 
-# 
+ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 50, 2))
+
+
 # plot(k, type = "l")
 # 6 coming as the number of clusters with maximum silwidth
 
@@ -573,9 +573,13 @@ cluster_result <- bind_cols(customer_id = id, group = group)
 ```
 
 
-
 ```{r data-heatmap-hod-group-entire}
 legend_title <- "group"
+
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+  mutate(customer_id = as.character(customer_id)) %>%
+  gracsr::scale_gran( method = "robust",
+                      response = "general_supply_kwh")
 
 data_group <- data_pick  %>% 
   mutate(customer_id = as.character(customer_id)) %>% 
@@ -606,7 +610,7 @@ hod_group_entire <- data_heatmap_hod_group %>%
                 color = as.factor(group)), size = 1)+
   facet_wrap(~group, 
              scales = "free_y",  
-             ncol = 16) + 
+             ncol = 17) + 
               #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
   ylab("demand (in Kwh)") + 
@@ -641,7 +645,7 @@ moy_group_entire <- data_heatmap_moy_group %>%
   facet_wrap(~group, 
              scales = "free_y", 
              labeller = "label_value",
-             ncol = 16) +
+             ncol = 17) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
   ylab("demand (in Kwh)") +
   theme_bw() + theme_application() +
@@ -674,7 +678,7 @@ wkndwday_group_entire <- wkndwday_data%>%
    facet_wrap(~group, 
              scales = "free_y", 
              labeller = "label_both",
-             ncol = 16) + 
+             ncol = 17) + 
   theme_bw() + theme_application() +
   scale_fill_manual(values=as.vector(polychrome(17)))+
   scale_color_manual(values=as.vector(polychrome(17)))+
@@ -686,7 +690,7 @@ wkndwday_group_entire <- wkndwday_data%>%
 
  (hod_group_entire/moy_group_entire/ wkndwday_group_entire) +
   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
-  plot_layout(guides = "collect")& theme(legend.position = 'bottom')
+  plot_layout(guides = "collect")& theme(legend.position = 'none')
 ```
 
 ```{r, eval=FALSE}
