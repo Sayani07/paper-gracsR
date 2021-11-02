@@ -405,4 +405,86 @@ parcoord
 
 
 
+```{r data-heatmap-hod-group-entire-1col}
+
+hod_group_entire <- data_heatmap_hod_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=group,
+                  fill = as.factor(group), alpha = 0.5),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=group, 
+                color = as.factor(group)), size = 1)+
+  facet_wrap(~group, 
+             scales = "free_y",  
+             nrow = 17) + 
+              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
+  ylab("demand (in Kwh)") + 
+  theme_bw()  +
+  scale_x_discrete(breaks = seq(1, 24, 3))+ 
+  #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme_application() +
+  scale_fill_manual(values=as.vector(polychrome(20)))+
+  scale_color_manual(values=as.vector(polychrome(20)))+
+  theme(legend.position = "bottom")
+
+```
+
+```{r data-heatmap-moy-group-entire-1col}
+
+
+moy_group_entire <- data_heatmap_moy_group %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_value",
+             nrow = 17) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
+  ylab("demand (in Kwh)") +
+  theme_bw() + theme_application() +
+  scale_fill_manual(values=as.vector(polychrome(20)))+
+  scale_color_manual(values=as.vector(polychrome(20)))+
+  theme(legend.position = "bottom")
+```
+
+
+```{r data-wnwd-group-entire-1col}
+
+wkndwday_group_entire <- wkndwday_data%>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
+  geom_boxplot(aes(fill = group, color = group),alpha = 0.5, outlier.alpha = 0.05)+
+  #geom_boxplot(outlier.size = 1) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
+#geom_boxplot(aes(fill = as.factor(group))) +
+  #scale_fill_lv() +
+ xlab("wknd-wday") + 
+  ylab("demand (in Kwh)") +
+   facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_both",
+             nrow = 17) + 
+  theme_bw() + theme_application() +
+  scale_fill_manual(values=as.vector(polychrome(20)))+
+  scale_color_manual(values=as.vector(polychrome(20)))+
+  theme(legend.position = "none")
+```
+
+
+```{r combined-groups-js-entire-1col}
+
+ (hod_group_entire + moy_group_entire+ wkndwday_group_entire) +
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
+  plot_layout(guides = "collect")& theme(legend.position = 'none')
+```
+
+
+
 
