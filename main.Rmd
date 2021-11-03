@@ -427,7 +427,7 @@ _Scenario (c): One significant granularity_
 
 
 
-```{r plot-3gran-new, out.width="100%", fig.cap="The linear (left) and cyclic (right) representation of the simulated variable is shown. Each row represents a design in Scenario (a). In this scenario, all of $g1$, $g2$ and $g3$ changes across at least one design. Also, it is not possible to comprehend these differences in patterns just by looking at or considering the linear representation."}
+```{r plot-3gran-new, out.width="100%", fig.cap="The linear (left) and cyclic (right) representation of the simulated variable is shown. Each row represents a design in Scenario (a). In this scenario, all of $g1$, $g2$ and $g3$ changes across at least one design. Also, it is not possible to comprehend these distributional differences in patterns just by looking at or considering the linear representation."}
 
 ```
 
@@ -457,7 +457,7 @@ _Scenario (c): One significant granularity_
 ```
 
 
-```{r gran2and1-clubbed, fig.cap=" Plots (b) and (c) correspond to Design (b) and (c) respectively. In (b) $g2$, $g3$ changes across atleast one design but $g1$ remains constant. Only $g3$ changes across different designs in (c)."}
+```{r gran2and1-clubbed, fig.cap=" Plots (b) and (c) correspond to Scenarios (b) and (c) respectively. In (b) $g2$, $g3$ changes across atleast one design but $g1$ remains constant. Only $g3$ changes across different designs in (c)."}
 #gran2_change  + gran1_change + plot_layout(widths = c(1,1))
 #ggpubr::ggarrange(gran1_change, gran2_change, labels = c("a", "b"))
 ```
@@ -494,12 +494,12 @@ All of the approaches were fitted to each data design and for each combination o
 For more detailed results, please refer to the supplementary paper. The code for creating these data designs and running the methodologies is available at (https://github.com/Sayani07/paper-gracsR/Validation).
 
 
-```{r parcoord-sim, fig.cap = "The parallel coordinate plot illustrates the total inter-cluster distances for granularities $g1$, $g2$, and $g3$. One line in the figure depicts the inter-cluster distances for a single simulation scenario. While the first plot indicates that no variable stands out during clustering, the next two designs demonstrate that {g1} and {g1, g2} have extremely low inter-cluster distances, indicating that they did not contribute to clustering. It is worth emphasising that these facts are consistent with our initial assumptions when designing the scenarios and (a), (b), and (c) correspond to Scenario (a), (b) and (c) respectively."}
+```{r parcoord-sim, fig.cap = "The parallel coordinate plot illustrates the total inter-cluster distances for granularities $g1$, $g2$, and $g3$. One line in the figure depicts the inter-cluster distances for a single simulation scenario. While the first plot indicates that no variable stands out during clustering, the next two designs demonstrate that g1 and (g1, g2) have relatively lower inter-cluster distances, indicating that they did not contribute to clustering. It is worth emphasising that these facts are consistent with our initial assumptions when designing the scenarios and (a), (b), and (c) correspond to Scenario (a), (b) and (c) respectively."}
 
 ```
 
 
-```{r mds-plot-validation, fig.cap = "Relative positions of clusters corresponding to different scenarios (columns) for different values of mean differences between categories (rows) are shown using the first two dimensions of MDS. It can be observed that clusters become more compact and separated for higher mean differences between categories across all designs. Between designs, separation is least prominent corresponding to scenario (c) where only granularity is responsible for the clusters."}
+```{r mds-plot-validation, fig.cap = "Relative positions of clusters corresponding to different scenarios (columns) for different values of mean differences between categories (rows) are shown using the first two dimensions of MDS. It can be observed that clusters become more compact and separated for higher mean differences between categories across all scenarios. Between scenarios, separation is least prominent corresponding to scenario (c) where only one granularity is responsible for distinguishing the clusters."}
 
 ```
 
@@ -596,7 +596,7 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
-```{r hod-ind-group, fig.cap = "The distribution of selected customers over hod (a), moy (b), and wnwd (c) for the $24$ selected customers is shown. In each case, the same colour denotes the same group using js-based clustering and are placed together to facilitate comparison. Individuals with similar distributional differences across categories of `hod` or `moy` are grouped together, with some exceptions. " }
+```{r hod-ind-group, fig.cap = "The distribution of selected customers over hod (a), moy (b), and wnwd (c) for the $24$ selected customers is shown. In each case, the same colour denotes the same group using js-based clustering and are placed together to facilitate comparison. Individuals with similar distributional differences across categories of hod or moy are grouped together, with some exceptions. Distributional differences across categories of wnwday are not discernable except for a couple of customers." }
 ```
 
 <!-- It appears that the aim of grouping comparable distributions over considered variables has been accomplished to some extent. -->
@@ -616,7 +616,7 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
-```{r combined-groups-js, fig.cap = "The distribution of electricity demand over hod (a), moy (b), and wnwd*hod (c). Groups 2 and 5 appear to have a hod pattern among its members, whereas groups 1, 3, and 5 appear to have a moy pattern. Weekend/weekday differences across groups are not discernible, showing that it is not a critical variable for clustering on its own. It is probable that the distribution over Weekend/Weekday will differ conditional on the categories of hod or moy. (c) demonstrates that the distribution is not different, except for the tails. It is useful to compare the summarised distributions of groups to those of individuals in order to establish that the majority of individuals in the group share the same characteristics."}
+```{r combined-groups-js, fig.cap = "The distribution of electricity demand over hod (a), moy (b), and hod (conditional on wnwd) (c). Groups 2 and 5 appear to have a hod pattern among its members (morning and evening peak), whereas groups 1, 3, and 5 appear to have a moy pattern (higher usage in mid-year). With their conditional dependencies on hod or moy categories, wnwd differences may not be discernible on their own. (c) demonstrates that the distribution of hod conditional on wnwd is also not different, except for the tails. This might be because most of these chosen customers do not have a wnwd pattern. It is useful to compare the summarised distributions of groups to those of individuals in order to establish that the majority of individuals in the group share the same characteristics."}
 ```
 
 
