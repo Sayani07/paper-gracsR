@@ -67,7 +67,7 @@ theme_characterisation <- function() {
 theme_application <- function() {
   
   theme_light() + # setting theme
-    #theme(strip.text = element_text(margin = margin(b = 0, t = 0))) + # narrow facet space
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0)), strip.text.x = element_text(size = 8)) + # narrow facet space
     theme(axis.title.y=element_blank(),
           axis.text.y=element_blank(),
           axis.ticks.y=element_blank()) + # no axis ticks 
@@ -1224,36 +1224,78 @@ cluster_result <- suppressMessages(f %>%
   rename("customer_id" = "id") %>% 
   mutate(group = as.factor(group))
 
+cluster_result_id <- cluster_result %>% arrange(group) %>% mutate(divide_cust = rep(c(1,2), each = 12))
+
 ##----hod-ind-group
-hod_ind_group <- data_hod %>% 
-  left_join(cluster_result, by = c("customer_id")) %>% 
+hod_ind_group1 <- data_hod %>% 
+  left_join(cluster_result_id, by = c("customer_id")) %>% 
+  filter(divide_cust == 1) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`,
-                  group=customer_id, fill = group),
+                  group=customer_id),
               alpha = 0.5) +
   geom_line(aes(y = `50%`,
-                group=customer_id, 
-                color = group), size = 1) +
-  facet_wrap(group~customer_id, 
+                group=customer_id), size = 1) +
+  facet_wrap(~customer_id, 
              scales = "free_y",
-             nrow=8) + 
+             ncol=1) + 
   theme_application()+
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +    xlab("hod")  +
   scale_x_discrete(breaks = seq(0, 23, 3))+ theme(legend.position = "bottom")+theme(plot.margin = unit(c(0,0,0,-1), "cm"))
 # + scale_y_continuous(breaks = NULL) 
 
-moy_ind_group <- data_moy %>% 
-  left_join(cluster_result, by = c("customer_id")) %>% 
+
+hod_ind_group2 <- data_hod %>% 
+  left_join(cluster_result_id, by = c("customer_id")) %>% 
+  filter(divide_cust == 2) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=customer_id),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=customer_id), size = 1) +
+  facet_wrap(~customer_id, 
+             scales = "free_y",
+             ncol=1) + 
+  theme_application()+
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +    xlab("hod")  +
+  scale_x_discrete(breaks = seq(0, 23, 3))+ theme(legend.position = "bottom")+theme(plot.margin = unit(c(0,0,0,-1), "cm"))
+# + scale_y_continuous(breaks = NULL) 
+
+moy_ind_group1 <- data_moy %>% 
+  left_join(cluster_result_id, by = c("customer_id")) %>% 
+  filter(divide_cust == 1) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`, 
-                  group=customer_id, fill = group), alpha = 0.5) +
-  geom_line(aes(y = `50%`, group=customer_id, color = group), size = 1) +
-  facet_wrap(group~customer_id, 
+                  group=customer_id), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=customer_id), size = 1) +
+  facet_wrap(~customer_id, 
              scales = "free_y", 
-             nrow=8) +
+             ncol=1) +
+  ylab("demand (in Kwh)") +
+  xlab("moy")  +
+  theme_application() +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) + theme(legend.position = "bottom")+
+  theme(plot.margin = unit(c(0,-1,0, -1), "cm"))
+
+
+moy_ind_group2 <- data_moy %>% 
+  left_join(cluster_result_id, by = c("customer_id")) %>% 
+  filter(divide_cust == 2) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, 
+                  group=customer_id), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=customer_id), size = 1) +
+  facet_wrap(~customer_id, 
+             scales = "free_y", 
+             ncol=1) +
   ylab("demand (in Kwh)") +
   xlab("moy")  +
   theme_application() +
@@ -1263,27 +1305,93 @@ moy_ind_group <- data_moy %>%
 
 
 
-wkndwday_ind_group <- data_wkndwday%>% 
-  left_join(cluster_result, by = c("customer_id")) %>% 
-  mutate(group  = as.factor(group)) %>% 
+wkndwday_ind_group1 <- data_wkndwday %>% 
+  left_join(cluster_result_id, by = c("customer_id")) %>% 
+  filter(divide_cust == 1) %>% 
+  mutate(divide_cust  = as.factor(divide_cust)) %>% 
   ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
   #lvplot::geom_lv(aes(fill = as.factor(group), 
   #            color = as.factor(group)), k=5, alpha = 0.5) +
-  geom_boxplot(aes(color = group, fill = group),alpha = 0.5)+
+  geom_boxplot(aes(fill = divide_cust),alpha = 0.5)+
   #geom_boxplot(outlier.shape = NA) + 
   coord_cartesian(ylim = ylim1*1.05)+
-  facet_wrap(group~customer_id, 
+  facet_wrap(~customer_id, 
              scales = "free_y", 
              labeller = "label_value",
-             nrow=8)  +
+             ncol=1)  +
   theme_application()+
-  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7"))  + theme(legend.position = "none")+
+  scale_fill_manual(values = c("black", "#009E73","#0072B2", "#D55E00","#CC79A7")) + theme(legend.position = "none")+
   xlab("wnwd")+theme(plot.margin = unit(c(0,-1,0,0), "cm"))
 
+wkndwday_ind_group2 <- data_wkndwday %>% 
+  left_join(cluster_result_id, by = c("customer_id")) %>% 
+  filter(divide_cust == 2) %>% 
+  mutate(divide_cust  = as.factor(divide_cust)) %>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  #lvplot::geom_lv(aes(fill = as.factor(group), 
+  #            color = as.factor(group)), k=5, alpha = 0.5) +
+  geom_boxplot(aes(fill = divide_cust),alpha = 0.5)+
+  #geom_boxplot(outlier.shape = NA) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  facet_wrap(~customer_id, 
+             scales = "free_y", 
+             labeller = "label_value",
+             ncol=1)  +
+  theme_application()+
+  scale_fill_manual(values = c("black", "#009E73","#0072B2", "#D55E00","#CC79A7")) + theme(legend.position = "none")+
+  xlab("wnwd")+theme(plot.margin = unit(c(0,-1,0,0), "cm"))
+
+
+
+
+
+# moy_ind_group <- data_moy %>% 
+#   left_join(cluster_result, by = c("customer_id")) %>% 
+#   ggplot(aes(x = category)) + 
+#   geom_ribbon(aes(ymin = `25%`, 
+#                   ymax = `75%`, 
+#                   group=customer_id, fill = group), alpha = 0.5) +
+#   geom_line(aes(y = `50%`, group=customer_id, color = group), size = 1) +
+#   facet_wrap(group~customer_id, 
+#              scales = "free_y", 
+#              nrow=8) +
+#   ylab("demand (in Kwh)") +
+#   xlab("moy")  +
+#   theme_application() +
+#   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
+#   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) + theme(legend.position = "bottom")+
+#   theme(plot.margin = unit(c(0,-1,0, -1), "cm"))
+
+
+# 
+# wkndwday_ind_group <- data_wkndwday%>% 
+#   left_join(cluster_result, by = c("customer_id")) %>% 
+#   mutate(group  = as.factor(group)) %>% 
+#   ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+#   #lvplot::geom_lv(aes(fill = as.factor(group), 
+#   #            color = as.factor(group)), k=5, alpha = 0.5) +
+#   geom_boxplot(aes(color = group, fill = group),alpha = 0.5)+
+#   #geom_boxplot(outlier.shape = NA) + 
+#   coord_cartesian(ylim = ylim1*1.05)+
+#   facet_wrap(group~customer_id, 
+#              scales = "free_y", 
+#              labeller = "label_value",
+#              nrow=8)  +
+#   theme_application()+
+#   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
+#   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7"))  + theme(legend.position = "none")+
+#   xlab("wnwd")+theme(plot.margin = unit(c(0,-1,0,0), "cm"))
+
 # hod_ind_design + moy_ind_design + wkndwday_ind_design 
-hod_ind_group + moy_ind_group + wkndwday_ind_group +  plot_layout(guides = "collect", ncol = 6) + plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = 'none')
+
+
+cust_div1 <- hod_ind_group1 + moy_ind_group1 + wkndwday_ind_group1
+cust_div2 <- hod_ind_group2 + moy_ind_group2 + wkndwday_ind_group2
+
+# (cust_div1) + (cust_div2) + plot_layout(guides = "collect", ncol = 6,widths = 1) + plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = 'none')
+
   
+ggpubr::ggarrange(cust_div1, cust_div2, ncol = 2, labels = c("(a)","(b)"))
 
 ##----data-heatmap-hod-group
 legend_title <- "group"
