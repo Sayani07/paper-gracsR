@@ -332,7 +332,7 @@ table <- tibble(design, g1, g2, g3)
 
 knitr::kable(
   list(tab_dist,  tibble(design, g1, g2, g3)),
-  caption = 'For Scenario (a), distributions of different categories when they vary (top). If distributions are fixed, they are set to N(0, 1). 5 designs resulting from different distributions across categories (below)',
+  caption = 'For S1, distributions of different categories when they vary (top). If distributions are fixed, they are set to N(0, 1). 5 designs resulting from different distributions across categories (below)',
   booktabs = TRUE, valign = 't'
 )
 
@@ -1016,7 +1016,7 @@ mds_data <- function(data){
   
   colnames(mds) <- c("Dim.1", "Dim.2")
   
-  groups<-bind_rows(data %>%
+  groups <- bind_rows(data %>%
                       distinct(item1, group_item1) %>% 
                       rename("item" = "item1",
                              "group" = "group_item1"),
@@ -1042,18 +1042,18 @@ simtable <- expand.grid(mean_diff = mean_diff,
                         #time_series = time_series, 
                         nT = nT)
 
-data1 <- mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_25.rds")) %>% mutate(diff = 1 , design= "a")
-data2 <-mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_26.rds")) %>% mutate(diff = 2 , design= "a")
-data3 <-mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_27.rds")) %>% mutate(diff = 5 , design= "a")
+data1 <- mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_25.rds")) %>% mutate(diff = 1 , design= "S1")
+data2 <-mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_26.rds")) %>% mutate(diff = 2 , design= "S1")
+data3 <-mds_data(read_rds("validation/js-nqt/3gran_change_5D/data_validation_27.rds")) %>% mutate(diff = 5 , design= "S1")
 
-data4 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_7.rds")) %>% mutate(diff = 1 , design= "b")
-data5 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_17.rds")) %>% mutate(diff = 2 , design= "b")
-data6 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_9.rds")) %>% mutate(diff = 5 , design= "b")
+data4 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_7.rds")) %>% mutate(diff = 1 , design= "S2")
+data5 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_17.rds")) %>% mutate(diff = 2 , design= "S2")
+data6 <- mds_data(read_rds("validation/js-nqt/2gran_change_4D/data_validation_9.rds")) %>% mutate(diff = 5 , design= "S2")
 
 
-data7 <- mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_16.rds"))%>% mutate(diff = 1 , design= "c")
-data8 <-mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_17.rds"))%>% mutate(diff = 2 , design= "c")
-data9 <-mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_18.rds"))%>% mutate(diff = 5 , design= "c")
+data7 <- mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_16.rds"))%>% mutate(diff = 1 , design= "S3")
+data8 <-mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_17.rds"))%>% mutate(diff = 2 , design= "S3")
+data9 <-mds_data(read_rds("validation/js-nqt/1gran_change_5D/data_validation_18.rds"))%>% mutate(diff = 5 , design= "S3")
 
 all_data <- bind_rows(data1, data2, data3, data4, data5, data6, data7, data8, data9) %>% rename("Scenario" ="design")
 
@@ -1063,7 +1063,7 @@ mds_plot_10 <- ggplot(all_data,
                           y = Dim.2,
                           color = group)) +
   geom_point(size = 2, alpha = 0.5, shape = 3) +
-  facet_grid(diff~Scenario, labeller = "label_both") +
+  facet_grid(diff~Scenario, labeller = "label_value") +
   #geom_text(check_overlap = TRUE)  +
   theme_bw()+
   theme(legend.position = "bottom") +
