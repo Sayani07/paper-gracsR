@@ -455,7 +455,7 @@ _Scenario (c): One significant granularity_
 ```
 
 
-```{r gran2and1-clubbed, fig.cap=" Plots (b) and (c) correspond to Scenarios (b) and (c) respectively. In (b) $g2$, $g3$ changes across atleast one design but $g1$ remains constant. Only $g3$ changes across different designs in (c)."}
+```{r gran2and1-clubbed, fig.cap=" Boxplots showing distributions of categories across different designs (rows) and granularities (columns) for scenarios S2 and S3. In S2, $g2$, $g3$ change across atleast one design but $g1$ remains constant. Only $g3$ changes across different designs in S3."}
 #gran2_change  + gran1_change + plot_layout(widths = c(1,1))
 #ggpubr::ggarrange(gran1_change, gran2_change, labels = c("a", "b"))
 ```

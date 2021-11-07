@@ -428,7 +428,7 @@ p4 <- ggplot(data_bind, aes(x = as.factor(g3), y = sim_data)) + geom_boxplot(alp
   theme_validation()
 
 
-(p1+ (p2 + p3 + p4 + ggtitle("(a)")) + plot_layout(widths = c(2, 1)))&theme(plot.title = element_text(hjust = -3))
+(p1+ (p2 + p3 + p4 + ggtitle("S1")) + plot_layout(widths = c(2, 1)))&theme(plot.title = element_text(hjust = - 3.25))
 
 # 
 # plot_cyclic_data( data_bind %>% filter(design=="design2"))
@@ -647,8 +647,8 @@ gran1_change <- (p2 + p3 + p4) *
 
 ##----gran2and1-clubbed
 
- gran2_change <- gran2_change + ggtitle("(b)")+ theme(plot.title = element_text(hjust = -2.5)) 
- gran1_change <- gran1_change + ggtitle("(c)")+ theme(plot.title = element_text(hjust = -2.5)) 
+ gran2_change <- gran2_change + ggtitle("S2")+ theme(plot.title = element_text(hjust = -2.75)) 
+ gran1_change <- gran1_change + ggtitle("S3")+ theme(plot.title = element_text(hjust = -2.75)) 
  ggpubr::ggarrange(gran2_change, gran1_change)
  
  
