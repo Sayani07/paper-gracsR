@@ -981,7 +981,7 @@ design3 <- append_files_plot(folder_name = "validation/js-nqt", path = "/1gran_c
 # design2 <- append_files_plot(folder_name = "js-nqt", path = "/2gran_change_4D/")
 # design3 <- append_files_plot(folder_name = "js-nqt", path = "/1gran_change_5D/")
 
-(design1 + design2 + design3 + plot_layout(guides = "collect")+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')'))*theme_characterisation()&theme(legend.position = "none")&xlab("")
+(design1 + design2 + design3 + plot_layout(guides = "collect")+ plot_annotation(tag_levels = '1', tag_prefix = 'S', tag_suffix = ''))*theme_characterisation()*theme(plot.title = element_text(hjust = 0.5))&theme(legend.position = "none")&xlab("")
 
 
 ##----mds-plot-validation
