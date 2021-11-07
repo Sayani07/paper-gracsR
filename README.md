@@ -12,3 +12,8 @@ _This repository contains paper, supplementary paper, scripts and results for pr
 - _Supplementary_: paper-supplementary.pdf
 - _Validation_: validation/
 
+
+## Clone with `git-lfs`
+
+Since this repo contains large data files (>= 50MB), you need to first download and install a git plugin called [`git-lfs`](https://git-lfs.github.com) for versioning large files, and set up Git LFS using command `git lfs install` in Terminal, in order to fully clone this repo.
+

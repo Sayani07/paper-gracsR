@@ -1,0 +1,43 @@
+---
+title: "analysis"
+author: "Sayani Gupta"
+date: "05/07/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load-lib}
+library(readr)
+library(visdat)
+library(ggplot2)
+library(tidyverse)
+library(naniar)
+```
+
+```{r load-data}
+load("data/ALL_DATA.Rdata")
+```
+
+
+```{r miss-data}
+empty_as_na <- function(x){
+    if("factor" %in% class(x)) x <- as.character(x) ## since ifelse wont work with factors
+    ifelse(as.character(x)!="", x, NA)
+}
+
+## transform all columns
+CustomerData <- CustomerData %>% mutate_each(funs(empty_as_na)) 
+
+
+vis_miss(CustomerData, warn_large_data = FALSE) + 
+  theme(axis.text.x = element_text(angle = 90, size = 5))
+```
+
+```{r miss-var}
+gg_miss_var(CustomerData) + theme_bw() +
+  theme(axis.text.y = element_text(size = 4))
+```
+

@@ -1,0 +1,345 @@
+---
+title: "Algorithm using wpd values for clustering 100 households"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,echo=FALSE, message=FALSE, warning = FALSE)
+```
+
+```{r load-lib}
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(lvplot)
+#library(ggridges)
+library(tsibble)
+library(gravitas)
+library(ggpubr)
+library(readr)
+library(kableExtra)
+library(distributional)
+library(ggplot2)
+library(sugrrants)
+library(here)
+library(ggplot2)
+library(patchwork)
+library(scales)
+library(GGally)
+library(viridis)
+```
+
+
+```{r allplot, message=FALSE, warning=FALSE, echo = FALSE}
+
+##----harmony-all
+elec_harmony_all <- read_rds("../data/algo2-rawdata-wpd.rds")
+
+select_split <- str_split(elec_harmony_all$select_harmony, " ", simplify = TRUE)[,2]
+
+elec_sig_split <- elec_harmony_all %>%
+  mutate(facet_variable = case_when(
+    facet_variable == "hour_day" ~ "hod" ,
+    facet_variable == "day_month" ~ "dom" ,
+    facet_variable == "day_week" ~ "dow" ,
+    facet_variable == "week_month" ~ "wom" ,
+    facet_variable == "wknd_wday" ~ "wdwnd"
+  )) %>% 
+  mutate(x_variable = case_when(
+    x_variable == "hour_day" ~ "hod" ,
+    x_variable == "day_month" ~ "dom" ,
+    x_variable == "day_week" ~ "dow" ,
+    x_variable == "week_month" ~ "wom" ,
+    x_variable == "wknd_wday" ~ "wdwnd"
+  )) %>% 
+  bind_cols(select_split = select_split) %>% 
+  mutate(significant = case_when(
+    select_split == "***" ~ "highest",
+    select_split == "**" ~ "high",
+    select_split == "*" ~ "medium",
+    select_split == "" ~ "low"
+  )) %>%mutate(comb = paste(facet_variable, x_variable, sep = "-")) 
+
+# %>% 
+#   mutate(rank = case_when(
+#     select_split == "***" ~ paste(rank, "***", sep = " "),
+#     select_split == "**" ~  paste(rank, "**", sep = " "),
+#     select_split == "*" ~  paste(rank, "*", sep = " "),
+#     select_split == "" ~  paste(rank, "", sep = " ")
+#   ))
+  
+elec_sig_split$significant <- 
+  factor(elec_sig_split$significant, levels = c("highest", "high", "medium", "low")) 
+  
+
+data_comb_filter = elec_sig_split %>% 
+mutate(low_proxy = if_else(significant=="low", 0, 1))%>% 
+select(comb, customer_id, low_proxy) %>% 
+pivot_wider(names_from = customer_id, values_from = low_proxy) %>% 
+mutate(score = rowMeans(across(-1))) %>% 
+filter(score !=0)
+
+
+data_sig_filter = elec_sig_split %>% 
+filter(comb %in% data_comb_filter$comb)
+
+data_clust = data_sig_filter %>% 
+select(comb, customer_id, wpd) %>% 
+pivot_wider(names_from = comb, values_from = wpd) 
+
+hc = stats::hclust(dist(data_clust[-1], method = "manhattan"),method="complete")
+#plot(hc)
+plot(hc, cex = 0.6)
+rect.hclust(hc, k = 8, border = 2:10)
+
+
+library(fpc)
+koptimal = fpc::nselectboot(dist(data_clust[-1], method = "manhattan"),
+                        B = 50,
+                        method = "complete",
+                        clustermethod = disthclustCBI, 
+                        classification = "averagedist",
+                        krange = 2:8)
+
+koptimal = koptimal$kopt
+
+groups <- cutree(hc, k=8) %>% 
+  as_tibble() %>% 
+mutate(customer_id = data_clust$customer_id)
+
+##----cluster-characterization
+
+data = data_clust %>% 
+left_join(groups)%>% 
+             rename ("group" = "value") %>% 
+             ungroup() %>% 
+             select(group, customer_id, everything()) %>% 
+             pivot_longer(-c(1,2), names_to = "comb", values_to = "wpd")
+
+data_pcp <- data %>% pivot_wider(
+              names_from = comb, 
+              values_from = wpd) %>% 
+  mutate(group = as.character(group)) 
+```
+
+
+```{r}
+ggpairs_nocolor <- ggpairs(data_pcp, columns = 3:7)
+ggpairs_nocolor
+
+groupge2 <- data %>% 
+  group_by(group) %>% 
+  summarise(n = length(unique(customer_id))) %>% 
+  filter(n>2)
+
+
+data_pcp_ge2 <- data_pcp %>% filter(group %in% groupge2$group)
+
+
+
+ggpairs_nocolor <- ggpairs(data_pcp_ge2, columns = 3:7)
+
+
+ggpairs_color <- ggscatmat(data_pcp_ge2, columns=3:7, color = "group") +
+  scale_colour_brewer(palette="Set2")
+ggpairs_color
+
+# 
+# data_order <- data %>% 
+#   group_by(comb) %>% 
+#   summarise(m = mean(wpd)) %>% 
+#   arrange(desc(m))
+#   
+# data_median = data %>% 
+#   group_by(group, comb) %>% 
+#   summarize(wpd_med = median(wpd))
+# 
+# data_pcp <- data_median %>% 
+# mutate(group = as.character(group)) %>% 
+#   left_join(data_order) %>% 
+#   arrange(desc(m)) %>% 
+#   pivot_wider(-4, 
+#               names_from = comb, 
+#               values_from = wpd_med) 
+             
+data_pcp <- data_pcp %>% ungroup()%>% filter(group %in% groupge2$group)
+parcoord <- GGally::ggparcoord(data_pcp ,
+                   columns = 3:ncol(data_pcp),
+                   groupColumn = "group",
+                   showPoints = TRUE, 
+                   title = "(c)",
+                   alphaLines = 0.3,
+                   order = "allClass",
+                   scale = "globalminmax"
+) + ggplot2::theme_bw() +
+  scale_color_brewer(palette = "Dark2") + 
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size=10)
+  )+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd") 
+
+
+c(6, 7, 3, 4, 5)
+# 
+# ggparcoord(data_pcp, scale = "globalminmax", columns=3:ncol(data_pcp),groupColumn = "group", alphaLines = 0.8) + geom_boxplot(aes_string(group = "variable"), width = 0.1, alpha = 0.1,
+#                  outlier.color = NA) +  scale_color_brewer(palette = "Dark2") 
+#+
+ # geom_point(data = data, aes(x=comb, y = wpd)) 
+
+##----read-orig-data
+
+elec <- read_rds("../data/elec_nogap_2013_100.rds") %>% 
+  left_join(groups)%>% 
+             rename ("group" = "value")
+
+
+
+# plot(hc, cex = 0.6)
+# rect.hclust(hc, k = 4, border = 2:7)
+
+#elec_zoom
+parcoord
+
+
+elec_scaled <- elec %>%
+    group_by(customer_id) %>%
+    #dplyr::mutate(general_supply_kwh = scale(general_supply_kwh)) %>%
+    ungroup()
+
+  
+sm_hod_dow <- elec_scaled %>% 
+gravitas::create_gran("hour_day") %>% 
+  gravitas::create_gran("day_week") 
+
+sm_hod_list <- sm_hod_dow %>% 
+  as_tibble() %>% 
+  arrange(group, day_week, hour_day) %>% 
+  mutate(category = paste(hour_day, day_week, sep = "-")) %>% 
+   select(group, category, general_supply_kwh) %>% 
+  pivot_wider(names_from = category,
+              values_from = general_supply_kwh)
+ 
+
+elec %>% as_tibble() %>% group_by(group) %>% summarise(n = length(unique(customer_id)))
+
+
+quantile_prob_val = c(0.25, 0.5, 0.75)
+  
+  
+p1 <- sm_hod_dow %>% 
+  filter(group==1) %>% 
+  gravitas::prob_plot(
+     "day_week",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 1") + theme_bw()  +
+  theme(legend.position = "none",
+        strip.text = element_text(size = 10, margin = margin())) + 
+  theme(panel.spacing =unit(0, "lines"))+ ylab("")+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5))
+  
+p2 <- sm_hod_dow %>% 
+  filter(group==2 ) %>% 
+  gravitas::prob_plot(  "day_week",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10()+
+    ggtitle("Group 2")+ theme_bw()  +
+  theme(legend.position = "none",
+        strip.text = element_text(size = 10, margin = margin())) + 
+  theme(panel.spacing =unit(0, "lines"))+ ylab("")+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5))
+  
+p3 <- sm_hod_dow %>% 
+  filter(group==3) %>% 
+  gravitas::prob_plot(  "day_week",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 3" )+ theme_bw()  +
+  theme(legend.position = "none",
+        strip.text = element_text(size = 10, margin = margin())) + 
+  theme(panel.spacing =unit(0, "lines"))+ ylab("")+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5))
+  
+p4 <- sm_hod_dow %>% 
+  filter(group==4) %>% 
+  gravitas::prob_plot("day_week",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 4")+ theme_bw()  +
+  theme(legend.position = "none",
+        strip.text = element_text(size = 10, margin = margin())) + 
+  theme(panel.spacing =unit(0, "lines"))+ ylab("")+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5))
+  
+    
+p5 <- sm_hod_dow %>% 
+  filter(group==5) %>% 
+  gravitas::prob_plot("day_week",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 5")+ theme_bw()  +
+  theme(legend.position = "none",
+        strip.text = element_text(size = 10, margin = margin())) + 
+  theme(panel.spacing =unit(0, "lines"))+ ylab("")+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5))
+  
+  
+    
+p6 <- sm_hod_dow %>% 
+  filter(group==6) %>% 
+  gravitas::prob_plot("day_week",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 6")+ theme_bw()  +
+  theme(legend.position = "none",
+        strip.text = element_text(size = 10, margin = margin())) + 
+  theme(panel.spacing =unit(0, "lines"))+ ylab("")+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5))
+  
+    
+p7 <- sm_hod_dow %>% 
+  filter(group==7) %>% 
+  gravitas::prob_plot("day_week",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 7")+ theme_bw()  +
+  theme(legend.position = "none",
+        strip.text = element_text(size = 10, margin = margin())) + 
+  theme(panel.spacing =unit(0, "lines"))+ ylab("")+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5))
+  
+    
+p8 <- sm_hod_dow %>% 
+  filter(group==8) %>% 
+  gravitas::prob_plot("day_week",
+     "hour_day",
+  response = "general_supply_kwh",
+  plot_type = "quantile", nrow=1) +
+  scale_y_log10() +
+    ggtitle("Group 8")+ theme_bw()  +
+  theme(legend.position = "none",
+        strip.text = element_text(size = 10, margin = margin())) + 
+  theme(panel.spacing =unit(0, "lines")) + ylab("")+
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5)) 
+
+(p1 + p2)/ (p3 + p4)
+(p5 + p6)/(p7 +p8)
+
+```

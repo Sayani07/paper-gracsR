@@ -1,0 +1,73 @@
+---
+title: "introduction_section"
+author: "Sayani Gupta"
+date: "08/09/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Paper: Clustering of residential electricity customers using load time series
+
+- Time feature extraction is a potential remedy, however, it is limited by the type of noisy, patchy, and unequal time-series common in residential datasets.
+
+ - In this paper we propose a strategy to alleviate these limitations by
+converting any types of load time series into map models that can be readily clustered.
+
+
+- higher cluster distinction and robustness
+
+- The experiment with 12 clusters results in around 61% distinction, improved coincidence
+factor by around 6.75% relative to a random grouping, and robustness of around 59% against the applied noise.
+
+- stochastic and not deterministic segmentation
+
+- The processes of stacking daily
+curves and applying PCA to extract core features from the pile of
+curves, do not suit parallel computing. This makes the algorithm unsuitable for a large number of customers.
+
+-  Alternatively, Shannonian entropy [62,63], can be used to optimise the embedding
+parameters.
+
+- feature based sensitive to outlier days
+
+- The method feature based  is static in that any
+addition of new data (of additional customers and or additional days)
+require repeating both feature extraction and clustering
+
+
+- model based : Regardless of its length, dates and times, each
+continuous series translates to a map function or yields a geometry
+ Alternatively,
+Shannonian entropy [62,63], can be used to optimise the embedding
+parameters.
+
+ A distinction metric is the silhouette width [65,50], which measures how
+similar homes are to their own cluster members (cohesion) compared
+with homes in other clusters (separation), and is bounded within (−1,
+1).
+
+This is a desirable outcome; and clustering methods which are
+able to isolate outliers are found to exhibit high performance as indicated in
+
+Though, with a finite set of clusters the outliers stand
+out, forcing the rest of the samples to lump together in big clusters with
+high variability and vague profiles. To remedy this situation, we can
+exclude outliers and re-cluster samples. 
+
+To remedy this situation, we can
+exclude outliers and re-cluster samples. Though exclusion of outliers
+often gives way to new outliers to emerge. Alternatively, we reduce
+clusters to between 8 and 12 to retain all samples. The optima are
+obtained at 9 and 12 clusters with ∼62.4% and ∼61.1% distinctions,
+respectively.
+
+There are at least two key areas to extend this research. These include load prediction based on clustering repeatability, and customer
+privacy protection by noise encryption. The current repeatability metric
+determines if the same clusters of homes are formed by clustering over
+successive periods of time, such as successive seasons, or years. To reinforce repeatability, future work can also focus on cross validation by
+bootstrapping, i.e., the same clusters of homes should be formed based
+on randomly selected days within a certain period.

@@ -1,0 +1,4 @@
+data/algo2-cust600-wpd-rawdata.rds filter=lfs diff=lfs merge=lfs -text
+data/elec_nogap_2013_clean_356cust.rds filter=lfs diff=lfs merge=lfs -text
+validation/data_validation_cat_all_cluster.rds filter=lfs diff=lfs merge=lfs -text
+*.rds filter=lfs diff=lfs merge=lfs -text

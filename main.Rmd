@@ -8,11 +8,9 @@ authors:
 - name: Sayani Gupta
   affiliation: Department of Econometrics and Business Statistics, Monash University
   thanks: "Email: Sayani.Gupta@monash.edu"
-
-- name: Rob J Hyndman
-  affiliation: Department of Econometrics and Business Statistics, Monash University
-
 - name: Dianne Cook
+  affiliation: Department of Econometrics and Business Statistics, Monash University
+- name: Rob J Hyndman
   affiliation: Department of Econometrics and Business Statistics, Monash University
   
 keywords:

@@ -8,7 +8,6 @@ cache/*
 *.log
 *.tex
 *.toc
-*.rds
 *.RData
 *.7z
 *.csv
@@ -24,3 +23,11 @@ main.aux
 main.bbl
 main.out
 main.blg
+data/*.rds
+!data/elec_nogap_2013_clean_356cust.rds
+!data/algo2-cust600-wpd-rawdata.rds
+validation/*.rds
+!validation/js-wpd/*.rds
+!validation/js-nqt/*.rds
+!validation/js-robust/*.rds
+

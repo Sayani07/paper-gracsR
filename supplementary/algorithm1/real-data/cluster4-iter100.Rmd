@@ -15,7 +15,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(knitr)
 library(here)
-read_chunk(here::here("old/simdata01.R"))
+read_chunk(here::here("validation/old/simdata01.R"))
 ```
 
 # How the time series plot of the designs look like for different sample sizes?

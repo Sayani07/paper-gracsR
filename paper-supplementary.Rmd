@@ -354,7 +354,7 @@ data_validation_cat <- read_rds(here::here("validation/data_validation_cat_all_c
         
 
 
-gran_cat_dist <- data_validation_cat %>% 
+gran_cat_dist_from <- data_validation_cat %>% 
   mutate(customer_from = as.character(customer_from),
          customer_to = as.character(customer_to)) %>% 
   left_join(cluster_result, by = c("customer_from" = "customer_id")) %>% 
@@ -369,7 +369,27 @@ gran_cat_dist <- data_validation_cat %>%
   pivot_wider(names_from = group_to, values_from = sum) %>% 
   mutate(distance = sum(`1`, `2`, `3`, `4`, `5`,`6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`)) %>% 
   select(-(4:8)) %>% 
-  arrange(-distance) 
+  arrange(-distance) %>% 
+    rename("group"="group_from")
+
+
+gran_cat_dist_to <- data_validation_cat %>% 
+  mutate(customer_from = as.character(customer_from),
+         customer_to = as.character(customer_to)) %>% 
+  left_join(cluster_result, by = c("customer_from" = "customer_id")) %>% 
+  rename("group_from" = "group") %>% 
+  left_join(cluster_result, by = c("customer_to" = "customer_id")) %>%  
+  rename("group_to" = "group") %>% 
+  group_by(gran,
+           category,
+           group_from, 
+           group_to) %>% 
+  summarise(sum = sum(distance)) %>% 
+  pivot_wider(names_from = group_from, values_from = sum) %>% 
+  mutate(distance = sum(`1`, `2`, `3`, `4`, `5`,`6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`)) %>% 
+  select(-(4:8)) %>% 
+  arrange(-distance) %>% 
+    rename("group"="group_to")
 
 
 # Contribution of individual category for hod
@@ -421,8 +441,6 @@ parcoord
 
 
 
-
-
 # contribution of moy
 
 ```{r contribution-moy}
@@ -437,6 +455,7 @@ gran_cat_hod <-   gran_cat_dist %>%
 gran_cat_hod$category <- factor(gran_cat_hod$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
 # for each group, percent contribution of hours
+
 
 group_total <- gran_cat_hod %>% 
   arrange(category) %>% 
