@@ -497,7 +497,7 @@ For more detailed results, please refer to the supplementary paper. The code for
 ```
 
 
-```{r mds-plot-validation, fig.cap = "Relative positions of clusters corresponding to different scenarios (columns) for different values of mean differences between categories (rows) are shown using the first two dimensions of MDS. It can be observed that clusters become more compact and separated for higher mean differences between categories across all scenarios. Between scenarios, separation is least prominent corresponding to scenario (c) where only one granularity is responsible for distinguishing the clusters."}
+```{r mds-plot-validation, fig.cap = "MDS summary plots to illustrate the cluster sparation for the range of mean differences (rows) under the different scenarios (columns). It can be observed that clusters become more compact and separated for higher mean differences between categories across all scenarios. Between scenarios, separation is least prominent corresponding to scenario (c) where only one granularity is responsible for distinguishing the clusters."}
 
 ```
 
