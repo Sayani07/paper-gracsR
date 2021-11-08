@@ -557,6 +557,11 @@ Following @Fan2021-bq's idea of picking related examples (neighbors) for each in
 ```{r data-pick}
 ```
 
+```{r tsne-plot}
+```
+
+
+
 <!-- - can be done in several ways -->
 
 <!-- - show raw data of moy, hod, wkndwday patterns for them -->
@@ -585,8 +590,16 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
-```{r opt-clusters}
+```{r opt-clusters-jsd}
+
 ```
+
+
+```{r opt-cluster-tsne-jsd, fig.cap = "(a) shows t-SNE summary of the 24 customers chosen through prototype selection, (b) shows a plot of sindex for different cluster size $k$"}
+
+```
+
+
 
 ```{r groups-24}
 ```
@@ -619,7 +632,6 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ### wpd-based distances
 
 We chose the optimal number of clusters using (@Hennig2014-ah) as $3$. A parallel coordinate plot with the three significant cyclic granularities is used to characterise the groups here. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the groups followed by $hod$ and $wnwd$. There is only one customer who has significant $wpd$ across $wnwd$ and stands out from the rest of the customers. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has the most distinct pattern across moy. Group 1 is a mixed group that has strong patterns on at least one of the three variables. The findings vary from js-based clustering, yet it is a helpful grouping.
-
 
 
 ```{r data-pick-wpd}
