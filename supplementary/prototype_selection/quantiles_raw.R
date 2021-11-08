@@ -89,6 +89,9 @@ load("data/data_356cust_wide")
 
 # without scaling
 
+
+
+
 data_356cust_pc <- prcomp(data_356cust_wide[,-1],
                           center = FALSE, scale = FALSE, retx = TRUE)
 
@@ -112,10 +115,16 @@ sort(abs(data_356cust_pc$rotation[,1]))
 library(Rtsne)
 set.seed(2099)
 
+
+
 tSNE_fit <- data_356cust_wide%>% 
   select(-customer_id) %>% 
   Rtsne(pca = FALSE,
          perplexity = 30)
+
+
+
+
 
 # data_pick_one <- c(8618759, 8291696, 10357256, 8290374) %>% as_tibble 
 # data_pick_two <- c(9044864, 8642053, 10534367, 9021526,11162275) %>% as_tibble
@@ -152,6 +161,8 @@ tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1],
   data_pick_cust, by = c("customer_id"
 )) %>% mutate(design = if_else(is.na(design), "0", design))
 
+
+
 #rownames(tsne_df) <- data_356cust_wide$customer_id
 
 rownames(data_356cust_pc10) <- data_356cust_wide$customer_id
@@ -164,7 +175,9 @@ tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY, color = design)) +
   guides(color = FALSE) +
   labs(caption = "tSNE") +
   theme(aspect.ratio = 1) +
-  theme_light()
+  theme_light()+coord_fixed(ratio = 1)
+
+
 
 ## ----highlight-customer--------------------------------------------------------
 

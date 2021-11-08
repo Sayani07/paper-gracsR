@@ -24,7 +24,11 @@ library(tidyr)
 library(purrr)
 library(stringr)
 library(pals)
-
+library(Rtsne)
+library(fpc)
+library(cluster)
+library(ggpubr)
+library(grid)
 ##----load-data
 load("data/ALL_DATA.Rdata")
 
@@ -84,6 +88,7 @@ theme_application <- function() {
             panel.grid.minor.y = element_blank()
           )
 }
+
 
 
 ##----format-data
@@ -1108,6 +1113,59 @@ data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
   gracsr::scale_gran( method = "robust",
                       response = "general_supply_kwh")
 
+##---tsne-plot
+
+data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds") %>% 
+  filter(quantiles %in% "50%")
+
+data_356cust_moy <- read_rds("data/quantile_data_356cust_moy_robust.rds") %>% 
+  filter(quantiles %in% "50%")
+
+data_356cust_wkndwday <- read_rds("data/quantile_data_356cust_wkndwday_robust.rds") %>% 
+  filter(quantiles %in% "50%")
+
+
+data_356cust_hod_wide <- data_356cust_hod %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_moy_wide <- data_356cust_moy %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_wkndwday_wide <- data_356cust_wkndwday %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_wide <- left_join(data_356cust_hod_wide,
+                               data_356cust_moy_wide, by="customer_id") %>% 
+  left_join(data_356cust_wkndwday_wide,  by="customer_id"
+  )
+
+
+data_24cust_wide <- data_356cust_wide %>% filter(customer_id %in% data_pick$customer_id)
+
+set.seed(2935)
+
+tSNE_fit <- data_24cust_wide%>% 
+  select(-customer_id) %>% 
+  Rtsne(pca = FALSE, perplexity = 2)
+
+
+tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
+                      tsneY = tSNE_fit$Y[, 2], 
+                      customer_id = as.character(data_24cust_wide$customer_id))
+
+tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
+  geom_point(aes(text = customer_id), size =1) +
+  #scale_color_manual(values = limn_pal_tableau10()) +
+  scale_colour_viridis_d(direction = -1) +
+  guides(color = FALSE) +
+  #labs(caption = "tSNE") +
+  theme(aspect.ratio = 1) +
+  theme_light()+ coord_fixed(ratio=1)
+
+
 ##----hod-moy-wkndwday plots
 data_hod <- quantile_gran(data_pick,
                           "hour_day",
@@ -1183,6 +1241,7 @@ wkndwday_ind_design <- data_wkndwday%>%
     aes(group = 1), size = 1, color = "black")+
   xlab("wnwd")+
   theme_application()
+
 ##----all-data
 data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
   mutate(customer_id = as.character(customer_id)) %>% 
@@ -1205,18 +1264,6 @@ distance <- wkndwday/2 + moy/12 + hod/24
 
 f = as.dist(distance)
 
-##----opt-clusters
-library(fpc)
-library(cluster)
-k = array()
-for(i in 2:20)
-{
-  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
-  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  k[i]=p$sindex
-}
-# 
-# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1))
 
 ##----groups-24
 cluster_result <- suppressMessages(f %>% 
@@ -1385,13 +1432,24 @@ wkndwday_ind_group2 <- data_wkndwday %>%
 # hod_ind_design + moy_ind_design + wkndwday_ind_design 
 
 
-cust_div1 <- hod_ind_group1 + moy_ind_group1 + wkndwday_ind_group1
+cust_div1 <- hod_ind_group1 + moy_ind_group1 + wkndwday_ind_group1 
 cust_div2 <- hod_ind_group2 + moy_ind_group2 + wkndwday_ind_group2
 
 # (cust_div1) + (cust_div2) + plot_layout(guides = "collect", ncol = 6,widths = 1) + plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = 'none')
 
-  
-ggpubr::ggarrange(cust_div1, cust_div2, ncol = 2, labels = c("(a)","(b)"))
+
+
+# plot.list <- list(cust_div1, cust_div2)
+# 
+# ggarrange(plotlist = plot.list)
+# x = c(0, 0.5, 1, 0.5, 0.5, 0.5)
+# y = c(0.5, 0.5, 0.5,0, 0.5, 1)
+# id = c(1,1,1,2,2,2)
+# grid.polygon(x,y,id)
+#   
+plot <- ggpubr::ggarrange(cust_div1, cust_div2, ncol = 2, labels = c("a", "b"))
+
+ggpubr::annotate_figure(plot, top = text_grob(" 24 sets of hod, moy, wkndwday split into two columns each containing 12 customers", fig.lab.size = 6))
 
 ##----data-heatmap-hod-group
 legend_title <- "group"
@@ -1513,7 +1571,8 @@ for(i in 2:20)
   p <- cluster.stats(f, clustering = group, silhouette = TRUE)
   k[i]=p$sindex
 }
-# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1))
+
+ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1))
 
 group <- f%>% hclust (method = "ward.D") %>% cutree(k=3)
 
@@ -1554,4 +1613,86 @@ parcoord <- GGally::ggparcoord(data_pcp ,
   scale_color_viridis_d(direction = 1) + theme_light()
 
 (parcoord + gridExtra::tableGrob(data_table))+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
+
+##----opt-clusters-jsd
+
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+  mutate(customer_id = as.character(customer_id)) %>% 
+  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
+  gracsr::scale_gran( method = "robust",
+                      response = "general_supply_kwh")
+
+hod <- suppressMessages(data_pick %>% 
+                          dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
+
+moy <- suppressMessages(data_pick %>% 
+                          dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
+
+wkndwday <- suppressMessages(data_pick %>% 
+                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
+
+distance <- wkndwday/2 + moy/12 + hod/24
+
+f = as.dist(distance)
+
+k = array()
+set.seed(123)
+for(i in 2:20)
+{
+  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
+  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+  k[i]=p$sindex
+}
+
+opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), 
+                       aes(x=k, y = value)) +
+  geom_line() + 
+  scale_x_continuous(breaks = seq(2, 20, 2), minor_breaks = 1) + 
+  theme(axis.text.x = element_text(angle=45, size = 8, hjust = 1)) +
+  theme_bw() +ylab("sindex") + xlab("number of clusters")
+
+##----opt-cluster-tsne-jsd
+tsne_xy + opt_clusters + plot_annotation(tag_levels = "a")
+
+##----opt-clusters-jsd-wpd
+
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+  mutate(customer_id = as.character(customer_id)) %>% 
+  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
+  gracsr::scale_gran( method = "robust",
+                      response = "general_supply_kwh")
+
+hod <- suppressMessages(data_pick %>% 
+                          dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
+
+moy <- suppressMessages(data_pick %>% 
+                          dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
+
+wkndwday <- suppressMessages(data_pick %>% 
+                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
+
+distance <- wkndwday/2 + moy/12 + hod/24
+
+f = as.dist(distance)
+
+k = array()
+set.seed(123)
+for(i in 2:20)
+{
+  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
+  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+  k[i]=p$sindex
+}
+
+opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), 
+                       aes(x=k, y = value)) +
+  geom_line() + 
+  scale_x_continuous(breaks = seq(2, 20, 2), minor_breaks = 1) + 
+  theme(axis.text.x = element_text(angle=45, size = 8, hjust = 1)) +
+  theme_bw() +ylab("sindex") + xlab("number of clusters")
+
+##----opt-cluster-tsne-wpd
+tsne_xy + opt_clusters +
+  ggpubr::plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')
+
 

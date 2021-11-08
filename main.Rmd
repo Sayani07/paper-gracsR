@@ -595,7 +595,7 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
-```{r opt-cluster-tsne-jsd, fig.cap = "(a) shows t-SNE summary of the 24 customers chosen through prototype selection, (b) shows a plot of sindex for different cluster size $k$"}
+```{r opt-cluster-tsne-jsd, fig.cap = "(a) shows t-SNE summary of the $24$ selected customers chosen through prototype selection, (b) shows a plot of sindex for different cluster size."}
 
 ```
 
