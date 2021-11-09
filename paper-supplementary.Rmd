@@ -170,8 +170,6 @@ id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
 ```
 
 
-
-
 ```{r opt-clust-350, fig.cap = "Cluster separation for the 353 customers across the number of clusters is shown. When the cluster size changes from 17 to 18, the separation index drops sharply and then flattens out, resulting in the appearance of the elbow. Hence, when grouping the 353 customers, the number of clusters is taken to be 17."}
 
 # Find optimal number of clusters
@@ -188,9 +186,7 @@ ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom
 ```
 
 
-
-
-```{r}
+```{r group-353}
 
 # plot(k, type = "l")
 # 6 coming as the number of clusters with maximum silwidth
@@ -253,8 +249,8 @@ hod_group_entire1 <- data_heatmap_hod_group %>%
   scale_x_discrete(breaks = seq(1, 24, 3))+ 
   #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
   theme_application() +
-  scale_fill_manual(values=as.vector(polychrome(20)))+
-  scale_color_manual(values=as.vector(polychrome(20)))+
+  scale_fill_manual(values=as.vector(okabe(n = 8)))+
+  scale_color_manual(values=as.vector(okabe(n = 8)))+
   theme(legend.position = "bottom")
 
 hod_group_entire2 <- data_heatmap_hod_group %>% 
@@ -310,8 +306,8 @@ moy_group_entire1 <- data_heatmap_moy_group %>%
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
   ylab("demand (in Kwh)") +
   theme_bw() + theme_application() +
-  scale_fill_manual(values=as.vector(polychrome(20)))+
-  scale_color_manual(values=as.vector(polychrome(20)))+
+  scale_fill_manual(values=as.vector(okabe(n = 8)))+
+  scale_color_manual(values=as.vector(okabe(n = 8)))+
   theme(legend.position = "bottom")
 
 
@@ -361,8 +357,8 @@ wkndwday_group_entire1 <- wkndwday_data%>%
              labeller = "label_both",
              nrow = 8) + 
   theme_bw() + theme_application() +
-  scale_fill_manual(values=as.vector(polychrome(20)))+
-  scale_color_manual(values=as.vector(polychrome(20)))+
+  scale_fill_manual(values=as.vector(okabe(n = 8)))+
+  scale_color_manual(values=as.vector(okabe(n = 8)))+
   theme(legend.position = "none")
 
 wkndwday_group_entire2 <- wkndwday_data%>% 
@@ -389,7 +385,7 @@ wkndwday_group_entire2 <- wkndwday_data%>%
 ```
 
 
-```{r combined-groups-js-entire, fig.cap = "The distribution of electricity demand for the clusters across hod (a), moy (b) and wkndwday (c). It seems like group 2 and 5 have a hod pattern across its members, while group 1, 3, 5 have a moy pattern. Wknd-wday variations across groups are not distinguishable, indicating that it is not a critical variable for clustering. It is helpful to compare the summarised distributions of groups to that of individuals to confirm that the most of individuals in the group have the same characterisation."}
+```{r combined-groups-js-entire, fig.cap = "The distribution of electricity demand for the clusters across hod, moy and wkndwday for the $17$ groups from $353$ customers. Wknd-wday variations across groups are not distinguishable, but ideally each group should have an unique combination of hod and moy.", fig.height=6}
 
 
 group_entire1 <- (hod_group_entire1 + moy_group_entire1 + wkndwday_group_entire1)&theme_characterisation()& theme(legend.position = 'none')
