@@ -98,6 +98,40 @@ S6. These points should ideally correspond to different behavior with respect to
 knitr::include_graphics("figs/liminal_view.png")
 ```
 
+```{r prototype-data-pick}
+```
+
+
+```{r assemble}
+```
+
+
+```{r data-pick}
+```
+
+
+```{r all-data}
+
+```
+
+
+```{r clustering}
+```
+
+
+```{r groups-24}
+
+```
+
+
+```{r tsne-fit}
+```
+
+
+```{r tsne-plot-supplementary, fig.cap="t-SNE summary of selected $24$ prototype customers. Each ellipse corresponds to a group after clustering using our methodology. Few customers are not enclosed inside an ellipse as they are from mixed groups and there are too few points to calculate an ellipse around them. It is important to note that the selection of prototypes is based on only $50$ percentiles, whereas, the clustering is based on all the deciles."}
+
+```
+
 <!-- From this set we select $4$ "anchor" customers which are far apart from each other and $5$ neighboring customers for each of these anchors. These selections were done using the granularity $hod$ space. It is important to note that when we use our proposed methodologies, it is based on all dimensions `hod`, `moy` and `wkndwday`.Fig \ref{fig:mds} shows the MDS of these 356 customers in a 2D space basis their distance on individual granularities and when all of them are combined. Our methodolgies are run on these $24$ customers, which act as a way to evaluate the proposed methodologies.  -->
 
 
