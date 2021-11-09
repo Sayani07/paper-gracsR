@@ -63,11 +63,7 @@ knitr::read_chunk('script/main.R')
 ```
 
 
-## Raw time series plot
-
-\noindent To get a sense of how the raw time series data looks, we plot the energy usage for $50$ sampled households is plotted along the y-axis versus time from past to future in Figure ref\{fig:raw-data-50}. Each of these series is associated with a single customer. Energy consumption for each customer is given at fine temporal resolution (every 30 minutes) for a period of 2-3 years.
-
-```{r raw-data-50, out.width = "100%", fig.cap="The raw data for 50 households are shown. It looks like there is a lot of missing values and unequal length of time series along with asynchronous periods for which data is observed. No insightful behavioral pattern could be discerned from this view other than when the customer is not at home."}
+```{r raw-data-50, out.width = "100%", fig.cap=" The raw half-hourly energy usage for $50$ sampled households is plotted along the y-axis versus time in a linear scale.  Each of these series is associated with a single customer. It looks like there is a lot of missing values and unequal length of time series along with asynchronous periods for which data is observed. No insightful behavioral pattern could be discerned from this view other than when the customer is not at home."}
 
 knitr::include_graphics("figs/raw_plot_cust.png") # look at smart-meter.R for the code
 ```
@@ -197,8 +193,9 @@ ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom
 group <- f %>% hclust (method = "ward.D") %>% cutree(k=17)
 
 cluster_result <- bind_cols(customer_id = id, group = group) %>%
-  arrange(group) %>% 
-  mutate(divide_cust = c(rep(1, 177), rep(2, 176)))
+  arrange(group)
+# %>% 
+#   mutate(divide_cust = c(rep(1, 177), rep(2, 176)))
 
 # cluster_result %>% group_by(group) %>% count()
 
@@ -228,9 +225,10 @@ data_heatmap_hod_group <- quantile_gran(data_group,
   
 data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
 
-data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
+# data_heatmap_hod_group$group <- paste("group", data_heatmap_hod_group$group, sep = "-")
 
-hod_group_entire <- data_heatmap_hod_group %>% 
+hod_group_entire1 <- data_heatmap_hod_group %>% 
+  filter(group<9) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`,
@@ -242,7 +240,7 @@ hod_group_entire <- data_heatmap_hod_group %>%
                 color = as.factor(group)), size = 1)+
   facet_wrap(~group, 
              scales = "free_y",  
-             ncol = 17) + 
+             nrow = 8,labeller = "label_both") + 
               #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
   ylab("demand (in Kwh)") + 
@@ -252,6 +250,31 @@ hod_group_entire <- data_heatmap_hod_group %>%
   theme_application() +
   scale_fill_manual(values=as.vector(polychrome(20)))+
   scale_color_manual(values=as.vector(polychrome(20)))+
+  theme(legend.position = "bottom")
+
+hod_group_entire2 <- data_heatmap_hod_group %>% 
+  filter(group>=9) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`,
+                  group=group,
+                  fill = as.factor(group), alpha = 0.5),
+              alpha = 0.5) +
+  geom_line(aes(y = `50%`,
+                group=group, 
+                color = as.factor(group)), size = 1)+
+  facet_wrap(~group, 
+             scales = "free_y",  
+             nrow = 9,labeller = "label_both") + 
+              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
+  ylab("demand (in Kwh)") + 
+  theme_bw()  +
+  scale_x_discrete(breaks = seq(1, 24, 3))+ 
+  #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
+  theme_application() +
+  scale_fill_manual(values=as.vector(tableau20(20)))+
+  scale_color_manual(values=as.vector(tableau20(20)))+
   theme(legend.position = "bottom")
 
 ```
@@ -266,109 +289,18 @@ data_heatmap_moy_group <- quantile_gran(data_group,
 data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
 
-data_heatmap_moy_group$group <- paste("group", data_heatmap_moy_group$group, sep = "-")
+# data_heatmap_moy_group$group <- paste("group", data_heatmap_moy_group$group, sep = "-")
 
 
-moy_group_entire <- data_heatmap_moy_group %>% 
+moy_group_entire1 <- data_heatmap_moy_group %>% 
+  filter(group<9) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
   geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
   facet_wrap(~group, 
-             scales = "free_y", 
-             labeller = "label_value",
-             ncol = 17) +
-    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
-  ylab("demand (in Kwh)") +
-  theme_bw() + theme_application() +
-  scale_fill_manual(values=as.vector(polychrome(20)))+
-  scale_color_manual(values=as.vector(polychrome(20)))+
-  theme(legend.position = "bottom")
-```
-
-
-```{r data-wnwd-group-entire}
-wkndwday_data <- data_group %>%
-  create_gran("wknd_wday") 
-wkndwday_data$group <- as.factor(wkndwday_data$group)
-# %>% 
-#   create_gran("hour_day")
-
-ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
-
-wkndwday_group_entire <- wkndwday_data%>% 
-  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
-  #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
-  geom_boxplot(aes(fill = group, color = group),alpha = 0.5, outlier.alpha = 0.05)+
-  #geom_boxplot(outlier.size = 1) + 
-  coord_cartesian(ylim = ylim1*1.05)+
-  #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
-#geom_boxplot(aes(fill = as.factor(group))) +
-  #scale_fill_lv() +
- xlab("wknd-wday") + 
-  ylab("demand (in Kwh)") +
-   facet_wrap(~group, 
              scales = "free_y", 
              labeller = "label_both",
-             ncol = 17) + 
-  theme_bw() + theme_application() +
-  scale_fill_manual(values=as.vector(polychrome(20)))+
-  scale_color_manual(values=as.vector(polychrome(20)))+
-  theme(legend.position = "none")
-```
-
-
-```{r combined-groups-js-entire, eval = FALSE, fig.cap = "The distribution of electricity demand for the clusters across hod (a), moy (b) and wkndwday (c). It seems like group 2 and 5 have a hod pattern across its members, while group 1, 3, 5 have a moy pattern. Wknd-wday variations across groups are not distinguishable, indicating that it is not a critical variable for clustering. It is helpful to compare the summarised distributions of groups to that of individuals to confirm that the most of individuals in the group have the same characterisation."}
-
- (hod_group_entire/moy_group_entire/ wkndwday_group_entire) +
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
-  plot_layout(guides = "collect")& theme(legend.position = 'none')
-```
-
-
-
-
-```{r data-heatmap-hod-group-entire-1col}
-
-hod_group_entire <- data_heatmap_hod_group %>% 
-  filter(group!="group-NA") %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`,
-                  group=group,
-                  fill = as.factor(group), alpha = 0.5),
-              alpha = 0.5) +
-  geom_line(aes(y = `50%`,
-                group=group, 
-                color = as.factor(group)), size = 1)+
-  facet_wrap(~group, 
-             scales = "free_y",  
-             nrow = 8) + 
-              #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
-    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hour-of-day") + 
-  ylab("demand (in Kwh)") + 
-  theme_bw()  +
-  scale_x_discrete(breaks = seq(1, 24, 3))+ 
-  #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme_application() +
-  scale_fill_manual(values=as.vector(polychrome(20)))+
-  scale_color_manual(values=as.vector(polychrome(20)))+
-  theme(legend.position = "bottom")
-
-```
-
-```{r data-heatmap-moy-group-entire-1col}
-
-
-moy_group_entire <- data_heatmap_moy_group %>% 
-  filter(group!="group-NA") %>% 
-  ggplot(aes(x = category)) + 
-  geom_ribbon(aes(ymin = `25%`, 
-                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
-  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
-  facet_wrap(~group, 
-             scales = "free_y", 
-             labeller = "label_value",
              nrow = 8) +
     theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
   ylab("demand (in Kwh)") +
@@ -376,12 +308,39 @@ moy_group_entire <- data_heatmap_moy_group %>%
   scale_fill_manual(values=as.vector(polychrome(20)))+
   scale_color_manual(values=as.vector(polychrome(20)))+
   theme(legend.position = "bottom")
+
+
+moy_group_entire2 <- data_heatmap_moy_group %>% 
+  filter(group>=9) %>% 
+  ggplot(aes(x = category)) + 
+  geom_ribbon(aes(ymin = `25%`, 
+                  ymax = `75%`, group=group, fill = as.factor(group)), alpha = 0.5) +
+  geom_line(aes(y = `50%`, group=group, color = as.factor(group)), size = 1 ) +
+  facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_both",
+             nrow =  9) +
+    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("month-of-year") + 
+  ylab("demand (in Kwh)") +
+  theme_bw() + theme_application() +
+  scale_fill_manual(values=as.vector(tableau20(20)))+
+  scale_color_manual(values=as.vector(tableau20(20)))+
+  theme(legend.position = "bottom")
 ```
 
 
-```{r data-wnwd-group-entire-1col}
+```{r data-wnwd-group-entire}
+wkndwday_data <- data_group %>%
+  create_gran("wknd_wday") 
+# wkndwday_data$group <- as.factor(wkndwday_data$group)
+# %>% 
+#   create_gran("hour_day")
 
-wkndwday_group_entire <- wkndwday_data%>% 
+ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
+
+wkndwday_group_entire1 <- wkndwday_data%>% 
+  filter(group<9) %>% 
+  mutate(group = as.factor(group)) %>% 
   ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
   #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
   geom_boxplot(aes(fill = group, color = group),alpha = 0.5, outlier.alpha = 0.05)+
@@ -400,14 +359,48 @@ wkndwday_group_entire <- wkndwday_data%>%
   scale_fill_manual(values=as.vector(polychrome(20)))+
   scale_color_manual(values=as.vector(polychrome(20)))+
   theme(legend.position = "none")
+
+wkndwday_group_entire2 <- wkndwday_data%>% 
+  filter(group>=9) %>% 
+  mutate(group = as.factor(group)) %>% 
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
+  #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
+  geom_boxplot(aes(fill = group, color = group),alpha = 0.5, outlier.alpha = 0.05)+
+  #geom_boxplot(outlier.size = 1) + 
+  coord_cartesian(ylim = ylim1*1.05)+
+  #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
+#geom_boxplot(aes(fill = as.factor(group))) +
+  #scale_fill_lv() +
+ xlab("wknd-wday") + 
+  ylab("demand (in Kwh)") +
+   facet_wrap(~group, 
+             scales = "free_y", 
+             labeller = "label_both",
+             nrow = 9) + 
+  theme_bw() + theme_application() +
+  scale_fill_manual(values=as.vector(tableau20(20)))+
+  scale_color_manual(values=as.vector(tableau20(20)))+
+  theme(legend.position = "none")
 ```
 
 
-```{r combined-groups-js-entire-1col}
+```{r combined-groups-js-entire, fig.cap = "The distribution of electricity demand for the clusters across hod (a), moy (b) and wkndwday (c). It seems like group 2 and 5 have a hod pattern across its members, while group 1, 3, 5 have a moy pattern. Wknd-wday variations across groups are not distinguishable, indicating that it is not a critical variable for clustering. It is helpful to compare the summarised distributions of groups to that of individuals to confirm that the most of individuals in the group have the same characterisation."}
 
- (hod_group_entire + moy_group_entire+ wkndwday_group_entire) +
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
-  plot_layout(guides = "collect")& theme(legend.position = 'none')
+
+group_entire1 <- (hod_group_entire1 + moy_group_entire1 + wkndwday_group_entire1)&theme_characterisation()& theme(legend.position = 'none')
+
+group_entire2 <- (hod_group_entire2 + moy_group_entire2 + wkndwday_group_entire2)&theme_characterisation()& theme(legend.position = 'none')
+
+ggpubr::ggarrange(group_entire1, group_entire2)
+ #  
+ #  
+ #  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
+ #  plot_layout(guides = "collect")& theme(legend.position = 'none')
+ # 
+ # 
+ # (hod_group_entire/moy_group_entire/ wkndwday_group_entire) +
+ #  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
+ #  plot_layout(guides = "collect")& theme(legend.position = 'none')
 ```
 
 
