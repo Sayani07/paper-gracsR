@@ -111,7 +111,6 @@ knitr::include_graphics("figs/liminal_view.png")
 
 ```
 
-## Clustering on 350 customers
 
 
 ```{r data-load-entire}
@@ -168,12 +167,15 @@ f = as.dist(DM)
 first_lot <- mds_data %>% names()
 
 id <- c(first_lot[-1], mds_data$name[nrow(mds_data)])
+```
 
+
+
+
+```{r opt-clust-350, fig.cap = "Cluster separation for the 353 customers across the number of clusters is shown. When the cluster size changes from 17 to 18, the separation index drops sharply and then flattens out, resulting in the appearance of the elbow. Hence, when grouping the 353 customers, the number of clusters is taken to be 17."}
 
 # Find optimal number of clusters
 
-library(fpc)
-library(cluster)
 k = array()
 for(i in 5:50)
 {
@@ -182,8 +184,13 @@ for(i in 5:50)
   k[i]=p$sindex
 }
 
-ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 50, 2))
+ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 50, 2), minor_breaks = 1) + xlab("number of clusters") + ylab ("separation index")
+```
 
+
+
+
+```{r}
 
 # plot(k, type = "l")
 # 6 coming as the number of clusters with maximum silwidth
