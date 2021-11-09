@@ -113,6 +113,8 @@ readr::write_rds(elec_ts, "data/elec_ts.rds")
 
 ## ---- elec-gaps
 elec_ts <- read_rds("data/elec_ts.rds")
+
+
 # 13735 customers in elec_ts
 gap_df <- has_gaps(elec_ts)
 
@@ -136,40 +138,20 @@ count_na_df <- elec_ts %>%
 lumped_na_df <- count_na_df %>% 
   mutate(
     customer_id = as.factor(customer_id) %>% 
-      fct_lump(264) %>%
+      #fct_lump(264) %>%
       fct_reorder(.n, sum)
   ) 
 
-p_264 <- lumped_na_df %>%
-  filter(customer_id != "Other") %>%
-  ggplot(aes(x = customer_id)) +
-  geom_linerange(aes(ymin = .from, ymax = .to)) +
-  geom_point(aes(y = .from), size = 0.6, shape = 4) +
-  geom_point(aes(y = .to), size = 0.6, shape = 4) +
-  coord_flip() +
-  xlab("Top customers with more than
-       10% observations missing") +
-  ylab("") +  theme(axis.text = element_blank(),
-    axis.ticks = element_blank(),
-    legend.position = "none",
-    plot.margin = unit(c(0, 0, -1, -1), "line")) + scale_y_datetime(" ",
-                   date_labels = "%b %d",
-                      breaks = "1 month",
-                      date_minor_breaks = "1 week") + 
-  theme(panel.grid.major.x =  element_line(colour = "#A9A9A9"),
-        panel.grid.minor.x =  element_line(colour = "#D3D3D3"))
-
-
 
 p_other <- lumped_na_df %>% 
-  filter(customer_id == "Other") %>% 
+  #filter(customer_id == "Other") %>% 
   ggplot(aes(x = customer_id)) +
   geom_linerange(aes(ymin = .from, ymax = .to), alpha = 0.01) +
   geom_point(aes(y = .from), size = 1.2,
              shape = 4, alpha = 0.1) +
   geom_point(aes(y = .to), size = 1.2, shape = 4, alpha = 0.01) +
   coord_flip() +
-  xlab("Rest") +
+  xlab("5050 customers with missing values") +
   ylab("Time gaps") +
   theme(
     panel.grid.major.y = element_blank(),
@@ -185,9 +167,10 @@ p_other <- lumped_na_df %>%
         panel.grid.minor.x =  element_line(colour = "#D3D3D3"))+
   theme(axis.text.x = element_text(angle = 90)) 
 
-g = p_264 + p_other + patchwork::plot_layout(ncol = 1, heights = c(10, 1))
+g = p_other + patchwork::plot_layout(ncol = 1, heights = c(10, 1))
 
-ggsave("figs/missing-data.png")
+ggsave("figs/missing-data-5050.png")
+
 
 ##----percentage_na_df
 
@@ -1110,7 +1093,7 @@ data_pick_six,
 data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
   mutate(customer_id = as.character(customer_id)) %>% 
   dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
-  gracsr::scale_gran( method = "robust",
+  gracsr::scale_gran( method = "nqt",
                       response = "general_supply_kwh")
 
 ##---tsne-plot
@@ -1274,6 +1257,7 @@ cluster_result <- suppressMessages(f %>%
 cluster_result_id <- cluster_result %>% arrange(group) %>% mutate(divide_cust = rep(c(1,2), each = 12))
 
 ##----hod-ind-group
+##
 hod_ind_group1 <- data_hod %>% 
   left_join(cluster_result_id, by = c("customer_id")) %>% 
   filter(divide_cust == 1) %>% 
@@ -1449,7 +1433,7 @@ cust_div2 <- hod_ind_group2 + moy_ind_group2 + wkndwday_ind_group2
 #   
 plot <- ggpubr::ggarrange(cust_div1, cust_div2, ncol = 2, labels = c("a", "b"))
 
-ggpubr::annotate_figure(plot, top = text_grob(" 24 sets of hod, moy, wkndwday split into two columns each containing 12 customers", fig.lab.size = 6))
+ggpubr::annotate_figure(plot, top = text_grob(" 24 sets of hod, moy, wkndwday split into two columns each containing 12 customers", size = 8), fig.lab.size = 6)
 
 ##----data-heatmap-hod-group
 legend_title <- "group"
