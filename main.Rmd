@@ -557,6 +557,11 @@ Following @Fan2021-bq's idea of picking related examples (neighbors) for each in
 ```{r data-pick}
 ```
 
+```{r tsne-fit}
+
+```
+
+
 ```{r tsne-plot}
 ```
 

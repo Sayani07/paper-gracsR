@@ -1096,7 +1096,7 @@ data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
   gracsr::scale_gran( method = "nqt",
                       response = "general_supply_kwh")
 
-##---tsne-plot
+##---tsne-fit
 
 data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds") %>% 
   filter(quantiles %in% "50%")
@@ -1135,6 +1135,9 @@ tSNE_fit <- data_24cust_wide%>%
   Rtsne(pca = FALSE, perplexity = 2)
 
 
+##---tsne-plot
+
+
 tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
                       tsneY = tSNE_fit$Y[, 2], 
                       customer_id = as.character(data_24cust_wide$customer_id))
@@ -1147,6 +1150,7 @@ tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
   #labs(caption = "tSNE") +
   theme(aspect.ratio = 1) +
   theme_light()+ coord_fixed(ratio=1)
+
 
 
 ##----hod-moy-wkndwday plots
@@ -1679,4 +1683,19 @@ opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()),
 tsne_xy + opt_clusters +
   ggpubr::plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')
 
+##----tsne-plot-supplementary
 
+
+tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
+                      tsneY = tSNE_fit$Y[, 2], 
+                      customer_id = as.character(data_24cust_wide$customer_id)) %>% left_join(cluster_result, by = c("customer_id")) %>% 
+  mutate(group = as.factor(group))
+
+tsne_xy_supplementary <- ggplot(tsne_df) +
+  aes(tsneX, tsneY) +
+  geom_point(size = 1) + 
+  theme_light()+ 
+  coord_fixed(ratio=1)+
+  stat_ellipse( aes(tsneX, tsneY, group = group ), level = 0.85)
+
+tsne_xy_supplementary
