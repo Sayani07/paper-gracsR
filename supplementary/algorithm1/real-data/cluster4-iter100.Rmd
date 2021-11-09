@@ -15,7 +15,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 library(knitr)
 library(here)
-read_chunk(here::here("validation/old/simdata01.R"))
+read_chunk(here::here("validation/simdata01.R"))
 ```
 
 # How the time series plot of the designs look like for different sample sizes?
@@ -42,7 +42,7 @@ quantile_prob_val = seq(0.1, 0.9, 0.1)
 ## nobs per combination is 50
 
 ```{r nobs50, echo = TRUE}
-ntimes_val = 50 # nobs per combination 
+ntimes_val = 300 # nobs per combination 
 ```
 
 
