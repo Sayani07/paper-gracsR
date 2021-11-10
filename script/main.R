@@ -1457,7 +1457,7 @@ wkndwday_group <- wkndwday_data%>%
   #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
   #geom_boxplot(aes(fill = as.factor(group))) +
   #scale_fill_lv() +
-  xlab("wnwd") + 
+  xlab("hod conditional by wdwnd") + 
   ylab("demand (in Kwh)") +
   facet_grid(group~wknd_wday, 
              scales = "free_y", 
@@ -1465,7 +1465,7 @@ wkndwday_group <- wkndwday_data%>%
   theme_bw() + theme_application3() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
-  theme(legend.position = "none") 
+  theme(legend.position = "none") + theme(strip.text.x = element_text(size=0))
 
 
 ##----combined-groups-js-big2
@@ -1516,10 +1516,10 @@ data_table <- data_pcp %>% group_by(group) %>%
 
 rownames(data_table) <- c("group-1", "group-2", "group-3")
 
-##----parcoord
+##----parcoord-application
 parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "customer_id") ,
                                columns = 3:5,
-                               groupColumn = "group",
+                               groupColumn = "group.x",
                                showPoints = FALSE, 
                                alphaLines = 0.8,
                                order = "anyClass",
@@ -1534,9 +1534,9 @@ parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "c
   ylab("wpd") + scale_fill_viridis_d(direction = 1) +
   scale_color_viridis_d(direction = 1) + theme_light()
 
-parcoord + geom_text(aes(label = id))
 
-(parcoord + gridExtra::tableGrob(data_table))+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
+
+(parcoord + geom_text(aes(label = id)) + gridExtra::tableGrob(data_table))+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
 
 ##----opt-clusters-jsd
 
