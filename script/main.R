@@ -55,13 +55,13 @@ theme_validation <- function() {
 theme_characterisation <- function() {
   
   theme_bw() + # seeting theme
-    theme(strip.text = element_text(size = 14,
+    theme(strip.text = element_text(size = 10,
                                     margin = margin(b = 0, t = 0))) + # narrow facet space
     theme(axis.title.y=element_blank(),
           axis.text.y=element_blank(),
           axis.ticks.y=element_blank()) + # no axis ticks 
     theme(panel.spacing =unit(0, "lines")) +  # to ensure no gap between facets
-    theme(axis.text.x = element_text(angle=90, hjust=1, size = 14)) + # rotate the x-axis text
+    theme(axis.text.x = element_text(angle=90, hjust=1, size = 10)) + # rotate the x-axis text
     theme(legend.position = "bottom")+
     theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
     theme(axis.text.x = element_text(size=5)) +
@@ -1457,7 +1457,7 @@ wkndwday_group <- wkndwday_data%>%
   #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
   #geom_boxplot(aes(fill = as.factor(group))) +
   #scale_fill_lv() +
-  xlab("hod conditional by wdwnd") + 
+  xlab("hod by wnwd") + 
   ylab("demand (in Kwh)") +
   facet_grid(group~wknd_wday, 
              scales = "free_y", 
@@ -1468,7 +1468,7 @@ wkndwday_group <- wkndwday_data%>%
   theme(legend.position = "none") + theme(strip.text.x = element_text(size=0))
 
 
-##----combined-groups-js-big2
+##----combined-groups-js
 (hod_group + moy_group + wkndwday_group) +
   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
   plot_layout(guides = "collect")& theme(legend.position = 'none')
@@ -1575,45 +1575,6 @@ opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()),
   theme(axis.text.x = element_text(angle=45, size = 8, hjust = 1)) +
   theme_bw() +ylab("sindex") + xlab("number of clusters")
 
-##----opt-cluster-tsne-jsd
-tsne_xy + opt_clusters + plot_annotation(tag_levels = "a")
-
-##----opt-clusters-jsd-wpd
-
-data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
-  mutate(customer_id = as.character(customer_id)) %>% 
-  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
-  gracsr::scale_gran( method = "robust",
-                      response = "general_supply_kwh")
-
-hod <- suppressMessages(data_pick %>% 
-                          dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
-
-moy <- suppressMessages(data_pick %>% 
-                          dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
-
-wkndwday <- suppressMessages(data_pick %>% 
-                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
-
-distance <- wkndwday/2 + moy/12 + hod/24
-
-f = as.dist(distance)
-
-k = array()
-set.seed(123)
-for(i in 2:20)
-{
-  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
-  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  k[i]=p$sindex
-}
-
-opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), 
-                       aes(x=k, y = value)) +
-  geom_line() + 
-  scale_x_continuous(breaks = seq(2, 20, 2), minor_breaks = 1) + 
-  theme(axis.text.x = element_text(angle=45, size = 8, hjust = 1)) +
-  theme_bw() +ylab("sindex") + xlab("number of clusters")
 
 ##---tsne-fit
 
@@ -1673,6 +1634,49 @@ tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
 ##----opt-cluster-tsne-wpd
 tsne_xy + opt_clusters +
   ggpubr::plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')
+
+##----opt-cluster-tsne-jsd
+
+tsne_xy + opt_clusters + plot_annotation(tag_levels = "a")
+
+##----opt-clusters-jsd-wpd
+
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+  mutate(customer_id = as.character(customer_id)) %>% 
+  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
+  gracsr::scale_gran( method = "robust",
+                      response = "general_supply_kwh")
+
+hod <- suppressMessages(data_pick %>% 
+                          dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
+
+moy <- suppressMessages(data_pick %>% 
+                          dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
+
+wkndwday <- suppressMessages(data_pick %>% 
+                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
+
+distance <- wkndwday/2 + moy/12 + hod/24
+
+f = as.dist(distance)
+
+k = array()
+set.seed(123)
+for(i in 2:20)
+{
+  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
+  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+  k[i]=p$sindex
+}
+
+opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), 
+                       aes(x=k, y = value)) +
+  geom_line() + 
+  scale_x_continuous(breaks = seq(2, 20, 2), minor_breaks = 1) + 
+  theme(axis.text.x = element_text(angle=45, size = 8, hjust = 1)) +
+  theme_bw() +ylab("sindex") + xlab("number of clusters")
+
+
 
 ##----tsne-plot-supplementary
 
