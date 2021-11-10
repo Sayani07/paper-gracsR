@@ -617,8 +617,11 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
-```{r hod-ind-group-png, fig.cap = "The distribution of selected customers over hod (a), moy (b), and wnwd (c) for the $24$ selected customers is shown. In each case, the same colour denotes the same group using js-based clustering and are placed together to facilitate comparison. Individuals with similar distributional differences across categories of hod or moy are grouped together, with some exceptions. Distributional differences across categories of wnwday are not discernable except for a couple of customers."}
+```{r hod-ind-group-png, fig.cap = "The distribution of selected customers over multiple granularities `hod`, `moy`, and `wnwd` are shown for the $24$ selected customers using quantile and box plots. The $24$ customers are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. Each customer is identified by their profile across all the granularities. A few of these customers have similar distributions across `moy` and some are similar in their `hod distributions. Distributional differences across categories of wnwd are not discernable except for a couple of customers (id: 16 and 18)."}
 ```
+
+ In each case, the same colour denotes the same group using js-based clustering and are placed together to facilitate comparison.
+
 
 <!-- It appears that the aim of grouping comparable distributions over considered variables has been accomplished to some extent. -->
 
