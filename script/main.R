@@ -38,7 +38,8 @@ load("data/ALL_DATA.Rdata")
 theme_validation <- function() {
   theme_bw() +
     theme(
-      strip.text = element_text(size = 8, margin = margin(b = 0, t = 1)),
+      strip.text = element_text(size = 8, 
+                                margin = margin(b = 0, t = 1)),
       plot.margin = margin(0, 0, 0, 0, "cm"),
       axis.title.y = element_blank(),
       #axis.text.x = element_blank(),
@@ -71,7 +72,8 @@ theme_characterisation <- function() {
 theme_application <- function() {
   
   theme_light() + # setting theme
-    theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0)), strip.text.x = element_text(size = 8)) + # narrow facet space
+    theme(strip.text = element_text(size = 10,
+                                    margin = margin(b = 0, t = 0)), strip.text.x = element_text(size = 8)) + # narrow facet space
     theme(axis.title.y=element_blank(),
           axis.text.y=element_blank(),
           axis.ticks.y=element_blank()) + # no axis ticks 
@@ -1087,74 +1089,53 @@ data_pick_four,
 data_pick_five, 
 data_pick_six,
 .id = "design") %>% 
-  mutate(customer_id = as.character(customer_id)) %>% 
-  mutate(id = row_number())
+  mutate(customer_id = as.character(customer_id)) 
 
-##----data-pick
+##----all-data
 data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
   mutate(customer_id = as.character(customer_id)) %>% 
   dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
   gracsr::scale_gran( method = "nqt",
                       response = "general_supply_kwh")
 
-##---tsne-fit
 
-data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds") %>% 
-  filter(quantiles %in% "50%")
+##----clustering
+hod <- suppressMessages(data_pick %>% 
+                          dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
 
-data_356cust_moy <- read_rds("data/quantile_data_356cust_moy_robust.rds") %>% 
-  filter(quantiles %in% "50%")
+moy <- suppressMessages(data_pick %>% 
+                          dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
 
-data_356cust_wkndwday <- read_rds("data/quantile_data_356cust_wkndwday_robust.rds") %>% 
-  filter(quantiles %in% "50%")
+wkndwday <- suppressMessages(data_pick %>% 
+                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
 
+distance <- wkndwday/2 + moy/12 + hod/24
 
-data_356cust_hod_wide <- data_356cust_hod %>%
-  pivot_wider(names_from = c("gran", "category", "quantiles"),
-              values_from = "quantiles_values")
-
-data_356cust_moy_wide <- data_356cust_moy %>%
-  pivot_wider(names_from = c("gran", "category", "quantiles"),
-              values_from = "quantiles_values")
-
-data_356cust_wkndwday_wide <- data_356cust_wkndwday %>%
-  pivot_wider(names_from = c("gran", "category", "quantiles"),
-              values_from = "quantiles_values")
-
-data_356cust_wide <- left_join(data_356cust_hod_wide,
-                               data_356cust_moy_wide, by="customer_id") %>% 
-  left_join(data_356cust_wkndwday_wide,  by="customer_id"
-  )
+f = as.dist(distance)
 
 
-data_24cust_wide <- data_356cust_wide %>% filter(customer_id %in% data_pick$customer_id)
+##----groups-24
+cluster_result <- suppressMessages(f %>% 
+                                     clust_gran(kopt = 5)) %>% 
+  rename("customer_id" = "id") %>% 
+  mutate(group = as.factor(group))
 
-set.seed(2935)
-
-tSNE_fit <- data_24cust_wide%>% 
-  select(-customer_id) %>% 
-  Rtsne(pca = FALSE, perplexity = 2)
-
-
-##---tsne-plot
+cluster_result_id <- cluster_result %>% arrange(group) %>% mutate(divide_cust = rep(c(1,2), each = 12))%>% 
+  mutate(id = row_number())
 
 
-tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
-                      tsneY = tSNE_fit$Y[, 2], 
-                      customer_id = as.character(data_24cust_wide$customer_id))
 
-tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
-  geom_point(aes(text = customer_id), size =1) +
-  #scale_color_manual(values = limn_pal_tableau10()) +
-  scale_colour_viridis_d(direction = -1) +
-  guides(color = FALSE) +
-  #labs(caption = "tSNE") +
-  theme(aspect.ratio = 1) +
-  theme_light()+ coord_fixed(ratio=1)
+##----data-pick
+data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+  mutate(customer_id = as.character(customer_id)) %>% 
+  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
+  gracsr::scale_gran( method = "robust",
+                      response = "general_supply_kwh")
 
 
 
 ##----hod-moy-wkndwday plots
+
 data_hod <- quantile_gran(data_pick,
                           "hour_day",
                           quantile_prob_val = quantile_prob_graph) %>% 
@@ -1230,77 +1211,57 @@ wkndwday_ind_design <- data_wkndwday%>%
   xlab("wnwd")+
   theme_application()
 
-##----all-data
-data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
-  mutate(customer_id = as.character(customer_id)) %>% 
-  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
-  gracsr::scale_gran( method = "nqt",
-                      response = "general_supply_kwh")
-
-
-##----clustering
-hod <- suppressMessages(data_pick %>% 
-                          dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
-
-moy <- suppressMessages(data_pick %>% 
-                          dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
-
-wkndwday <- suppressMessages(data_pick %>% 
-                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
-
-distance <- wkndwday/2 + moy/12 + hod/24
-
-f = as.dist(distance)
-
-
-##----groups-24
-cluster_result <- suppressMessages(f %>% 
-                                     clust_gran(kopt = 5)) %>% 
-  rename("customer_id" = "id") %>% 
-  mutate(group = as.factor(group))
-
-cluster_result_id <- cluster_result %>% arrange(group) %>% mutate(divide_cust = rep(c(1,2), each = 12))
-
 ##----hod-ind-group
-##
+
+  
 hod_ind_group1 <- data_hod %>% 
   left_join(cluster_result_id, by = c("customer_id")) %>% 
   filter(divide_cust == 1) %>% 
+  mutate(label = if_else(category == first(category), as.character(id), NA_character_)) %>%
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`,
                   group=customer_id),
-              alpha = 0.5) +
+              alpha = 0.3) +
   geom_line(aes(y = `50%`,
                 group=customer_id), size = 1) +
-  facet_wrap(~customer_id, 
+  facet_wrap(~id, 
              scales = "free_y",
              ncol=1) + 
   theme_application()+
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +    xlab("hod")  +
-  scale_x_discrete(breaks = seq(0, 23, 3))+ theme(legend.position = "bottom")+theme(plot.margin = unit(c(0,0,0,-1), "cm"))
+  scale_x_discrete(breaks = seq(0, 23, 3))+ theme(legend.position = "bottom")+theme(plot.margin = unit(c(0,0,0,-1), "cm")) +
+  ggrepel::geom_label_repel(aes(label = label, y = `50%`),
+                   nudge_x = -1,
+                   na.rm = TRUE)
+
+
 # + scale_y_continuous(breaks = NULL) 
 
 
 hod_ind_group2 <- data_hod %>% 
   left_join(cluster_result_id, by = c("customer_id")) %>% 
   filter(divide_cust == 2) %>% 
+  mutate(label = if_else(category == first(category), as.character(id), NA_character_)) %>% 
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`,
                   group=customer_id),
-              alpha = 0.5) +
+              alpha = 0.3) +
   geom_line(aes(y = `50%`,
                 group=customer_id), size = 1) +
-  facet_wrap(~customer_id, 
+  facet_wrap(~id, 
              scales = "free_y",
              ncol=1) + 
   theme_application()+
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +    xlab("hod")  +
-  scale_x_discrete(breaks = seq(0, 23, 3))+ theme(legend.position = "bottom")+theme(plot.margin = unit(c(0,0,0,-1), "cm"))
-# + scale_y_continuous(breaks = NULL) 
+  scale_x_discrete(breaks = seq(0, 23, 3))+ theme(legend.position = "bottom")+theme(plot.margin = unit(c(0,0,0,-1), "cm")) +
+  ggrepel::geom_label_repel(aes(label = label, y = `50%`),
+                            nudge_x = -1,
+                            na.rm = TRUE)
+
 
 moy_ind_group1 <- data_moy %>% 
   left_join(cluster_result_id, by = c("customer_id")) %>% 
@@ -1308,9 +1269,9 @@ moy_ind_group1 <- data_moy %>%
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`, 
-                  group=customer_id), alpha = 0.5) +
+                  group=customer_id), alpha = 0.3) +
   geom_line(aes(y = `50%`, group=customer_id), size = 1) +
-  facet_wrap(~customer_id, 
+  facet_wrap(~id, 
              scales = "free_y", 
              ncol=1) +
   ylab("demand (in Kwh)") +
@@ -1327,9 +1288,9 @@ moy_ind_group2 <- data_moy %>%
   ggplot(aes(x = category)) + 
   geom_ribbon(aes(ymin = `25%`, 
                   ymax = `75%`, 
-                  group=customer_id), alpha = 0.5) +
+                  group=customer_id), alpha = 0.3) +
   geom_line(aes(y = `50%`, group=customer_id), size = 1) +
-  facet_wrap(~customer_id, 
+  facet_wrap(~id, 
              scales = "free_y", 
              ncol=1) +
   ylab("demand (in Kwh)") +
@@ -1347,11 +1308,11 @@ wkndwday_ind_group1 <- data_wkndwday %>%
   mutate(divide_cust  = as.factor(divide_cust)) %>% 
   ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
   #lvplot::geom_lv(aes(fill = as.factor(group), 
-  #            color = as.factor(group)), k=5, alpha = 0.5) +
-  geom_boxplot(aes(fill = divide_cust),alpha = 0.5)+
+  #            color = as.factor(group)), k=5, alpha = 0.3) +
+  geom_boxplot(aes(fill = divide_cust),alpha = 0.3)+
   #geom_boxplot(outlier.shape = NA) + 
   coord_cartesian(ylim = ylim1*1.05)+
-  facet_wrap(~customer_id, 
+  facet_wrap(~id, 
              scales = "free_y", 
              labeller = "label_value",
              ncol=1)  +
@@ -1365,11 +1326,11 @@ wkndwday_ind_group2 <- data_wkndwday %>%
   mutate(divide_cust  = as.factor(divide_cust)) %>% 
   ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
   #lvplot::geom_lv(aes(fill = as.factor(group), 
-  #            color = as.factor(group)), k=5, alpha = 0.5) +
-  geom_boxplot(aes(fill = divide_cust),alpha = 0.5)+
+  #            color = as.factor(group)), k=5, alpha = 0.3) +
+  geom_boxplot(aes(fill = divide_cust),alpha = 0.3)+
   #geom_boxplot(outlier.shape = NA) + 
   coord_cartesian(ylim = ylim1*1.05)+
-  facet_wrap(~customer_id, 
+  facet_wrap(~id, 
              scales = "free_y", 
              labeller = "label_value",
              ncol=1)  +
@@ -1381,64 +1342,20 @@ wkndwday_ind_group2 <- data_wkndwday %>%
 
 
 
-# moy_ind_group <- data_moy %>% 
-#   left_join(cluster_result, by = c("customer_id")) %>% 
-#   ggplot(aes(x = category)) + 
-#   geom_ribbon(aes(ymin = `25%`, 
-#                   ymax = `75%`, 
-#                   group=customer_id, fill = group), alpha = 0.5) +
-#   geom_line(aes(y = `50%`, group=customer_id, color = group), size = 1) +
-#   facet_wrap(group~customer_id, 
-#              scales = "free_y", 
-#              nrow=8) +
-#   ylab("demand (in Kwh)") +
-#   xlab("moy")  +
-#   theme_application() +
-#   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
-#   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) + theme(legend.position = "bottom")+
-#   theme(plot.margin = unit(c(0,-1,0, -1), "cm"))
 
 
-# 
-# wkndwday_ind_group <- data_wkndwday%>% 
-#   left_join(cluster_result, by = c("customer_id")) %>% 
-#   mutate(group  = as.factor(group)) %>% 
-#   ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
-#   #lvplot::geom_lv(aes(fill = as.factor(group), 
-#   #            color = as.factor(group)), k=5, alpha = 0.5) +
-#   geom_boxplot(aes(color = group, fill = group),alpha = 0.5)+
-#   #geom_boxplot(outlier.shape = NA) + 
-#   coord_cartesian(ylim = ylim1*1.05)+
-#   facet_wrap(group~customer_id, 
-#              scales = "free_y", 
-#              labeller = "label_value",
-#              nrow=8)  +
-#   theme_application()+
-#   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
-#   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7"))  + theme(legend.position = "none")+
-#   xlab("wnwd")+theme(plot.margin = unit(c(0,-1,0,0), "cm"))
 
-# hod_ind_design + moy_ind_design + wkndwday_ind_design 
 
 
 cust_div1 <- hod_ind_group1 + moy_ind_group1 + wkndwday_ind_group1 
 cust_div2 <- hod_ind_group2 + moy_ind_group2 + wkndwday_ind_group2
 
-# (cust_div1) + (cust_div2) + plot_layout(guides = "collect", ncol = 6,widths = 1) + plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = 'none')
 
-
-
-# plot.list <- list(cust_div1, cust_div2)
-# 
-# ggarrange(plotlist = plot.list)
-# x = c(0, 0.5, 1, 0.5, 0.5, 0.5)
-# y = c(0.5, 0.5, 0.5,0, 0.5, 1)
-# id = c(1,1,1,2,2,2)
-# grid.polygon(x,y,id)
-#   
 plot <- ggpubr::ggarrange(cust_div1, cust_div2, ncol = 2, labels = c("a", "b"))
 
-ggpubr::annotate_figure(plot, top = text_grob(" 24 sets of hod, moy, wkndwday split into two columns each containing 12 customers", size = 8), fig.lab.size = 6)
+plot
+
+# ggpubr::annotate_figure(plot, top = text_grob(" 24 sets of hod, moy, wkndwday split into two columns each containing 12 customers", size = 8), fig.lab.size = 6)
 
 ##----data-heatmap-hod-group
 legend_title <- "group"
@@ -1682,6 +1599,61 @@ opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()),
   scale_x_continuous(breaks = seq(2, 20, 2), minor_breaks = 1) + 
   theme(axis.text.x = element_text(angle=45, size = 8, hjust = 1)) +
   theme_bw() +ylab("sindex") + xlab("number of clusters")
+
+##---tsne-fit
+
+data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds") %>% 
+  filter(quantiles %in% "50%")
+
+data_356cust_moy <- read_rds("data/quantile_data_356cust_moy_robust.rds") %>% 
+  filter(quantiles %in% "50%")
+
+data_356cust_wkndwday <- read_rds("data/quantile_data_356cust_wkndwday_robust.rds") %>% 
+  filter(quantiles %in% "50%")
+
+
+data_356cust_hod_wide <- data_356cust_hod %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_moy_wide <- data_356cust_moy %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_wkndwday_wide <- data_356cust_wkndwday %>%
+  pivot_wider(names_from = c("gran", "category", "quantiles"),
+              values_from = "quantiles_values")
+
+data_356cust_wide <- left_join(data_356cust_hod_wide,
+                               data_356cust_moy_wide, by="customer_id") %>% 
+  left_join(data_356cust_wkndwday_wide,  by="customer_id"
+  )
+
+
+data_24cust_wide <- data_356cust_wide %>% filter(customer_id %in% data_pick$customer_id)
+
+set.seed(2935)
+
+tSNE_fit <- data_24cust_wide%>% 
+  select(-customer_id) %>% 
+  Rtsne(pca = FALSE, perplexity = 2)
+
+
+##---tsne-plot
+
+
+tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
+                      tsneY = tSNE_fit$Y[, 2], 
+                      customer_id = as.character(data_24cust_wide$customer_id))
+
+tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
+  geom_point(aes(text = customer_id), size =1) +
+  #scale_color_manual(values = limn_pal_tableau10()) +
+  scale_colour_viridis_d(direction = -1) +
+  guides(color = FALSE) +
+  #labs(caption = "tSNE") +
+  theme(aspect.ratio = 1) +
+  theme_light()+ coord_fixed(ratio=1)
 
 ##----opt-cluster-tsne-wpd
 tsne_xy + opt_clusters +
