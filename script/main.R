@@ -55,16 +55,17 @@ theme_validation <- function() {
 theme_characterisation <- function() {
   
   theme_bw() + # seeting theme
-    theme(strip.text = element_text(size = 10,
+    theme(strip.text = element_text(size = 14,
                                     margin = margin(b = 0, t = 0))) + # narrow facet space
     theme(axis.title.y=element_blank(),
           axis.text.y=element_blank(),
           axis.ticks.y=element_blank()) + # no axis ticks 
     theme(panel.spacing =unit(0, "lines")) +  # to ensure no gap between facets
-    theme(axis.text.x = element_text(angle=90, hjust=1, size = 10)) + # rotate the x-axis text
+    theme(axis.text.x = element_text(angle=90, hjust=1, size = 14)) + # rotate the x-axis text
     theme(legend.position = "bottom")+
     theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
-    theme(axis.text.x = element_text(size=5))
+    theme(axis.text.x = element_text(size=5)) +
+    theme(axis.text = element_text(size = 12))  
 }
 
 
@@ -93,9 +94,24 @@ theme_application <- function() {
 
 ##----mytheme-application2
 theme_application2 <- function() {
-  theme_characterisation() +     theme(strip.background = element_blank(),
+  theme_characterisation() +   
+    theme(strip.background = element_blank(),
                                        strip.text.x = element_blank())
 
+}
+
+##----mytheme-application3
+theme_application3 <- function() {
+  theme_characterisation() +
+    theme(
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank()
+    )+ 
+    theme(axis.ticks.x = element_blank(),
+          axis.text.x = element_blank()) +
+    theme(
+          strip.text.y = element_blank())
+  
 }
 
 ##----format-data
@@ -1385,14 +1401,14 @@ hod_group <- data_heatmap_hod_group %>%
                 color = as.factor(group)), size = 1)+
   facet_wrap(~group, 
              scales = "free_y",  
-             nrow = 5) + 
+             nrow = 5, labeller = "label_value") + 
   #labeller = labeller(xfacet = c(`1` = "Group 2", `2` = "Group 4",`3` = "Group 1",`4` = "Group 3"))
   theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("hod") + 
   ylab("demand (in Kwh)") + 
   theme_bw()  +
   scale_x_discrete(breaks = seq(1, 24, 3))+ 
   #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
-  theme_application() +
+  theme_application3() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
   theme(legend.position = "bottom") 
@@ -1421,7 +1437,7 @@ moy_group <- data_heatmap_moy_group %>%
              nrow = 5) +
   theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("moy") + 
   ylab("demand (in Kwh)") +
-  theme_bw() + theme_application() +
+  theme_bw() + theme_application3() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
   theme(legend.position = "bottom") 
@@ -1445,17 +1461,17 @@ wkndwday_group <- wkndwday_data%>%
   ylab("demand (in Kwh)") +
   facet_grid(group~wknd_wday, 
              scales = "free_y", 
-             labeller = "label_both") + 
-  theme_bw() + theme_application() +
+             labeller = "label_value") + 
+  theme_bw() + theme_application3() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
   theme(legend.position = "none") 
 
 
-##----combined-groups-js
+##----combined-groups-js-big2
 (hod_group + moy_group + wkndwday_group) +
   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
-  plot_layout(guides = "collect")& theme(legend.position = 'bottom')
+  plot_layout(guides = "collect")& theme(legend.position = 'none')
 
 ##----data-pick-wpd
 elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
@@ -1469,15 +1485,15 @@ scaled_var <- elec_pick_wide
 
 f <- elec_pick_wide[-1] %>% dist() 
 
-k = array()
-for(i in 2:20)
-{
-  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
-  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  k[i]=p$sindex
-}
-
-ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1))
+# k = array()
+# for(i in 2:20)
+# {
+#   group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
+#   p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+#   k[i]=p$sindex
+# }
+# 
+# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1))
 
 group <- f%>% hclust (method = "ward.D") %>% cutree(k=3)
 
@@ -1501,7 +1517,7 @@ data_table <- data_pcp %>% group_by(group) %>%
 rownames(data_table) <- c("group-1", "group-2", "group-3")
 
 ##----parcoord
-parcoord <- GGally::ggparcoord(data_pcp %>% left_join(data_pick_cust, by = "customer_id") ,
+parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "customer_id") ,
                                columns = 3:5,
                                groupColumn = "group",
                                showPoints = FALSE, 
