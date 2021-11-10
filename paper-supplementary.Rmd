@@ -64,15 +64,17 @@ read_chunk(here::here("validation/simdata01.R"))
 ```
 
 
-```{r raw-data-50, out.width = "100%", fig.cap=" The raw half-hourly energy usage for $50$ sampled households is plotted along the y-axis versus time in a linear scale.  Each of these series is associated with a single customer. It looks like there is a lot of missing values and unequal length of time series along with asynchronous periods for which data is observed. No insightful behavioral pattern could be discerned from this view other than when the customer is not at home."}
+
+```{r raw-data-50, out.width = "100%", fig.cap=" The raw half-hourly energy usage for $50$ sampled households is plotted along the y-axis versus time in a linear scale.  Each of these series is associated with a single customer. It looks like there is a lot of missing values and unequal length of time series along with asynchronous periods for which data is observed. No insightful behavioral pattern could be discerned from this view other than when the customer is not at home.", fig.pos="h"}
 
 knitr::include_graphics("figs/raw_plot_cust.png") # look at smart-meter.R for the code
 ```
 
 
+
 (ref:missing-data) Investigating the temporal location of missing values for customers who have implicit missing values. There are $13,735$ customers in the data set, with 8,685 having no missing values and the remaining $5,050$ having at least one missing value. Each cross represents a missed observation in time, while the line connecting two dots represents continuous missingness over time. Missing values occur at random times and do not appear to follow a pattern, although there is a higher concentration of missing values in September and October 2012 for the majority of customers. This plot is inspired by @wang2020tsibble.
 
-```{r missing-data, fig.cap="(ref:missing-data)"}
+```{r missing-data, fig.cap="(ref:missing-data)", fig.pos="h"}
 knitr::include_graphics("figs/missing-data-5050.png")
 ```
 
@@ -139,7 +141,7 @@ knitr::include_graphics("figs/tour-tsne.png")
 
 <!-- . Instances may be distributed in the representation space in a reasonable manner, revealing their similarities, using this instance wise discriminative learning. A dual-level progressive similar instance selection (DPSIS) approach could also be used -->
 
-# Interaction of granularities
+<!-- # Interaction of granularities -->
 
 Consider a case in which there are only two interacting granularities of interest, $g1$ and $g2$. In contrast to the previous situation, when we could study distributions across $n_{g_1} + n_{g_2} = 5$ separate categories, with interaction, we must evaluate the distribution of the $n_{g_1}*n_{g_2}=6$ combination of categories. Consider the $4$ designs in Figure \ref{fig:interaction-gran}, where various distributions are assumed for different combinations of categories, resulting in different designs. Design $D1$ exhibits no change in distributions across $g1$ or $g2$, whereas Designs $D2$ and $D3$ alter across only $g1$ and $g2$, respectively. D4 varies across both $g1$ and $g2$ categories. D3 and D4 appear similar based on their relative differences across consecutive categories, but $D4$ also changes across facets, unlike $D3$, which has all facets look the same.
 

@@ -661,7 +661,7 @@ wkndwday_group_entire2 <- wkndwday_data%>%
   scale_color_manual(values=as.vector(tableau20(20)))+
   theme(legend.position = "none")
 
-##----combined-groups-js-entire
+## ---- combined-groups-js-entire
 group_entire1 <- (hod_group_entire1 + moy_group_entire1 + wkndwday_group_entire1)&theme_characterisation()& theme(legend.position = 'none')
 
 group_entire2 <- (hod_group_entire2 + moy_group_entire2 + wkndwday_group_entire2)&theme_characterisation()& theme(legend.position = 'none')
