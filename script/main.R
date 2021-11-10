@@ -1087,7 +1087,8 @@ data_pick_four,
 data_pick_five, 
 data_pick_six,
 .id = "design") %>% 
-  mutate(customer_id = as.character(customer_id))
+  mutate(customer_id = as.character(customer_id)) %>% 
+  mutate(id = row_number())
 
 ##----data-pick
 data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
@@ -1571,7 +1572,8 @@ data_pcp <- scaled_var %>%
   #bind_cols(customer_id =  elec_pick_wide$customer_id) %>%
   left_join(cluster_result_wpd , by = c("customer_id" = "id")) %>% 
   select(customer_id, group, everything()) %>% 
-  mutate(group = as.factor(group))
+  mutate(group = as.factor(group)) %>% 
+  mutate(customer_id = as.character(customer_id))
 
 data_table <- data_pcp %>% group_by(group) %>% 
   summarise(nobs = n(),
@@ -1583,8 +1585,8 @@ data_table <- data_pcp %>% group_by(group) %>%
 rownames(data_table) <- c("group-1", "group-2", "group-3")
 
 ##----parcoord
-parcoord <- GGally::ggparcoord(data_pcp ,
-                               columns = 3:ncol(data_pcp),
+parcoord <- GGally::ggparcoord(data_pcp %>% left_join(data_pick_cust, by = "customer_id") ,
+                               columns = 3:5,
                                groupColumn = "group",
                                showPoints = FALSE, 
                                alphaLines = 0.8,
@@ -1599,6 +1601,8 @@ parcoord <- GGally::ggparcoord(data_pcp ,
   xlab("") +
   ylab("wpd") + scale_fill_viridis_d(direction = 1) +
   scale_color_viridis_d(direction = 1) + theme_light()
+
+parcoord + geom_text(aes(label = id))
 
 (parcoord + gridExtra::tableGrob(data_table))+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
 
