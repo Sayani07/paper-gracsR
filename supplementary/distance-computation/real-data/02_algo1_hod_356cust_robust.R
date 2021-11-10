@@ -17,6 +17,9 @@ gran1 = "hour_day"
 # write_rds(distance_data_robust, here::here("data/dist_gran_hod_356cust_robust.rds"))
 # 
 
-distance_data_nqt <- elec %>% scale_gran(method = "nqt") %>% dist_gran(gran1)
+distance_data_nqt <- elec %>% 
+  scale_gran(method = "nqt") %>% 
+  dist_gran(gran1)
+
 write_rds(distance_data_nqt, here::here("data/dist_gran_hod_356cust_nqt.rds"))
 

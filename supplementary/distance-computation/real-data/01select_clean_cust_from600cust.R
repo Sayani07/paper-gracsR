@@ -13,7 +13,9 @@ elec <- read_rds(here::here("data/elec_nogap_2013_600.rds"))%>%
 elec_iqr0 <- elec %>% as_tibble() %>% group_by(customer_id) %>%
   summarise(q2 = stats::median(general_supply_kwh, na.rm = TRUE),
             iqr = stats::IQR(general_supply_kwh, na.rm = TRUE),
-            quantile = stats::quantile(general_supply_kwh, na.rm = TRUE, prob = seq(0.1, 0.9, 0.1))) %>% filter(iqr==0)
+            quantile = stats::quantile(general_supply_kwh, 
+                  na.rm = TRUE, prob = seq(0.1, 0.9, 0.1))) %>% 
+  filter(iqr==0)
 
 elec_sub <- elec %>%
   filter(!(customer_id %in%
