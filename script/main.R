@@ -1578,6 +1578,7 @@ opt_clusters_validation <- ggplot(sindex_all,
   theme_light() +
   scale_x_continuous(breaks = seq(2, 15, 1), minor_breaks = 1)
 
+
 opt_clusters_validation
 
 # 
