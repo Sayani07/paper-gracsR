@@ -107,7 +107,9 @@ theme_application3 <- function() {
     theme(axis.ticks.x = element_blank(),
           axis.text.x = element_blank()) +
     theme(
-          strip.text.y = element_blank())
+          strip.text.y = element_blank())+
+    theme(strip.text = element_text(size = 10,
+                                    margin = margin(b = 0, t = 0)))
   
 }
 
@@ -1145,7 +1147,7 @@ knitr::include_graphics("figs/ind-groups.png")
 
 # ggpubr::annotate_figure(plot, top = text_grob(" 24 sets of hod, moy, wkndwday split into two columns each containing 12 customers", size = 8), fig.lab.size = 6)
 
-##----data-heatmap-hod-group
+##----data-heatmap-hod-group-new
 legend_title <- "group"
 
 data_group <- data_pick  %>% 
@@ -1186,7 +1188,7 @@ hod_group <- data_heatmap_hod_group %>%
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
   theme(legend.position = "bottom") 
 
-##----data-heatmap-moy-group
+##----data-heatmap-moy-group-new
 data_heatmap_moy_group <- quantile_gran(data_group,
                                         gran1="month_year",
                                         quantile_prob_val = c(0.25, 0.5, 0.75),
@@ -1221,24 +1223,24 @@ wkndwday_data <- data_group %>% create_gran("wknd_wday") %>%
 
 ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
 
+wkndwday_data$group <- paste("group", wkndwday_data$group, sep = "-")
+
+
 wkndwday_group <- wkndwday_data%>% 
-  ggplot(aes(x=hour_day, y = general_supply_kwh)) +
-  #lvplot::geom_lv(aes(fill = as.factor(group)), k=5) +
+  ggplot(aes(x=wknd_wday, y = general_supply_kwh)) +
   geom_boxplot(aes(fill = group, color = group),alpha = 0.5, outlier.alpha = 0.05)+
-  #geom_boxplot(outlier.size = 1) + 
   coord_cartesian(ylim = ylim1*1.05)+
-  #ggridges::geom_density_ridges2(aes(x = general_supply_kwh, y = wknd_wday,fill = as.factor(group))) + coord_flip() +
-  #geom_boxplot(aes(fill = as.factor(group))) +
-  #scale_fill_lv() +
-  xlab("hod by wnwd") + 
+  xlab("wnwd") + 
   ylab("demand (in Kwh)") +
-  facet_grid(group~wknd_wday, 
+  facet_wrap(~group,
+             ncol = 1, 
              scales = "free_y", 
              labeller = "label_value") + 
-  theme_bw() + theme_application3() +
+  theme_bw() +
   scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
-  theme(legend.position = "none") + theme(strip.text.x = element_text(size=0))
+  theme(legend.position = "none") +
+  theme_application3()
 
 
 ##----combined-groups-js

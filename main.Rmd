@@ -636,10 +636,10 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 
 
 
-```{r data-heatmap-hod-group}
+```{r data-heatmap-hod-group-new}
 ```
 
-```{r data-heatmap-moy-group}
+```{r data-heatmap-moy-group-new}
 
 ```
 
