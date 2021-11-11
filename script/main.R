@@ -29,6 +29,7 @@ library(fpc)
 library(cluster)
 library(ggpubr)
 library(grid)
+library(ggrepel)
 
 
 ##----theme-validation
@@ -1030,7 +1031,7 @@ hod_ind_group1 <- data_hod %>%
   scale_x_discrete(breaks = seq(0, 23, 3))+ theme(legend.position = "bottom")+theme(plot.margin = unit(c(0,0,0,-1), "cm")) +
   ggrepel::geom_label_repel(aes(label = label, y = `50%`),
                    nudge_x = -1,
-                   na.rm = TRUE)
+                   na.rm = TRUE, max.overlaps = 12)
 
 
 # + scale_y_continuous(breaks = NULL) 
@@ -1268,7 +1269,7 @@ for(i in 2:20)
   k[i]=p$sindex
 }
 
-opt_clusters_wpd <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1)) + theme_bw() + ylab("sindex") + xlab("number of clusters")
+opt_clusters_wpd <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("sindex") + xlab("number of clusters")
 
 group <- f%>% hclust (method = "ward.D") %>% cutree(k=3)
 
@@ -1318,7 +1319,7 @@ parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "c
 data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
   mutate(customer_id = as.character(customer_id)) %>% 
   dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
-  gracsr::scale_gran( method = "robust",
+  gracsr::scale_gran( method = "nqt",
                       response = "general_supply_kwh")
 
 hod <- suppressMessages(data_pick %>% 
@@ -1394,63 +1395,21 @@ tSNE_fit <- data_24cust_wide%>%
 
 tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
                       tsneY = tSNE_fit$Y[, 2], 
-                      customer_id = as.character(data_24cust_wide$customer_id))
+                      customer_id = as.character(data_24cust_wide$customer_id)) %>% left_join(cluster_result_id, by = c("customer_id"))
 
 tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
   geom_point(aes(text = customer_id), size =1) +
+  ggrepel::geom_text_repel(aes(label = id), size = 4, seed = 2935, max.overlaps = 10)+
   #scale_color_manual(values = limn_pal_tableau10()) +
   scale_colour_viridis_d(direction = -1) +
-  guides(color = FALSE) +
+  #guides(color = FALSE) +
   #labs(caption = "tSNE") +
-  theme(aspect.ratio = 1) +
-  theme_light()
-
-##----opt-cluster-tsne-wpd
-tsne_xy + opt_clusters +
-  ggpubr::plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')
+  theme_light()+
+  theme(aspect.ratio = 1)
 
 ##----opt-cluster-tsne-jsd
 
-tsne_xy + opt_clusters + plot_annotation(tag_levels = "a")
-
-##----opt-clusters-jsd-wpd
-
-data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
-  mutate(customer_id = as.character(customer_id)) %>% 
-  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
-  gracsr::scale_gran( method = "robust",
-                      response = "general_supply_kwh")
-
-hod <- suppressMessages(data_pick %>% 
-                          dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
-
-moy <- suppressMessages(data_pick %>% 
-                          dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
-
-wkndwday <- suppressMessages(data_pick %>% 
-                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
-
-distance <- wkndwday/2 + moy/12 + hod/24
-
-f = as.dist(distance)
-
-k = array()
-set.seed(123)
-for(i in 2:20)
-{
-  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
-  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  k[i]=p$sindex
-}
-
-opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), 
-                       aes(x=k, y = value)) +
-  geom_line() + 
-  scale_x_continuous(breaks = seq(2, 20, 2), minor_breaks = 1) + 
-  theme(axis.text.x = element_text(angle=45, size = 8, hjust = 1)) +
-  theme_bw() +ylab("sindex") + xlab("number of clusters")
-
-
+tsne_xy + (opt_clusters/opt_clusters_wpd)  + plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')
 
 ##----tsne-plot-supplementary
 
