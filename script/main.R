@@ -713,7 +713,7 @@ append_files_plot <- function(folder_name, path){
   # all_data <- append_files("js-nqt")
   
   # compute all inter cluster distance "from" group
-  all_mat_mat_from <- all_datas%>%
+  all_mat_mat_from <- all_data%>%
     group_by(index, gran, group_item1, group_item2) %>% 
     filter(group_item1!= group_item2) %>% 
     summarise(sum = sum(distance),.groups = "drop") %>% 
@@ -1557,19 +1557,29 @@ sindex_all <- map(index_set, function(i){
 }) %>% bind_rows(.id = "index")
 
   
+
+}
+
+S1_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/3gran_change_5D/") %>% mutate(Scenario = "S1")
+
+S2_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/2gran_change_4D/")%>% mutate(Scenario = "S2")
+
+S3_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/1gran_change_5D/")%>% mutate(Scenario = "S3")
+
+sindex_all <- bind_rows(S1_nclust, S2_nclust, S3_nclust)
+
+
 opt_clusters_validation <- ggplot(sindex_all, 
                                   aes(x=k, y = sindex)) +
   geom_line(alpha = 0.3, aes(group = index), color = "blue") + 
   scale_x_continuous(breaks = seq(2, 20, 1)) + 
-  theme_bw() + ylab("sindex") + xlab("number of clusters")
+  facet_wrap(~Scenario, ncol = 1)+
+  ylab("sindex") + xlab("number of clusters")+
+  theme_light() +
+  scale_x_continuous(breaks = seq(2, 15, 1), minor_breaks = 1)
 
-}
+opt_clusters_validation
 
-S1_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/3gran_change_5D/")
-
-S2_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/2gran_change_4D/")
-
-S3_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/1gran_change_5D/")
-
-S1_nclust/S2_nclust/S3_nclust + plot_annotation(tag_levels = '1', tag_prefix = 'S', tag_suffix = '')
+# 
+# S1_nclust/S2_nclust/S3_nclust + plot_annotation(tag_levels = '1', tag_prefix = 'S', tag_suffix = '')
 
