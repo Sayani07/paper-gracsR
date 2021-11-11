@@ -713,7 +713,7 @@ append_files_plot <- function(folder_name, path){
   # all_data <- append_files("js-nqt")
   
   # compute all inter cluster distance "from" group
-  all_mat_mat_from <- all_data%>%
+  all_mat_mat_from <- all_datas%>%
     group_by(index, gran, group_item1, group_item2) %>% 
     filter(group_item1!= group_item2) %>% 
     summarise(sum = sum(distance),.groups = "drop") %>% 
@@ -1258,15 +1258,15 @@ scaled_var <- elec_pick_wide
 
 f <- elec_pick_wide[-1] %>% dist() 
 
-# k = array()
-# for(i in 2:20)
-# {
-#   group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
-#   p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-#   k[i]=p$sindex
-# }
-# 
-# ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1))
+k = array()
+for(i in 2:20)
+{
+  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
+  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+  k[i]=p$sindex
+}
+
+opt_clusters_wpd <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1)) + theme_bw() + ylab("sindex") + xlab("number of clusters")
 
 group <- f%>% hclust (method = "ward.D") %>% cutree(k=3)
 
@@ -1466,3 +1466,92 @@ tsne_xy_supplementary <- ggplot(tsne_df) +
   stat_ellipse( aes(tsneX, tsneY, group = group ), level = 0.85)
 
 tsne_xy_supplementary
+
+##----cluster-number-selection-validation
+
+
+##read all files containing information on distances and groups
+append_files <- function(folder_name, path){
+  
+  all_files = list.files(path = paste0(folder_name,path), 
+                         pattern = "data_validation_")
+  
+  names_levels <- map_dfr(all_files, 
+                          function(x){
+                            z = str_split(str_remove(x, ".rds"), "_") %>% 
+                              unlist()
+                            bind_cols(index = z[3])
+                          })
+  
+  all_files_path <- paste0(folder_name, path,
+                           all_files)  
+  
+  
+  all_data <- lapply(1:length(all_files_path), function(x){
+    
+    data = all_files_path %>% magrittr::extract2(x) %>% 
+      readRDS()
+    
+    names = names_levels %>% magrittr::extract(x,)
+    names_rep =   names %>% slice(rep(1:n(), each = nrow(data)))
+    bind_cols(names_rep, data)
+  }) %>% bind_rows() 
+}
+
+design1 <- append_files_plot(folder_name = "validation/js-nqt", path = "/3gran_change_5D/")
+
+
+#data <- read_rds("validation/js-nqt/2gran_change_4D/data_validation_10.rds")
+
+total_distance <- data %>%
+    group_by(item1, item2) %>% 
+    summarise(total = sum(distance), .groups = "drop") %>% ungroup()
+  
+total_distance_wide <- total_distance%>% 
+    pivot_wider(names_from = item2, values_from = total)
+  
+rownames(total_distance_wide) <- total_distance_wide$item1
+  
+distance_lowertriangle <- total_distance_wide %>% 
+    mutate_all(~replace(., is.na(.), 0)) %>%
+    tibble::rownames_to_column() %>%  
+    dplyr::select(-item1) %>% 
+    pivot_longer(-rowname) %>% 
+    pivot_wider(names_from=rowname, values_from=value) 
+  
+rownames(distance_lowertriangle) <- total_distance_wide$item1
+  
+  df <- distance_lowertriangle[-1] %>% as.matrix()
+  DM <- matrix(0, ncol(distance_lowertriangle), ncol(distance_lowertriangle)) 
+  DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)] # distance metric
+  distance_matrix = as.dist(DM)
+  
+groups <- bind_rows(data %>%
+                        distinct(item1, group_item1) %>% 
+                        rename("item" = "item1",
+                               "group" = "group_item1"),
+                      data %>% 
+                        distinct(item2, group_item2) %>%
+                        rename("item" = "item2",
+                               "group" = "group_item2")) %>% distinct(item, group) 
+  
+  
+  k = array()
+  for(i in 2:20)
+  {
+    group <- distance_matrix %>% 
+      hclust (method = "ward.D") %>% 
+      cutree(k=i)
+    p <- cluster.stats(distance_matrix,
+                       clustering = group, 
+                       silhouette = TRUE)
+    k[i]=p$sindex
+  }
+  
+opt_clusters_validation <- ggplot(k %>%
+                                    as_tibble %>% 
+                                    mutate(k = row_number()), 
+                                  aes(x=k, y = value)) +
+  geom_line() + scale_x_continuous(breaks = seq(2, 20, 1)) + 
+  theme_bw() + ylab("sindex") + xlab("number of clusters")
+
