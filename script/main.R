@@ -1471,7 +1471,8 @@ tsne_xy_supplementary
 
 
 ##read all files containing information on distances and groups
-append_files <- function(folder_name, path){
+
+append_files_nclust <- function(folder_name, path){
   
   all_files = list.files(path = paste0(folder_name,path), 
                          pattern = "data_validation_")
@@ -1496,37 +1497,39 @@ append_files <- function(folder_name, path){
     names_rep =   names %>% slice(rep(1:n(), each = nrow(data)))
     bind_cols(names_rep, data)
   }) %>% bind_rows() 
-}
-
-design1 <- append_files_plot(folder_name = "validation/js-nqt", path = "/3gran_change_5D/")
 
 
-#data <- read_rds("validation/js-nqt/2gran_change_4D/data_validation_10.rds")
+index_set <- all_data$index %>% unique
 
-total_distance <- data %>%
+sindex_all <- map(index_set, function(i){
+  
+  data <- all_data %>% dplyr::filter(index==i)
+  
+  total_distance <- data %>%
     group_by(item1, item2) %>% 
     summarise(total = sum(distance), .groups = "drop") %>% ungroup()
   
-total_distance_wide <- total_distance%>% 
+  total_distance_wide <- total_distance%>% 
     pivot_wider(names_from = item2, values_from = total)
   
-rownames(total_distance_wide) <- total_distance_wide$item1
+  rownames(total_distance_wide) <- total_distance_wide$item1
   
-distance_lowertriangle <- total_distance_wide %>% 
+  distance_lowertriangle <- total_distance_wide %>% 
     mutate_all(~replace(., is.na(.), 0)) %>%
     tibble::rownames_to_column() %>%  
     dplyr::select(-item1) %>% 
     pivot_longer(-rowname) %>% 
     pivot_wider(names_from=rowname, values_from=value) 
   
-rownames(distance_lowertriangle) <- total_distance_wide$item1
+  rownames(distance_lowertriangle) <- total_distance_wide$item1
   
   df <- distance_lowertriangle[-1] %>% as.matrix()
   DM <- matrix(0, ncol(distance_lowertriangle), ncol(distance_lowertriangle)) 
   DM[lower.tri(DM)] = df[lower.tri(df, diag=TRUE)] # distance metric
+  #print(i)
   distance_matrix = as.dist(DM)
   
-groups <- bind_rows(data %>%
+  groups <- bind_rows(data %>%
                         distinct(item1, group_item1) %>% 
                         rename("item" = "item1",
                                "group" = "group_item1"),
@@ -1537,21 +1540,36 @@ groups <- bind_rows(data %>%
   
   
   k = array()
-  for(i in 2:20)
+  for(j in 2:15)
   {
     group <- distance_matrix %>% 
       hclust (method = "ward.D") %>% 
-      cutree(k=i)
+      cutree(k=j)
+    #print(j)
     p <- cluster.stats(distance_matrix,
                        clustering = group, 
                        silhouette = TRUE)
-    k[i]=p$sindex
+    k[j]=p$sindex
   }
+  k %>% as_tibble() %>% set_names(c("sindex"))%>%
+    mutate(k = row_number())
   
-opt_clusters_validation <- ggplot(k %>%
-                                    as_tibble %>% 
-                                    mutate(k = row_number()), 
-                                  aes(x=k, y = value)) +
-  geom_line() + scale_x_continuous(breaks = seq(2, 20, 1)) + 
+}) %>% bind_rows(.id = "index")
+
+  
+opt_clusters_validation <- ggplot(sindex_all, 
+                                  aes(x=k, y = sindex)) +
+  geom_line(alpha = 0.3, aes(group = index), color = "blue") + 
+  scale_x_continuous(breaks = seq(2, 20, 1)) + 
   theme_bw() + ylab("sindex") + xlab("number of clusters")
+
+}
+
+S1_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/3gran_change_5D/")
+
+S2_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/2gran_change_4D/")
+
+S3_nclust <- append_files_nclust(folder_name = "validation/js-nqt", path = "/1gran_change_5D/")
+
+S1_nclust/S2_nclust/S3_nclust + plot_annotation(tag_levels = '1', tag_prefix = 'S', tag_suffix = '')
 
