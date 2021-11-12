@@ -1536,7 +1536,7 @@ opt_clusters_validation <- ggplot(sindex_all,
   scale_x_continuous(breaks = seq(2, 20, 1)) + 
   facet_wrap(~Scenario, ncol = 1)+
   ylab("sindex") + xlab("number of clusters")+
-  theme_light() +
+  theme_bw() +
   scale_x_continuous(breaks = seq(2, 15, 1), minor_breaks = 1)
 
 
