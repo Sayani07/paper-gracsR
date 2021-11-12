@@ -222,7 +222,7 @@ The total (dis) similarity between each pair of customers is obtained by combini
 
 <!-- The choice of distance measures is a critical step in clustering. It defines how the similarity of two elements (x, y) is calculated. -->
 
-**JS-based distances**
+### JS-based distances
 
 This distance metric considers two time series to be similar if the distributions of each category of an individual cyclic granularity or combination of categories for interacting cyclic granularities are similar. In this study, the distribution for each category is characterized using deciles (can potentially consider any list of quantiles), and the distances between distributions are calculated using the Jensen-Shannon distances (@Menendez1997-in), which are symmetric and thus could be used as a distance measure.
 
@@ -230,7 +230,7 @@ This distance metric considers two time series to be similar if the distribution
 The sum of the distances between two observations $x$ and $y$ in terms of cyclic granularity $A$ is defined as $$S^A_{x,y} = \sum_{j} D_{x,y}(A)$$ (sum of distances between each category $j$ of cyclic granularity $A$) or $$S^{A*B}_{x,y} = \sum_j \sum_k D_{x,y}(A, B)$$ (sum of distances between each combination of categories $(j, k)$ of the harmony $(A, B)$. After determining the distance between two series in terms of one granularity, we must combine them to produce a distance based on all significant granularities. When combining distances from individual $L$ cyclic granularities $C_l$ with $n_l$ levels, $$S_{x, y} = \sum_lS^{C_l}_{x,y}/n_l$$ is employed, which is also a distance metric since it is the sum of JS distances. This approach is expected to yield groups, such that the variation in observations within each group is in magnitude rather than distributional pattern, while the variation between groups is only in distributional pattern across categories.
 
 
-**wpd-based distances**
+### wpd-based distances
 
 Compute weighted pairwise distances $wpd$ (@Gupta2021-hakear) for all considered granularities for all observations. $wpd$ is designed to capture the maximum variation in the measured variable explained by an individual cyclic granularity or their interaction and is estimated by the maximum pairwise distances between consecutive categories normalized by appropriate parameters. A higher value of $wpd$ indicates that some interesting pattern is expected, whereas a lower value would indicate otherwise.
 
@@ -252,14 +252,18 @@ Once we have chosen $wpd$ as a relevant feature for characterizing the distribut
 
 ## Clustering
 
-_Number of clusters_: Different approaches to determining cluster size are required for varied applications and research objectives. Some typical ways of determining the number of clusters in the literature (e.g., the gap statistic [@tibshirani2001estimating], average silhouette width [@rousseeuw1987silhouettes], Dunn index [@dunn1973fuzzy]) are inspired primarily by defining and balancing "within-cluster homogeneity" and "between-cluster separation." Cluster separation index ($sindex$) proposed by @Hennig2014-ah is employed in this paper to have less dependency on a single or few ambiguous points. $sindex$ [@R-fpc] is determined by calculating the distance between each observation and the cluster to which it does not belong. Then, the least 10% of these distances are averaged to only evaluate places near the cluster edges. $sindex$, like other statistics in the literature, cannot be optimized over the number of clusters, since increasing the number of clusters reduces it. The number of clusters required is determined by the slope going from steep to shallow (an elbow).
+### Number of clusters 
 
-_ALgorithm_: With a way to obtain pairwise distances, any clustering algorithm can be employed that supports the given distance metric as input. A good comprehensive list of algorithms can be found in @Xu2015-ja based on traditional ways like partition, hierarchy, or more recent approaches like distribution, density, and others. We employ agglomerative hierarchical clustering in conjunction with Ward's linkage. Hierarchical cluster techniques fuse neighboring points sequentially to form bigger clusters, beginning with a full pairwise distance matrix. The distance between clusters is described using a "linkage technique". This agglomerative approach successively merges the pair of clusters with the shortest between-cluster distance using Ward's linkage method.
+Different approaches to determining cluster size are required for varied applications and research objectives. Some typical ways of determining the number of clusters in the literature (e.g., the gap statistic [@tibshirani2001estimating], average silhouette width [@rousseeuw1987silhouettes], Dunn index [@dunn1973fuzzy]) are inspired primarily by defining and balancing "within-cluster homogeneity" and "between-cluster separation." Cluster separation index ($sindex$) proposed by @Hennig2014-ah is employed in this paper to have less dependency on a single or few ambiguous points. $sindex$ [@R-fpc] is determined by calculating the distance between each observation and the cluster to which it does not belong. Then, the least 10% of these distances are averaged to only evaluate places near the cluster edges. $sindex$, like other statistics in the literature, cannot be optimized over the number of clusters, since increasing the number of clusters reduces it. The number of clusters required is determined by the slope going from steep to shallow (an elbow).
+
+### Algorithm
+
+With a way to obtain pairwise distances, any clustering algorithm can be employed that supports the given distance metric as input. A good comprehensive list of algorithms can be found in @Xu2015-ja based on traditional ways like partition, hierarchy, or more recent approaches like distribution, density, and others. We employ agglomerative hierarchical clustering in conjunction with Ward's linkage. Hierarchical cluster techniques fuse neighboring points sequentially to form bigger clusters, beginning with a full pairwise distance matrix. The distance between clusters is described using a "linkage technique". This agglomerative approach successively merges the pair of clusters with the shortest between-cluster distance using Ward's linkage method.
 
 <!--Hierarchical algorithms are one of the most widely used, can operate with data of any shape, has reasonable scalability, and the number of clusters is not needed as a parameter.-->
 
 
-## Characterization of clusters
+### Characterization of clusters
 
 Cluster characterization is an important element of cluster analysis. @Cook2007-qe provides several methods for characterizing clusters. _Parallel coordinate plots_ (@wegman1990hyperdimensional), _Scatterplot matrix_, _Displaying cluster statistics_ (@dasu2005grouping), _MDS_ (@borg2005modern), PCA, _t-SNE_(@R-tsne), _Tour_ (@wickham2011tourr) are some of the graphical approaches used in this study. A Parallel Coordinates Plot features parallel axes for each variable and each axis is linked by lines. Changing the axes may reveal patterns or relationships between variables for categorical variables. However, for categories with cyclic temporal granularities, preserving the underlying ordering of time is more desirable. Displaying cluster statistics is useful when we have larger problems and it is difficult to read the parallel coordinate plots due to congestion. All of MDS, PCA and t-SNE use a distance or dissimilarity matrix to construct a reduced-dimension space representation, their goals are diverse. Multidimensional scaling (@borg2005modern) seeks to maintain the distances between pairs of data points, with an emphasis on pairings of distant points in the original space. The t-SNE embedding will compress data points that are close in high-dimensional space. Tour is a collection of interpolated linear projections of multivariate data into lower-dimensional space. The cluster characterization approach varies depending on the distance metric used. Parallel coordinate plots, scatter plot matrices, MDS or PCA are potentially useful ways to characterize clusters using wpd-based distances. For JS-based distances, plotting cluster statistics is beneficial for characterization and variable importance could be displayed through parallel coordinate plots. 
 
@@ -380,7 +384,7 @@ To validate our clustering methods, we spiked many attributes in the data to cre
 <!-- The results for $T=300$ and $R=25$ is shown, that means we have $25$ time series each with length $300$. The rest of the results could be found in the supplementary paper. -->
 
 
-## Data generating processes
+## Data generation
 
 <!-- An ARMA (p,q) process is used to generate series, where $p$ and $q$ are selected at random such that the series is stationary. The various designs on $g1$, $g2$, and $g3$ are introduced by adding matching designs to this series' innovations. The innovations are considered to have a normal distribution, although they follow the same pattern as the designs. To eliminate the effect of starting values, the first 500 observations in each series are discarded. -->
 
@@ -397,7 +401,7 @@ Each category or combination of categories from $g1$, $g2$ and $g3$ are assumed 
 
 ### Individual granularities
 
-_Scenario (S1): All significant granularities_
+_Scenario (S1): All granularities significant_
 
 <!-- Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1). -->
 
@@ -407,7 +411,7 @@ _Scenario (S2): Few significant granularities_
 
 This is the case where one granularity will remain the same across all designs. We consider the case where the distribution of $v$ varies across $g2$ levels for all designs, across $g3$ levels for a few designs, and $g1$ does not vary across designs. The proposed design is shown in Figure \ref{fig:gran2and1-clubbed}(b).
 
-_Scenario (S3): One significant granularity_
+_Scenario (S3): Only one significant granularity_
 
 Only one granularity is responsible for identifying the designs in this case. This is depicted in Figure \ref{fig:gran2and1-clubbed} (right) where only $g3$ affects the designs significantly.
 
@@ -484,7 +488,7 @@ The proposed methods could be extended when two granularities of interest intera
 <!-- | **Interaction**  <br><br># obs: 500, 2000  <br># clusters: 4       	| 2           	| 25, 100, 200   	| -->
 
 
-## Visual exploration of findings
+## Visual exploration of results
 
 All of the approaches were fitted to each data design and for each combination of the considered parameters. The formed clusters have to match the design, be well separated, and have minimal intra-cluster variation. It is possible to study these desired clustering traits visually in a more comprehensive way than just looking at index values. So we use MDS and parallel coordinate graphs to demonstrate the findings:
 
@@ -546,7 +550,7 @@ table %>% kable()
 
 The use of our methodology is illustrated on smart meter energy usage for a sample of customers from [SGSC consumer trial data](https://data.gov.au/data/dataset/smart-grid-smart-city-customer-trial-data) which was available through [Department of the Environment and Energy](https://data.gov.au/data/organization/doee) and Data61 CSIRO. It contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total. In most cases, electricity data is expected to have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view because too many measurements all squeezed in that representation. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior. The raw data for these consumers is of unequal length, with varying start and finish dates. Because our proposed methods evaluate probability distributions rather than raw data, neither of these data features would pose any threat to our methodology unless they contained any structure or systematic patterns. Additionally, there were missing values in the database but further investigation revealed that there is no structure in the missingness (see Supplementary paper for raw data features and missingness). The study begins by subsetting a data set along all dimensions of interest using data filtering and prototyping. By grouping the prototypes using our methods and assessing their meaning, the study hopes to unravel some of the heterogeneities observed in energy usage data. Because our application does not employ additional customer data, we cannot explain why consumption varies, but rather try to identify how it varies.
 
-_Data filtering and variable selection_
+## Data filtering and variable selection
 
 - Choose a smaller subset of randomly selected $600$ customers with no implicit missing values for 2013.
 
@@ -557,7 +561,7 @@ _Data filtering and variable selection_
 - Remove customers whose energy consumption is 0 in all deciles. These are the clients whose consumption is likely to remain essentially flat and with no intriguing repeated patterns that we are interested in studying.
 
 
-_Prototype selection_
+## Prototype selection
 
 <!-- Why instance selection -->
 Supervised learning uses a training set of known information to categorize new events through instance selection. Instance selection (@olvera2010review) is a method of rejecting instances that are not helpful for classification. This is analogous to subsampling the population along all dimensions of interest such that the sampled data represents the primary features of the underlying distribution. Instance selection in unsupervised learning has received little attention in the literature, yet it could be a useful tool for evaluating model or method performance. There are several ways to approach prototype selection.
