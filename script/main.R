@@ -911,6 +911,21 @@ distance <- wkndwday/2 + moy/12 + hod/24
 f = as.dist(distance)
 
 
+##----opt-clusters-jsd
+
+all_index <- map_dfr(2:20, function(x){
+  group <- f %>% hclust (method = "ward.D") %>% cutree(k=x)
+  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+  index <- c(k = x, sindex = p$sindex, avg_silwidth = p$avg.silwidth, gamma =  p$pearsongamma, widegap = p$widestgap)
+}) 
+
+  # , gamma = p$pearsongamma, widegap = p$widestgap, dunn = p$dunn), gamma =  p$pearsongamma,
+data_index <- all_index %>% pivot_longer(2:5, names_to = "index_type", values_to = "index_value")
+  
+  
+opt_clusters <- data_index %>% ggplot(aes(x = k, y = index_value, group = index_type))+
+  geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y")
+
 ##----groups-24
 cluster_result <- suppressMessages(f %>% 
                                      clust_gran(kopt = 5)) %>% 
@@ -920,20 +935,17 @@ cluster_result <- suppressMessages(f %>%
 cluster_result_id <- cluster_result %>% arrange(group) %>% mutate(divide_cust = rep(c(1,2), each = 12))%>% 
   mutate(id = row_number())
 
-
-
 ##----data-pick
-data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+data_pick_robust <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
   mutate(customer_id = as.character(customer_id)) %>% 
   dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
   gracsr::scale_gran( method = "robust",
                       response = "general_supply_kwh")
 
 
-
 ##----hod-moy-wkndwday plots
 
-data_hod <- quantile_gran(data_pick,
+data_hod <- quantile_gran(data_pick_robust,
                           "hour_day",
                           quantile_prob_val = quantile_prob_graph) %>% 
   pivot_wider(names_from = quantiles,
@@ -961,7 +973,7 @@ hod_ind_design <- data_hod %>%
   scale_color_viridis_d()+
   scale_x_discrete(breaks = seq(0, 23, 3))
 
-data_moy <- quantile_gran(data_pick,
+data_moy <- quantile_gran(data_pick_robust,
                           "month_year", 
                           quantile_prob_val = quantile_prob_graph) %>% 
   pivot_wider(names_from = quantiles, 
@@ -984,7 +996,7 @@ moy_ind_design <- data_moy %>%
   xlab("moy")  +
   theme_application() 
 
-data_wkndwday <- data_pick  %>%
+data_wkndwday <- data_pick_robust  %>%
   create_gran("wknd_wday")  %>% 
   left_join(data_pick_cust, by = c("customer_id"))
 
@@ -1151,7 +1163,7 @@ knitr::include_graphics("figs/ind-groups.png")
 ##----data-heatmap-hod-group-new
 legend_title <- "group"
 
-data_group <- data_pick  %>% 
+data_group <- data_pick_robust  %>% 
   left_join(cluster_result, by = c("customer_id"))
 
 data_heatmap_hod_group <- quantile_gran(data_group,
@@ -1243,12 +1255,11 @@ wkndwday_group <- wkndwday_data%>%
   theme(legend.position = "none") +
   theme_application3()
 
-
 ##----combined-groups-js
-(hod_group + moy_group + wkndwday_group) +
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')+
+combined_groups_js5 <- (hod_group + moy_group + wkndwday_group) +
   plot_layout(guides = "collect")& theme(legend.position = 'none')
 
+### wpd clustering starts
 ##----data-pick-wpd
 elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
 
@@ -1261,15 +1272,31 @@ scaled_var <- elec_pick_wide
 
 f <- elec_pick_wide[-1] %>% dist() 
 
-k = array()
-for(i in 2:20)
-{
-  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
-  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  k[i]=p$sindex
-}
 
-opt_clusters_wpd <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("sindex") + xlab("number of clusters")
+# k = array()
+# for(i in 2:20)
+# {
+#   group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
+#   p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+#   k[i]=p$sindex
+# }
+
+
+all_index <- map_dfr(2:20, function(x){
+  group <- f %>% hclust (method = "ward.D") %>% cutree(k=x)
+  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
+  index <- c(k = x, sindex = p$sindex, avg_silwidth = p$avg.silwidth, gamma =  p$pearsongamma, widegap = p$widestgap)
+}) 
+
+# , gamma = p$pearsongamma, widegap = p$widestgap, dunn = p$dunn), gamma =  p$pearsongamma,
+data_index <- all_index %>% pivot_longer(2:5, names_to = "index_type", values_to = "index_value")
+
+
+opt_clusters_wpd <- data_index %>% ggplot(aes(x = k, y = index_value, group = index_type))+
+  geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y")
+
+
+# opt_clusters_wpd <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("sindex") + xlab("number of clusters")
 
 group <- f%>% hclust (method = "ward.D") %>% cutree(k=3)
 
@@ -1314,44 +1341,6 @@ parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "c
 
 (parcoord + geom_text(aes(label = id)) + gridExtra::tableGrob(data_table))+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
 
-##----opt-clusters-jsd
-
-data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
-  mutate(customer_id = as.character(customer_id)) %>% 
-  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>% 
-  gracsr::scale_gran( method = "nqt",
-                      response = "general_supply_kwh")
-
-hod <- suppressMessages(data_pick %>% 
-                          dist_gran(gran1 = "hour_day", response = "general_supply_kwh"))
-
-moy <- suppressMessages(data_pick %>% 
-                          dist_gran(gran1 = "month_year", response = "general_supply_kwh"))
-
-wkndwday <- suppressMessages(data_pick %>% 
-                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
-
-distance <- wkndwday/2 + moy/12 + hod/24
-
-f = as.dist(distance)
-
-k = array()
-set.seed(123)
-for(i in 2:20)
-{
-  group <- f %>% hclust (method = "ward.D") %>% cutree(k=i)
-  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  k[i]=p$sindex
-}
-
-opt_clusters <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), 
-                       aes(x=k, y = value)) +
-  geom_line() + 
-  scale_x_continuous(breaks = seq(2, 20, 2), minor_breaks = 1) + 
-  theme(axis.text.x = element_text(angle=45, size = 8, hjust = 1)) +
-  theme_bw() +ylab("sindex") + xlab("number of clusters")
-
-
 ##---tsne-fit
 
 data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds") %>% 
@@ -1395,7 +1384,8 @@ tSNE_fit <- data_24cust_wide%>%
 
 tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
                       tsneY = tSNE_fit$Y[, 2], 
-                      customer_id = as.character(data_24cust_wide$customer_id)) %>% left_join(cluster_result_id, by = c("customer_id"))
+                      customer_id = as.character(data_24cust_wide$customer_id)) %>% 
+  left_join(cluster_result_id, by = c("customer_id"))
 
 tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
   geom_point(aes(text = customer_id), size =1) +
@@ -1409,19 +1399,23 @@ tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
 
 ##----opt-cluster-tsne-jsd
 
-tsne_xy + (opt_clusters/opt_clusters_wpd)  + plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')
+tsne_xy + (opt_clusters/opt_clusters_wpd)  + 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')
+
 
 ##----tsne-plot-supplementary
 
 
 tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
                       tsneY = tSNE_fit$Y[, 2], 
-                      customer_id = as.character(data_24cust_wide$customer_id)) %>% left_join(cluster_result, by = c("customer_id")) %>% 
+                      customer_id = as.character(data_24cust_wide$customer_id)) %>%
+  left_join(cluster_result_id, by = c("customer_id")) %>% 
   mutate(group = as.factor(group))
 
 tsne_xy_supplementary <- ggplot(tsne_df) +
   aes(tsneX, tsneY) +
   geom_point(size = 1) + 
+  ggrepel::geom_text_repel(aes(label = id), size = 4, seed = 2935, max.overlaps = 10)+
   theme_light()+ 
   coord_fixed(ratio=1)+
   stat_ellipse( aes(tsneX, tsneY, group = group ), level = 0.85)
@@ -1545,3 +1539,6 @@ opt_clusters_validation
 # 
 # S1_nclust/S2_nclust/S3_nclust + plot_annotation(tag_levels = '1', tag_prefix = 'S', tag_suffix = '')
 
+##----opt-clusters
+opt_clusters + opt_clusters_wpd + plot_annotation(tag_levels = "a")
+# ggsave("figs/opt_clusters.png")
