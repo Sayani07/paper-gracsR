@@ -381,7 +381,13 @@ Cluster characterization is an important element of cluster analysis. @Cook2007-
 
 # Validation {#sec:validation}
 
-To validate our clustering methods, we spiked many attributes in the data to create different data designs. <!--to see where one method works better than the other and where they might give us the same outcome --or the effect of missing data <!---and trends on the proposed methods.--> Three circular granularities $g1$, $g2$ and $g3$ are considered with categories denoted by $\{g10,g11\}$, $\{g20, g21, g22\}$ and $\{g30, g31, g32, g33, g34\}$ and levels $n_{g_1}=2$, $n_{g_2}=3$ and $n_{g_3}=5$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by $\{0, 1, 2, \dots, 6\}$ or $\{Mon, Tue, \dots, Sun\}$. Here categories of $g1$, $g2$ and $g3$ are represented by $\{0, 1\}$, $\{0, 1, 2\}$ and $\{0, 1, 2, 3, 4\}$ respectively. A continuous measured variable $v$ of length $T$ indexed by $\{0, 1, \dots T-1\}$ is simulated such that it follows the structure across $g1$, $g2$ and $g3$. We constructed independent replications of all data designs $R = \{25, 250, 500\}$ to investigate if our proposed clustering method can discover distinct designs in small, medium, and big number of series. All designs employ $T=\{300, 1000, 5000\}$ sample sizes to evaluate small, medium, and large-sized series. Variations in method performance may be due to different jumps between categories. So a mean difference of $\mu = \{1, 2, 5\}$ between categories is considered. The performance of the approaches varies with the number of granularities which has interesting patterns across its categories. So three scenarios are considered to accommodate that.
+To validate our clustering methods, we spiked many attributes in the data to create different data designs. <!--to see where one method works better than the other and where they might give us the same outcome --or the effect of missing data <!---and trends on the proposed methods.--> Three circular granularities $g1$, $g2$ and $g3$ are considered with categories denoted by $\{g10,g11\}$, $\{g20, g21, g22\}$ and $\{g30, g31, g32, g33, g34\}$ and levels $n_{g_1}=2$, $n_{g_2}=3$ and $n_{g_3}=5$. These categories could be integers or some more meaningful labels. For example, the granularity "day-of-week" could be either represented by $\{0, 1, 2, \dots, 6\}$ or $\{Mon, Tue, \dots, Sun\}$. Here categories of $g1$, $g2$ and $g3$ are represented by $\{0, 1\}$, $\{0, 1, 2\}$ and $\{0, 1, 2, 3, 4\}$ respectively. A continuous measured variable $v$ of length $T$ indexed by $\{0, 1, \dots T-1\}$ is simulated such that it follows the structure across $g1$, $g2$ and $g3$. We constructed independent replications of all data designs $R = \{25, 250, 500\}$ to investigate if our proposed clustering method can discover distinct designs in small, medium, and big number of series. All designs employ $T=\{300, 1000, 5000\}$ sample sizes to evaluate small, medium, and large-sized series. Variations in method performance may be due to different jumps between categories. So a mean difference of $\mu = \{1, 2, 5\}$ between categories is considered. The performance of the approaches varies with the number of granularities which has interesting patterns across its categories. So three scenarios are considered to accommodate that. Figure \ref{fig:range-parameter} shows the range of parameters considered for each scenario.
+
+
+```{r range-parameter, fig.cap="Range of parameters for different scenarios"}
+knitr::include_graphics("figs/simulation_table.png")
+```
+
 
 
 <!-- The results for $T=300$ and $R=25$ is shown, that means we have $25$ time series each with length $300$. The rest of the results could be found in the supplementary paper. -->
@@ -506,7 +512,7 @@ All of the approaches were fitted to each data design and for each combination o
 
 - In our study sample, the method js-nqt outperforms the method js-robust for smaller differences between categories. More testing, however, is required to corroborate this.
 
-For more detailed results, please refer to the supplementary paper. The code for creating these data designs and running the methodologies is available at (https://github.com/Sayani07/paper-gracsR/Validation).
+For more detailed results, please refer to the supplementary paper.
 
 
 ```{r cluster-number-selection-validation, fig.cap="sindex plotted as a function of the number of clusters for S1, S2, and S3. S1 has a sharp decrease in sindex from 5 to 6, whereas S2 and S3 have a decrease from 4 to 5. As a result, the number of clusters considered for S1, S2, and S3 is 5, 4, 4, respectively. This corresponds to the number of designs taken into account in each scenario."}
@@ -711,7 +717,7 @@ The authors thank the ARC Centre of Excellence for Mathematical and Statistical 
 
 **Data and scripts:** Data sets and R code to reproduce all figures in this article (main.R).
 
-**Supplementary paper:** Additional tables, graphics and and R code to reproduce it (paper-supplementary.pdf, paper-supplementary.Rmd)
+**Supplementary paper:** Additional tables, graphics and and R code to reproduce it (paper-supplementary.pdf, paper-supplementary.Rmd). The code for creating validation designs and running the methodologies is available at (https://github.com/Sayani07/paper-gracsR/Validation).
 
 **R-package:** To implement the ideas provided in this research, the open-source R package 'gracsr' is available on Github (https://github.com/Sayani07/gracsr).
 
