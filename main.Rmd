@@ -509,7 +509,7 @@ All of the approaches were fitted to each data design and for each combination o
 For more detailed results, please refer to the supplementary paper. The code for creating these data designs and running the methodologies is available at (https://github.com/Sayani07/paper-gracsR/Validation).
 
 
-```{r cluster-number-selection-validation, fig.cap="sindex plotted as a function of the number of clusters for S1, S2, and S3. S1 has a sharp decrease in sindex from 5 to 6, whereas S2 and S3 have a decrease from 4 to 5. As a result, the number of clusters considered for S1, S2, and S3 is 5, 4, 4, respectively. This corresponds to the number of designs taken into account in each scenario."}
+```{r cluster-number-selection-validation, fig.cap="Separation index plotted as a function of the number of clusters for S1, S2, and S3. S1 has a sharp decrease from 5 to 6, whereas S2 and S3 have a decrease from 4 to 5. As a result, the number of clusters considered for S1, S2, and S3 is 5, 4, 4, respectively. This corresponds to the number of designs taken into account in each scenario."}
 ```
 
 
