@@ -1306,6 +1306,9 @@ opt_clusters_wpd <- all_index %>% ggplot(aes(x = k, y = sindex))+
 
 # opt_clusters_wpd <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("sindex") + xlab("number of clusters")
 
+
+
+##----wpd-clustering
 group <- f%>% hclust (method = "ward.D") %>% cutree(k=4)
 
 
@@ -1316,16 +1319,19 @@ data_pcp <- scaled_var %>%
   left_join(cluster_result_wpd , by = c("customer_id" = "id")) %>% 
   select(customer_id, group, everything()) %>% 
   mutate(group = as.factor(group)) %>% 
-  mutate(customer_id = as.character(customer_id))
+  mutate(customer_id = as.character(customer_id)) %>% 
+  rename("moy" = "month_year",
+         "hod" = "hour_day",
+         "wnwd" = "wknd_wday")
 
 data_table <- data_pcp %>% group_by(group) %>% 
   summarise(nobs = n(),
-            moy = round(median(month_year),2),
-            hod = round(median(hour_day),2),
-            wnwd = round(median(wknd_wday),2)) %>% 
-  select(-group)
+            moy = round(median(moy),2),
+            hod = round(median(hod),2),
+            wnwd = round(median(wnwd),2)) %>% 
+  select(-group) 
 
-rownames(data_table) <- c("group-1", "group-2", "group-3")
+rownames(data_table) <- c("group-1", "group-2", "group-3", "group-4")
 
 ##----parcoord-application
 parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "customer_id") ,
@@ -1343,11 +1349,13 @@ parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "c
   theme(legend.position = "bottom") +
   xlab("") +
   ylab("wpd") + scale_fill_viridis_d(direction = 1) +
-  scale_color_viridis_d(direction = 1) + theme_light()
+  scale_color_viridis_d(direction = 1) + theme_light()  +labs(colour="group") +
+  theme(panel.border = element_blank())
 
+# 
+# (parcoord + geom_text(aes(label = id)) + gridExtra::tableGrob(data_table)) + plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
 
-
-(parcoord + geom_text(aes(label = id)) + gridExtra::tableGrob(data_table))+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
+parcoord + geom_text(aes(label = id)) + inset_element(gridExtra::tableGrob(data_table), left = 0.4, bottom = 0.6, right = 1, top = 1) & theme(legend.position = "bottom")
 
 ##----tsne-fit
 

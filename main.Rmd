@@ -633,6 +633,7 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
+
 ```{r tsne-fit}
 ```
 
@@ -696,6 +697,9 @@ knitr::include_graphics("figs/combined4and5.png")
 
 We chose the optimal number of clusters using (@Hennig2014-ah) as $3$. A parallel coordinate plot with the three significant cyclic granularities is used to characterise the groups here. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the groups followed by $hod$ and $wnwd$. There is only one customer who has significant $wpd$ across $wnwd$ and stands out from the rest of the customers. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has the most distinct pattern across moy. Group 1 is a mixed group that has strong patterns on at least one of the three variables. The findings vary from js-based clustering, yet it is a helpful grouping.
 
+```{r wpd-clustering}
+
+```
 
 
 ```{r parcoord-application, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with three wpd-based groupings. Plot (b) which shows median wpd values for each group. The plot shows that moy is the most important variable in identifying clusters, whereas wnwd is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high wpd across wnwd stand out in this display. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has most discernible pattern across moy. Group 1 is a mixed group with strong patterns on atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE, fig.height=6}
