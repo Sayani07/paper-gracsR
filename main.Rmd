@@ -677,8 +677,7 @@ include_graphics("figs/opt_clust_parenthesis.png")
 
 <!-- The widest within-cluster gap (widest_gap) is high till $k=5$ and then have a gradual decrease. Number of -->
 
-```{r opt-clusters, fig.cap=" Different cluster statistics plotted as a function of number of clusters for JS-based (a) and wpd-based (b) approaches. avg within is not too useful for revealing any sharp change in average distance between clusters with increasing number of clusters. For (a), sindex sees a sharp fall at $k = 4$ and then do not decrease until $k=16$ and the widest gap is high till $k=5$. For (b), sindex sees a fall at $k=3$ and then at $k=7$ and widest gap has a sharp fall at $k=6$."}
-
+```{r opt-clusters, fig.cap=" Different cluster statistics plotted as a function of number of clusters for JS-based (a) and wpd-based (b) approaches. avg within is not too useful for revealing any sharp change in average distance between clusters with increasing number of clusters. For (a), sindex sees a sharp fall at $k = 4$ and then do not decrease until $k=16$ and the widest gap is high till $k=5$. For (b), sindex sees a fall at $k=3$ and then at $k=7$ and widest gap has a sharp fall at $k=6$.", eval = FALSE}
 #knitr::include_graphics("figs/opt_clusters.png")
 ```
 
