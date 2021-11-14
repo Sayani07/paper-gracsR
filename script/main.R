@@ -913,21 +913,24 @@ f = as.dist(distance)
 
 ##----opt-clusters-jsd
 
-all_index <- map_dfr(2:23, function(x){
+all_index <- map_dfr(2:10, function(x){
   group <- f %>% hclust (method = "ward.D") %>% cutree(k=x)
   p <- cluster.stats(f, clustering = group, silhouette = TRUE, wgap = TRUE)
   index <- c(k = x,
-             sindex = p$sindex,  
-             avg_within =  p$average.within,
-             widest_gap = p$widestgap)
+             sindex = p$sindex)  
+             #avg_within =  p$average.within,
+             #widest_gap = p$widestgap)
 }) 
 
   # , gamma = p$pearsongamma, widegap = p$widestgap, dunn = p$dunn), gamma =  p$pearsongamma,avg_silwidth = p$avg.silwidth,
-data_index <- all_index %>% pivot_longer(2:4, names_to = "index_type", values_to = "index_value")
+# data_index <- all_index %>% pivot_longer(2:4, names_to = "index_type", values_to = "index_value")
+#   
   
-  
-opt_clusters <- data_index %>% ggplot(aes(x = k, y = index_value, group = index_type))+
-  geom_line() + scale_x_continuous(breaks = seq(2, 23, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y") +  theme(axis.text.x = element_text(angle=90, hjust=1, size = 8))
+# opt_clusters <- data_index %>% ggplot(aes(x = k, y = index_value, group = index_type))+
+#   geom_line() + scale_x_continuous(breaks = seq(2, 23, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y") +  theme(axis.text.x = element_text(angle=90, hjust=1, size = 8))
+
+opt_clusters <- all_index %>% ggplot(aes(x = k, y = sindex))+
+  geom_line() + scale_x_continuous(breaks = seq(2, 10, 1), minor_breaks = 1) + theme_bw() + ylab("sindex") + xlab("number of clusters")  +  theme(axis.text.x = element_text(angle=90, hjust=1, size = 8))
 
 ##----groups-24
 cluster_result <- suppressMessages(f %>% 
@@ -1263,6 +1266,7 @@ combined_groups_js5 <- (hod_group + moy_group + wkndwday_group) +
   plot_layout(guides = "collect")& theme(legend.position = 'none')
 
 ### wpd clustering starts
+
 ##----data-pick-wpd
 elec_600_wpd <- read_rds(here::here("data/algo2-cust600-wpd-rawdata.rds"))
 
@@ -1285,23 +1289,24 @@ f <- elec_pick_wide[-1] %>% dist()
 # }
 
 
-all_index <- map_dfr(2:23, function(x){
+all_index <- map_dfr(2:10, function(x){
   group <- f %>% hclust (method = "ward.D") %>% cutree(k=x)
   p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  index <- c(k = x, sindex = p$sindex, avg_within =  p$average.within, widest_gap = p$widestgap)
+  index <- c(k = x, sindex = p$sindex)
+  #, avg_within =  p$average.within, widest_gap = p$widestgap)
 }) 
 
 # , gamma = p$pearsongamma, widegap = p$widestgap, dunn = p$dunn), gamma =  p$pearsongamma, avg_silwidth = p$avg.silwidth,
-data_index <- all_index %>% pivot_longer(2:4, names_to = "index_type", values_to = "index_value")
+# data_index <- all_index %>% pivot_longer(2:4, names_to = "index_type", values_to = "index_value")
 
 
-opt_clusters_wpd <- data_index %>% ggplot(aes(x = k, y = index_value, group = index_type))+
-  geom_line() + scale_x_continuous(breaks = seq(2, 23, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y") + theme(axis.text.x = element_text(angle=90, hjust=1, size = 8))
+opt_clusters_wpd <- all_index %>% ggplot(aes(x = k, y = sindex))+
+  geom_line() + scale_x_continuous(breaks = seq(2, 10, 1), minor_breaks = 1) + theme_bw() + ylab("sindex") + xlab("number of clusters")  + theme(axis.text.x = element_text(angle=90, hjust=1, size = 8))
 
 
 # opt_clusters_wpd <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("sindex") + xlab("number of clusters")
 
-group <- f%>% hclust (method = "ward.D") %>% cutree(k=3)
+group <- f%>% hclust (method = "ward.D") %>% cutree(k=4)
 
 
 cluster_result_wpd <- bind_cols(id = elec_pick_wide$customer_id, group = group) 
@@ -1344,7 +1349,7 @@ parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "c
 
 (parcoord + geom_text(aes(label = id)) + gridExtra::tableGrob(data_table))+ plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & theme(legend.position = "bottom")
 
-##---tsne-fit
+##----tsne-fit
 
 data_356cust_hod <- read_rds("data/quantile_data_356cust_hod_robust.rds") %>% 
   filter(quantiles %in% "50%")
@@ -1383,16 +1388,18 @@ tSNE_fit <- data_24cust_wide%>%
   Rtsne(pca = FALSE, perplexity = 2)
 
 
-##---tsne-plot
+##----tsne-df
 
 tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1], 
                       tsneY = tSNE_fit$Y[, 2], 
                       customer_id = as.character(data_24cust_wide$customer_id)) %>% 
   left_join(cluster_result_id, by = c("customer_id"))
 
+
+##----tsne-xy
 tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
-  geom_point(aes(text = customer_id), size =1) +
-  ggrepel::geom_text_repel(aes(label = id), size = 4, seed = 2935, max.overlaps = 10)+
+  geom_point(size =1) +
+  ggrepel::geom_text_repel(aes(label = id), size = 3, seed = 2935, max.overlaps = 10)+
   #scale_color_manual(values = limn_pal_tableau10()) +
   scale_colour_viridis_d(direction = -1) +
   #guides(color = FALSE) +
@@ -1403,7 +1410,7 @@ tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
 ##----opt-cluster-tsne-jsd
 
 tsne_xy + (opt_clusters/opt_clusters_wpd)  + 
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')
+  plot_annotation(tag_levels = list(c('', 'JS', 'wpd')))
 
 
 ##----tsne-plot-supplementary

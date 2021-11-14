@@ -592,15 +592,6 @@ Supervised learning uses a training set of known information to categorize new e
 ```{r data-pick}
 ```
 
-```{r tsne-fit}
-
-```
-
-
-```{r tsne-plot}
-```
-
-
 
 <!-- - can be done in several ways -->
 
@@ -642,9 +633,21 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
+```{r tsne-fit}
+```
 
-```{r opt-cluster-tsne-jsd-png, fig.cap = "(a) shows t-SNE summary of the $24$ selected customers chosen through prototype selection, (b) and (c) shows a plot of sindex for different cluster size for clustering based on JS-based distances and wpd-distances respectively. The plot suggests optimal number of clusters as $4$ and $7$ respectively."}
-include_graphics("figs/opt_clust_parenthesis.png")
+
+```{r tsne-df}
+```
+
+
+```{r tsne-xy}
+
+```
+
+
+```{r opt-cluster-tsne-jsd, fig.cap = "(a) shows t-SNE summary of the $24$ selected customers chosen through prototype selection, (b) and (c) shows a plot of sindex for different cluster size for clustering based on JS-based distances and wpd-distances respectively. The plot suggests optimal number of clusters as $4$ and $7$ respectively."}
+#include_graphics("figs/opt_clust_parenthesis.png")
 ```
 
 
