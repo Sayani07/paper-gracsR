@@ -913,18 +913,21 @@ f = as.dist(distance)
 
 ##----opt-clusters-jsd
 
-all_index <- map_dfr(2:20, function(x){
+all_index <- map_dfr(2:23, function(x){
   group <- f %>% hclust (method = "ward.D") %>% cutree(k=x)
-  p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  index <- c(k = x, sindex = p$sindex, avg_silwidth = p$avg.silwidth, gamma =  p$pearsongamma, widegap = p$widestgap)
+  p <- cluster.stats(f, clustering = group, silhouette = TRUE, wgap = TRUE)
+  index <- c(k = x,
+             sindex = p$sindex,  
+             avg_within =  p$average.within,
+             widest_gap = p$widestgap)
 }) 
 
-  # , gamma = p$pearsongamma, widegap = p$widestgap, dunn = p$dunn), gamma =  p$pearsongamma,
-data_index <- all_index %>% pivot_longer(2:5, names_to = "index_type", values_to = "index_value")
+  # , gamma = p$pearsongamma, widegap = p$widestgap, dunn = p$dunn), gamma =  p$pearsongamma,avg_silwidth = p$avg.silwidth,
+data_index <- all_index %>% pivot_longer(2:4, names_to = "index_type", values_to = "index_value")
   
   
 opt_clusters <- data_index %>% ggplot(aes(x = k, y = index_value, group = index_type))+
-  geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y")
+  geom_line() + scale_x_continuous(breaks = seq(2, 23, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y") +  theme(axis.text.x = element_text(angle=90, hjust=1, size = 8))
 
 ##----groups-24
 cluster_result <- suppressMessages(f %>% 
@@ -1282,18 +1285,18 @@ f <- elec_pick_wide[-1] %>% dist()
 # }
 
 
-all_index <- map_dfr(2:20, function(x){
+all_index <- map_dfr(2:23, function(x){
   group <- f %>% hclust (method = "ward.D") %>% cutree(k=x)
   p <- cluster.stats(f, clustering = group, silhouette = TRUE)
-  index <- c(k = x, sindex = p$sindex, avg_silwidth = p$avg.silwidth, gamma =  p$pearsongamma, widegap = p$widestgap)
+  index <- c(k = x, sindex = p$sindex, avg_within =  p$average.within, widest_gap = p$widestgap)
 }) 
 
-# , gamma = p$pearsongamma, widegap = p$widestgap, dunn = p$dunn), gamma =  p$pearsongamma,
-data_index <- all_index %>% pivot_longer(2:5, names_to = "index_type", values_to = "index_value")
+# , gamma = p$pearsongamma, widegap = p$widestgap, dunn = p$dunn), gamma =  p$pearsongamma, avg_silwidth = p$avg.silwidth,
+data_index <- all_index %>% pivot_longer(2:4, names_to = "index_type", values_to = "index_value")
 
 
 opt_clusters_wpd <- data_index %>% ggplot(aes(x = k, y = index_value, group = index_type))+
-  geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y")
+  geom_line() + scale_x_continuous(breaks = seq(2, 23, 1), minor_breaks = 1) + theme_bw() + ylab("index") + xlab("number of clusters") + facet_wrap(~index_type, ncol = 1, scales = "free_y") + theme(axis.text.x = element_text(angle=90, hjust=1, size = 8))
 
 
 # opt_clusters_wpd <- ggplot(k %>% as_tibble %>% mutate(k = row_number()), aes(x=k, y = value)) + geom_line() + scale_x_continuous(breaks = seq(2, 20, 1), minor_breaks = 1) + theme_bw() + ylab("sindex") + xlab("number of clusters")

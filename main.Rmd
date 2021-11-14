@@ -669,8 +669,11 @@ include_graphics("figs/opt_clust_parenthesis.png")
 ```
 
 
-```{r opt-clusters}
-knitr::include_graphics("figs/opt_clusters.png")
+<!-- The widest within-cluster gap (widest_gap) is high till $k=5$ and then have a gradual decrease. Number of -->
+
+```{r opt-clusters, fig.cap=" Different cluster statistics plotted as a function of number of clusters for JS-based (a) and wpd-based (b) approaches. avg within is not too useful for revealing any sharp change in average distance between clusters with increasing number of clusters. For (a), sindex sees a sharp fall at $k = 4$ and then do not decrease until $k=16$ and the widest gap is high till $k=5$. For (b), sindex sees a fall at $k=3$ and then at $k=7$ and widest gap has a sharp fall at $k=6$."}
+
+#knitr::include_graphics("figs/opt_clusters.png")
 ```
 
 <!-- GroupA and Group B may represent different set of customers as they are groupings based on different number of clusters. -->
@@ -687,8 +690,8 @@ We chose the optimal number of clusters using (@Hennig2014-ah) as $3$. A paralle
 
 
 
-```{r parcoord, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with three wpd-based groupings. Plot (b) which shows median wpd values for each group. The plot shows that moy is the most important variable in identifying clusters, whereas wnwd is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high wpd across wnwd stand out in this display. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has most discernible pattern across moy. Group 1 is a mixed group with strong patterns on atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE}
-include_graphics("figs/parcoord-application.png")
+```{r parcoord-application, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with three wpd-based groupings. Plot (b) which shows median wpd values for each group. The plot shows that moy is the most important variable in identifying clusters, whereas wnwd is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high wpd across wnwd stand out in this display. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has most discernible pattern across moy. Group 1 is a mixed group with strong patterns on atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE, fig.height=6}
+#include_graphics("figs/parcoord-application.png")
 ```
 
 Things become far more complicated when we consider a larger data set with more uncertainty, as they do with any clustering problem. Summarizing distributions across clusters with varied or outlying customers can result in a shape that does not represent the group. Furthermore, combining heterogeneous customers may result in similar-looking final clusters that are not effective for visually differentiating them. It is also worth noting that the Weekend/Weekday behavior in the given case does not characterize any cluster. This, however, will not be true for all of the customers in the data set. If more extensive prototype selection is used, resulting in more comprehensive prototypes in the data set, this method might be used to classify the entire data set into these prototype behaviors. However, the goal of this section was to have a few customers that have significant patterns over one or more cyclic granularities, apply our methodology to cluster them, and demonstrate that the method produces useful clusters.
