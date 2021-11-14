@@ -7,9 +7,9 @@ The paper proposes a methodology to cluster time series based on probability dis
 
 _This repository contains paper, supplementary paper, scripts and results for project `gracsr` -GRAnularity CluStering in R_
 
-- _Paper_: main.pdf
+- _Paper_: [main.pdf](https://github.com/Sayani07/paper-gracsR/blob/master/main.pdf)
 - _Scripts (Paper)_: scripts/main.R
-- _Supplementary_: paper-supplementary.pdf
+- _Supplementary_: [paper-supplementary.pdf](https://github.com/Sayani07/paper-gracsR/blob/master/paper-supplementary.pdf)
 - _Validation_: validation/
 
 
