@@ -499,13 +499,13 @@ The proposed methods could be extended when two granularities of interest intera
 
 ## Visual exploration of results
 
-All of the approaches were fitted to each data design and to each combination of the considered parameters. The formed clusters have to match the design, be well separated, and have minimal intra-cluster variation. It is possible to study these desired clustering traits visually in a more comprehensive way than just looking at index values. MDS and parallel coordinate graphs are used to demonstrate the findings, along with an index value plot for guidance on the number of clusters. JS-based approaches corresponding to NQT and RS are referred to as JS-NQT and JS-RS respectively. In the following plots, results for JS-NQT are reported. For similar results with JS-RS or wpd-based distances, please refer to the supplementary paper.
+All of the approaches were fitted to each data design and to each combination of the considered parameters. The formed clusters have to match the design, be well separated, and have minimal intra-cluster variation. It is possible to study these desired clustering traits visually in a more comprehensive way than just looking at index values. MDS and parallel coordinate graphs are used to demonstrate the findings, as well as an index value plot to provide direction on the number of clusters. JS-based approaches corresponding to NQT and RS are referred to as JS-NQT and JS-RS respectively. In the following plots, results for JS-NQT are reported. For similar results with JS-RS or wpd-based distances, please refer to the supplementary paper.
 
-- Figure \ref{fig:sindex-plot-validation} shows sindex plotted against the number of clusters ($k$) for the range of mean differences (rows) under the different scenarios (columns). This can be used to determine the number of clusters for each scenario. When sindex for each scenario are examined, it appears that $k = 5, 4, 4$ is justified for scenarios S1, S2, and S3, respectively, given the sharp decrease in sindex from that value of $k$. The number of clusters corresponds to the number of designs that were originally considered in each scenario.
+- Figure \ref{fig:sindex-plot-validation} shows $sindex$ plotted against the number of clusters ($k$) for the range of mean differences (rows) under the different scenarios (columns). This can be used to determine the number of clusters for each scenario. When $sindex$ for each scenario are examined, it appears that $k = 5, 4, 4$ is justified for scenarios S1, S2, and S3, respectively, given the sharp decrease in $sindex$ from that value of $k$. Thus, tshe number of clusters corresponds to the number of designs that were originally considered in each scenario.
 
-- In Figure \ref{fig:mds-plot-validation}, we tried to see how separated our clusters are. We observe that in all scenarios and for different mean differences, clusters are separated. However, the separation increases with an increase in mean differences across scenarios. This is intuitive because, as the difference between categories increases, it gets easier for the methods to correctly distinguish the designs.
+- Figure \ref{fig:mds-plot-validation} shows separation of our clusters. It can be observed that in all scenarios and for different mean differences, clusters are separated. However, the separation increases with an increase in mean differences across scenarios. This is intuitive because, as the difference between categories increases, it gets easier for the methods to correctly distinguish the designs.
 
-- Figure \ref{fig:parcoord-sim} depicts a parallel coordinate plot with the vertical bar showing total inter-cluster distances with regard to granularities $g1$, $g2$, and $g3$ for all simulation settings and scenarios. So one line in the figure shows the inter-cluster distances for one simulation setting and scenarios vary across facets. The lines are not colored by group since the purpose is to highlight the contribution of the factors to categorization rather than class separation. The first plot shows that no variable stands out in the clustering, but the following two designs show that {g1} and {g1, g2} have very low inter-cluster distances, meaning that they did not contribute to the clustering. It is worth noting that these facts correspond to our original assumptions when developing the scenarios, which incorporate distributional differences over three (S1), two (S2), and one (S3) significant granularities. Hence, Figure \ref{fig:parcoord-sim} (S1), (S2), and (S3) validate the construction of scenarios (S1), (S2), and (S3) respectively.
+- Figure \ref{fig:parcoord-sim} depicts a parallel coordinate plot with the vertical bar showing total inter-cluster distances with regard to granularities $g1$, $g2$, and $g3$ for all simulation settings and scenarios. So one line in the figure shows the inter-cluster distances for one simulation setting and scenarios vary across facets. The lines are not colored by group since the purpose is to highlight the contribution of the factors to categorization rather than class separation. Panel S1 shows that no variable stands out in the clustering, but the following two panels show that {g1} and {g1, g2} have very low inter-cluster distances, meaning that they did not contribute to the clustering. It is worth noting that these facts correspond to our original assumptions when developing the scenarios, which incorporate distributional differences over three (S1), two (S2), and one (S3) significant granularities. Hence, Figure \ref{fig:parcoord-sim} (S1), (S2), and (S3) validate the construction of scenarios (S1), (S2), and (S3) respectively.
 
  - The JS-RS and wpd-based methods perform worse for $nT=300$, then improve for higher $nT$ evaluated in the study. However, a complete year of data is the minimum requirement to capture distributional differences in winter and summer profiles, for example. Even if the data is only available for a month, $nT$ with half-hourly data is expected to be at least $1000$. As a result, as long as the performance is promising for higher $nT$, this is not a challenge.
 
@@ -521,12 +521,6 @@ All of the approaches were fitted to each data design and to each combination of
 ```
 
 
-
-```{r parcoord-sim, fig.cap = "The parallel coordinate plot illustrates the total inter-cluster distances for granularities $g1$, $g2$, and $g3$. One line in the figure depicts the inter-cluster distances for a single simulation scenario. While the first plot indicates that no variable stands out during clustering, the next two designs demonstrate that g1 and (g1, g2) have relatively lower inter-cluster distances, indicating that they did not contribute to clustering. It is worth emphasising that these facts are consistent with our initial assumptions when designing the scenarios and S1, S2, S3 correspond to scenarios with three, two and one significant granularity respectively."}
-
-```
-
-
 ```{r mds-data-validation}
 
 ```
@@ -535,6 +529,13 @@ All of the approaches were fitted to each data design and to each combination of
 ```{r mds-plot-validation, fig.cap = "MDS summary plots to illustrate the cluster sparation for the range of mean differences (rows) under the different scenarios (columns). It can be observed that clusters become more compact and separated for higher mean differences between categories across all scenarios. Between scenarios, separation is least prominent corresponding to Scenario (S3) where only one granularity is responsible for distinguishing the clusters."}
 
 ```
+
+
+```{r parcoord-sim, fig.cap = "The parallel coordinate figure depicts total inter-cluster distances for the granularities $g1$, $g2$, and $g3$. The inter-cluster distances for a single simulation scenario are represented by one line in the figure. While panel S1 shows that no variable stands out during clustering, panels S2 and S3 show that g1 and (g1, g2) had smaller inter-cluster distances, indicating that they did not contribute to clustering. These facts are consistent with our initial assumptions when building the scenarios, and S1, S2, S3 correspond to scenarios with three, two, and one significant granularity, respectively."}
+
+```
+
+
 
 
 
