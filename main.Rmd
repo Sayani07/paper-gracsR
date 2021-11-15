@@ -709,17 +709,16 @@ knitr::include_graphics("figs/combined4and5.png")
 ```
 
 
-
 ### wpd-based distances
 
-We chose the optimal number of clusters using (@Hennig2014-ah) as $3$. A parallel coordinate plot with the three significant cyclic granularities is used to characterise the groups here. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the groups followed by $hod$ and $wnwd$. There is only one customer who has significant $wpd$ across $wnwd$ and stands out from the rest of the customers. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has the most distinct pattern across moy. Group 1 is a mixed group that has strong patterns on at least one of the three variables. The findings vary from JS-based clustering, yet it is a helpful grouping.
+The $sindex$ is plotted against the number of clusters for clustering based on wpd-based distances in \ref{fig:opt-cluster-tsne-jsd}. The scales are very different from JS-based clustering and also there is more gradual decrease in the separation index. The $sindex$ falls from around $20$ when $k=3$ to $19$ when $k=4$ and further decreases to $17.5$ with $k>7$. Thus, there are few choices available for number of clusters. The groupings with $k=4$ is shown through a parallel coordinate plot with the three significant cyclic granularities. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the groups followed by $hod$ and $wnwd$. The two customers (id: 16 and 18) which has significant differences between $wnwd$ catgeories (in Figure \ref{fig:hod-ind-group-png}) stand out from the rest of the customers. Group-4 has a higher $wpd$ for `hod` than `moy` or `wkndwday`. Group-2 and Group-3 have the most distinct pattern across `moy`. Group-1 is a mixed group that has strong patterns on at least one of the three variables. When $k=3$ is used, Group-2 and Group-3 are merged together because their patterns relative to `moy`, '`hod` and `wnwd` are same. The findings vary from JS-based clustering, yet it is a helpful grouping.
 
 ```{r wpd-clustering}
 
 ```
 
 
-```{r parcoord-application, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with three wpd-based groupings. Plot (b) which shows median wpd values for each group. The plot shows that moy is the most important variable in identifying clusters, whereas wnwd is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high wpd across wnwd stand out in this display. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has most discernible pattern across moy. Group 1 is a mixed group with strong patterns on atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE, fig.height=6}
+```{r parcoord-application, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with four wpd-based groupings. Plot (b) which shows median $wpd$ values for each group. The plot shows that `moy` is the most important variable in identifying clusters, whereas `wnwd` is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high $wpd$ across wnwd stand out in this display. Group-4 has a higher $wpd$ for `hod` than `moy` or `wnwd`. Group-2 and Group-3 has most discernible pattern across `moy`. Group-1 is a mixed group with strong patterns across atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE, fig.height=6}
 #include_graphics("figs/parcoord-application.png")
 ```
 
