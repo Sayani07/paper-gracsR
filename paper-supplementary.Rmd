@@ -43,9 +43,11 @@ knitr::opts_knit$set(root.dir = here::here())
 
 
 ```{r external, include = FALSE, cache = FALSE}
-knitr::read_chunk('script/main.R')
+knitr::read_chunk('script/mylibrary.R')
+knitr::read_chunk('script/mytheme.R')
+knitr::read_chunk('script/validation.R')
 read_chunk(here::here("validation/simdata01.R"))
-knitr::read_chunk('script/gracsr-supplementary.R')
+knitr::read_chunk('script/supplementary.R')
 ```
 
 
