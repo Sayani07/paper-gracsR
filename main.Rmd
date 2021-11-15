@@ -499,21 +499,25 @@ The proposed methods could be extended when two granularities of interest intera
 
 ## Visual exploration of results
 
-All of the approaches were fitted to each data design and for each combination of the considered parameters. The formed clusters have to match the design, be well separated, and have minimal intra-cluster variation. It is possible to study these desired clustering traits visually in a more comprehensive way than just looking at index values. So we use MDS and parallel coordinate graphs to demonstrate the findings:
+All of the approaches were fitted to each data design and to each combination of the considered parameters. The formed clusters have to match the design, be well separated, and have minimal intra-cluster variation. It is possible to study these desired clustering traits visually in a more comprehensive way than just looking at index values. MDS and parallel coordinate graphs are used to demonstrate the findings, along with an index value plot for guidance on the number of clusters. JS-based approaches corresponding to NQT and RS are referred to as JS-NQT and JS-RS respectively. In the following plots, results for JS-NQT are reported. For similar results with JS-RS or wpd-based distances, please refer to the supplementary paper.
 
-- Figure \ref{fig:cluster-number-selection-validation} shows sindex plotted against the number of clusters ($k$). This can be used to determine the number of clusters for each scenario. Each line in the plots represents a different simulation setting for the same scenario. When sindex for each scenario are examined, it appears that $k = 5, 4, 4$ is justified for scenarios S1, S2, and S3, respectively, given the sharp decrease in sindex from that value of $k$. The number of clusters corresponds to the number of designs that were originally considered in each scenario.
-
+- Figure \ref{fig:sindex-plot-validation} shows sindex plotted against the number of clusters ($k$) for the range of mean differences (rows) under the different scenarios (columns). This can be used to determine the number of clusters for each scenario. When sindex for each scenario are examined, it appears that $k = 5, 4, 4$ is justified for scenarios S1, S2, and S3, respectively, given the sharp decrease in sindex from that value of $k$. The number of clusters corresponds to the number of designs that were originally considered in each scenario.
 
 - In Figure \ref{fig:mds-plot-validation}, we tried to see how separated our clusters are. We observe that in all scenarios and for different mean differences, clusters are separated. However, the separation increases with an increase in mean differences across scenarios. This is intuitive because, as the difference between categories increases, it gets easier for the methods to correctly distinguish the designs.
 
 - Figure \ref{fig:parcoord-sim} depicts a parallel coordinate plot with the vertical bar showing total inter-cluster distances with regard to granularities $g1$, $g2$, and $g3$ for all simulation settings and scenarios. So one line in the figure shows the inter-cluster distances for one simulation setting and scenarios vary across facets. The lines are not colored by group since the purpose is to highlight the contribution of the factors to categorization rather than class separation. The first plot shows that no variable stands out in the clustering, but the following two designs show that {g1} and {g1, g2} have very low inter cluster distances, meaning that they did not contribute to the clustering. It is worth noting that these facts correspond to our original assumptions when developing the scenarios, which incorporate distributional differences over three (S1), two (S2), and one (S3) significant granularities. Hence, Figure \ref{fig:parcoord-sim} (S1), (S2), and (S3) validate the construction of scenarios (S1), (S2), and (S3) respectively.
 
- - The js-robust and wpd methods perform worse for $nT=300$, then improve for higher $nT$ evaluated in the study. Although, a complete year of data is the minimum requirement to capture distributional differences in winter and summer profiles, for example. Even if the data is only available for a month, $nT$ with half-hourly data is expected to be at least $1000$. As a result, as long as the performance is promising for higher $nT=300$, this is not a challenge.
+ - The JS-RS and wpd-based methods perform worse for $nT=300$, then improve for higher $nT$ evaluated in the study. Although, a complete year of data is the minimum requirement to capture distributional differences in winter and summer profiles, for example. Even if the data is only available for a month, $nT$ with half-hourly data is expected to be at least $1000$. As a result, as long as the performance is promising for higher $nT$, this is not a challenge.
 
-- In our study sample, the method js-nqt outperforms the method js-robust for smaller differences between categories. More testing, however, is required to corroborate this.
+- In our study sample, the method JS-NQT outperforms the method JS-RS for smaller differences between categories. More testing, however, is required to corroborate this.
 
-For more detailed results, please refer to the supplementary paper.
 
+```{r sindex-data-validation}
+
+```
+
+
+```{r sindex-plot-validation, fig.cap = "The cluster separation index (sindex) is plotted as a function of the number of clusters for the range of mean differences (rows) under the different scenarios (columns). S1 has a sharp decrease in sindex from 5 to 6, whereas S2 and S3 have a decrease from 4 to 5. As a result, the number of clusters considered for S1, S2, and S3 is 5, 4, 4, respectively. This corresponds to the number of designs taken into account in each scenario."}
 
 ```{r cluster-number-selection-validation, fig.cap="Separation index plotted as a function of the number of clusters for S1, S2, and S3. S1 has a sharp decrease from 5 to 6, whereas S2 and S3 have a decrease from 4 to 5. As a result, the number of clusters considered for S1, S2, and S3 is 5, 4, 4, respectively. This corresponds to the number of designs taken into account in each scenario."}
 ```
@@ -525,9 +529,15 @@ For more detailed results, please refer to the supplementary paper.
 ```
 
 
+```{r mds-data-validation}
+
+```
+
+
 ```{r mds-plot-validation, fig.cap = "MDS summary plots to illustrate the cluster sparation for the range of mean differences (rows) under the different scenarios (columns). It can be observed that clusters become more compact and separated for higher mean differences between categories across all scenarios. Between scenarios, separation is least prominent corresponding to Scenario (S3) where only one granularity is responsible for distinguishing the clusters."}
 
 ```
+
 
 
 
@@ -603,12 +613,15 @@ Supervised learning uses a training set of known information to categorize new e
 
 ## Clustering {#sec:clustering}
 
-The $24$ prototypes <!--and the data subset consisting of $353$ customers--> are clustered using the methodology described in Section \ref{sec:methodology} and results are reported below. In the following plots, the median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$ percentiles.<!--All customers with the same color represent the same clustered groups. --> Groups by JS-based distances and wpd-based distances are colored differently as they represent different groupings. The plotting scales are not displayed since we want to emphasize comparable patterns rather than scales. The idea is that a customer in a cluster may have low total energy usage, but their behavior may be quite similar to a customer with high usage with respect to distributional pattern or significance across cyclic granularities.
+The $24$ prototypes <!--and the data subset consisting of $353$ customers--> are clustered using the methodology described in Section \ref{sec:methodology} and results are reported below. In the following plots, the median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$ percentiles.<!--All customers with the same color represent the same clustered groups. --> Groups by JS-based distances and wpd-based distances are colored differently as they represent different groupings.
+While plotting the clusters, RS-based scaling is applied to each customer, so that no customer dominate the shape of the summarized clusters because of magnitude. The plotting scales are not displayed since we want to emphasize comparable patterns rather than scales. The idea is that a customer in a cluster may have low total energy usage, but their behavior may be quite similar to a customer with high usage with respect to distributional pattern or significance across cyclic granularities.
 
 ### JS-based distances
 
-For clustering based on JS-based distances, we chose the optimal number of clusters using (@Hennig2014-ah) as $5$. The groupings are shown in Figure \ref{fig:hod-ind-group-png}. <!--Customers with the same color represent the same clustered groups.--> Our methodology is useful for grouping similar distributions over `hod` and `moy` and they are placed closely for easy comparison. Few groups have mixed patterns across `hod` and `moy`, but few have all customers in the group having a similar profile. Figure \ref{fig:combined-groups-js} shows the summarized distributions across $5$ groups and assists us in characterizing each cluster. It shows Groups $2$ and $4$ have `hod` pattern with a typical morning and evening peak, whereas groups $1$, $3$, and $5$ show a `moy` pattern with higher usage in winter months. Differences in Weekend/Weekday between groups are not discernible, implying that it may not be a relevant variable in distinguishing various clusters unless maybe conditioned by `moy` or `hod`. It may be interesting to compare these two plots to verify if the summarized distributions across groups correctly characterised the groupings. If it has, then the majority of the group's members should share a similar profile.
+The $sindex$ is plotted against the number of clusters for clustering based on JS-based (JS-NQT) distances in \ref{fig:opt-cluster-tsne-jsd}. The $sindex$ falls from around $0.56$ when $k=3$ to $0.54$ when $k$ increases. In our study, we use $k=4, 5$. Figure \ref{fig:groups-4and5} depicts the summarised distributions across $4$ and  $5$ clusters in (a) and (b) respectively, and assists in characterizing each cluster. A-2, A-3, and A-4 have profiles that correspond to groups B-2, B-3, and B-5, respectively. B-2 (id: 4-9 in Figure \ref{fig:hod-ind-group-png}) and B-5 (id: 21-24) have a 'hod' pattern with a typical morning and evening peak, whereas the other groups have no distinct pattern or high variability throughout the day. A-1 is subdivided into B-1 and B-4, each of which has a distinct shape across 'moy' and 'wnwd'. B-4 (id: 16-20) is distinguished by higher energy consumption in the first few months of the year and greater variability in weekend usage. B-1 (id: 1-3) has higher consumption in the middle of the year (winter months) and a similar weekday-weekend inter-quartile range. When $k = 4$ is used, these two groups merge to form A-1, which has a moy profile of higher usage in both the beginning and middle of the year, which is not representative of the individuals. It may be worthwhile to compare Figures \ref{fig:opt-cluster-tsne-jsd} and \ref{fig:hod-ind-group-png} to see if the summarized distributions across groups accurately characterized the groupings. If it has, then the majority of the members of the group should have a similar profile.
 
+
+<!-- Our methodology is useful for grouping similar distributions over `hod` and `moy` and they are placed closely for easy comparison. Few groups have mixed patterns across `hod` and `moy`, but few have all customers in the group having a similar profile.  -->
 
 <!--  It appears that the aim of grouping comparable distributions across categories of multiple temporal dependencies has been accomplished to some extent. -->
 
@@ -647,6 +660,8 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
+
+
 ```{r opt-cluster-tsne-jsd, fig.cap = "(a) shows t-SNE summary of the $24$ selected customers chosen through prototype selection, (b) and (c) shows a plot of sindex for different cluster size for clustering based on JS-based distances and wpd-distances respectively. The plot suggests optimal number of clusters as $4$ and $7$ respectively."}
 #include_graphics("figs/opt_clust_parenthesis.png")
 ```
@@ -679,6 +694,7 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 ```
 
 
+
 <!-- The widest within-cluster gap (widest_gap) is high till $k=5$ and then have a gradual decrease. Number of -->
 
 ```{r opt-clusters, fig.cap=" Different cluster statistics plotted as a function of number of clusters for JS-based (a) and wpd-based (b) approaches. avg within is not too useful for revealing any sharp change in average distance between clusters with increasing number of clusters. For (a), sindex sees a sharp fall at $k = 4$ and then do not decrease until $k=16$ and the widest gap is high till $k=5$. For (b), sindex sees a fall at $k=3$ and then at $k=7$ and widest gap has a sharp fall at $k=6$.", eval = FALSE}
@@ -687,22 +703,26 @@ For clustering based on JS-based distances, we chose the optimal number of clust
 
 <!-- GroupA and Group B may represent different set of customers as they are groupings based on different number of clusters. -->
 
-```{r combined4and5, fig.cap = "For $k = 4$ (a) and $k=5$ (b), the distribution of electricity demand across groups over hod, moy, and wnwd is shown. groupA-2, groupA-3, and groupA-4 profiles correspond to groupB-2, groupB-3, and groupB-5, respectively. groupA-1 is split into groupB-1 and groupB-4, each of which has a distinct shape across moy and wnwd. groupB-4 (id: 16-20) is characterized by higher energy consumption in the first few months of the year and more variation in weekend usage. groupB-1 (id:1-3) is distinguished by higher consumption in the middle of the year (winter months) and similar weekday-weekend inter-quartile range. When $k = 4$ is used, these two groups merge to form groupA-1, which has a moy profile of higher usage in both the beginning and middle of the year, which is not representative of the individuals in the group."}
-knitr::include_graphics("figs/combined4and5.png")
+```{r combined4and5, fig.cap = "For $k = 4$ (a) and $k=5$ (b), the distribution of electricity demand across groups over hod, moy, and wnwd is shown. Groups A-2, A-3, and A-4 profiles correspond to Groups B-2, B-3, and B-5, respectively. A-1 is split into B-1 and B-4, each of which has a distinct shape across moy and wnwd. B-4 (id: 16-20) is characterized by higher energy consumption in the first few months of the year and more variation in weekend usage. B-1 (id:1-3) is distinguished by higher consumption in the middle of the year (winter months) and similar weekday-weekend inter-quartile range. When $k = 4$ is used, these two groups merge to form A-1, which has a moy profile of higher usage in both the beginning and middle of the year, which is not representative of the individuals in the group."}
+#knitr::include_graphics("figs/combined4and5.png")
 ```
 
+
+```{r groups-4and5, fig.cap = "For $k = 4$ (a) and $k=5$ (b), the distribution of electricity demand across groups over hod, moy, and wnwd is shown. Groups A-2, A-3, and A-4 profiles correspond to Groups B-2, B-3, and B-5, respectively. A-1 is split into B-1 and B-4, each of which has a distinct shape across moy and wnwd. B-4 (id: 16-20) is characterized by higher energy consumption in the first few months of the year and more variation in weekend usage. B-1 (id:1-3) is distinguished by higher consumption in the middle of the year (winter months) and similar weekday-weekend inter-quartile range. When $k = 4$ is used, these two groups merge to form A-1, which has a moy profile of higher usage in both the beginning and middle of the year, which is not representative of the individuals in the group."}
+
+```
 
 
 ### wpd-based distances
 
-We chose the optimal number of clusters using (@Hennig2014-ah) as $3$. A parallel coordinate plot with the three significant cyclic granularities is used to characterise the groups here. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the groups followed by $hod$ and $wnwd$. There is only one customer who has significant $wpd$ across $wnwd$ and stands out from the rest of the customers. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has the most distinct pattern across moy. Group 1 is a mixed group that has strong patterns on at least one of the three variables. The findings vary from js-based clustering, yet it is a helpful grouping.
+The $sindex$ is plotted against the number of clusters for clustering based on wpd-based distances in \ref{fig:opt-cluster-tsne-jsd}. The scales are very different from JS-based clustering and also there is more gradual decrease in the separation index. The $sindex$ falls from around $20$ when $k=3$ to $19$ when $k=4$ and further decreases to $17.5$ with $k>7$. Thus, there are few choices available for number of clusters. The groupings with $k=4$ is shown through a parallel coordinate plot with the three significant cyclic granularities. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the groups followed by $hod$ and $wnwd$. The two customers (id: 16 and 18) which has significant differences between $wnwd$ catgeories (in Figure \ref{fig:hod-ind-group-png}) stand out from the rest of the customers. Group-4 has a higher $wpd$ for `hod` than `moy` or `wkndwday`. Group-2 and Group-3 have the most distinct pattern across `moy`. Group-1 is a mixed group that has strong patterns on at least one of the three variables. When $k=3$ is used, Group-2 and Group-3 are merged together because their patterns relative to `moy`, '`hod` and `wnwd` are same. The findings vary from JS-based clustering, yet it is a helpful grouping.
 
 ```{r wpd-clustering}
 
 ```
 
 
-```{r parcoord-application, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with three wpd-based groupings. Plot (b) which shows median wpd values for each group. The plot shows that moy is the most important variable in identifying clusters, whereas wnwd is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high wpd across wnwd stand out in this display. Group 3 has a higher wpd for hod than moy or wkndwday. Group 2 has most discernible pattern across moy. Group 1 is a mixed group with strong patterns on atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE, fig.height=6}
+```{r parcoord-application, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with four wpd-based groupings. Plot (b) which shows median $wpd$ values for each group. The plot shows that `moy` is the most important variable in identifying clusters, whereas `wnwd` is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high $wpd$ across wnwd stand out in this display. Group-4 has a higher $wpd$ for `hod` than `moy` or `wnwd`. Group-2 and Group-3 has most discernible pattern across `moy`. Group-1 is a mixed group with strong patterns across atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE, fig.height=6}
 #include_graphics("figs/parcoord-application.png")
 ```
 
