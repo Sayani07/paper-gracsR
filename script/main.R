@@ -1496,8 +1496,8 @@ tsne_df <- data.frame(tsneX = tSNE_fit$Y[, 1],
 
 ##----tsne-xy
 tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
-  geom_point(size =1) +
-  ggrepel::geom_text_repel(aes(label = id), size = 3, seed = 2935, max.overlaps = 10)+
+  geom_point(size=2,shape=".") +
+  ggrepel::geom_text_repel(aes(label = id), size = 2, seed = 2935, max.overlaps = 10)+
   #scale_color_manual(values = limn_pal_tableau10()) +
   scale_colour_viridis_d(direction = -1) +
   #guides(color = FALSE) +
