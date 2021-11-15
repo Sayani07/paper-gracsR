@@ -45,6 +45,7 @@ knitr::opts_knit$set(root.dir = here::here())
 ```{r external, include = FALSE, cache = FALSE}
 knitr::read_chunk('script/main.R')
 read_chunk(here::here("validation/simdata01.R"))
+knitr::read_chunk('script/gracsr-supplementary.R')
 ```
 
 
@@ -878,5 +879,12 @@ ggpubr::ggarrange(group_entire1, group_entire2)
 ```
 
 
+```{r sindex-data-validation}
 
+```
+
+
+```{r sindex-plot-validation-wpd}
+
+```
 
