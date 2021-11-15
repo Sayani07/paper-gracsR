@@ -518,8 +518,6 @@ All of the approaches were fitted to each data design and to each combination of
 
 
 ```{r sindex-plot-validation, fig.cap = "The cluster separation index (sindex) is plotted as a function of the number of clusters for the range of mean differences (rows) under the different scenarios (columns). S1 has a sharp decrease in sindex from 5 to 6, whereas S2 and S3 have a decrease from 4 to 5. As a result, the number of clusters considered for S1, S2, and S3 is 5, 4, 4, respectively. This corresponds to the number of designs taken into account in each scenario."}
-
-```{r cluster-number-selection-validation, fig.cap="Separation index plotted as a function of the number of clusters for S1, S2, and S3. S1 has a sharp decrease from 5 to 6, whereas S2 and S3 have a decrease from 4 to 5. As a result, the number of clusters considered for S1, S2, and S3 is 5, 4, 4, respectively. This corresponds to the number of designs taken into account in each scenario."}
 ```
 
 
@@ -575,15 +573,13 @@ Clustering huge data sets presents a slew of difficulties. As a result, we disse
 ## Data filtering and variable selection {#sec:datafilter}
 
 
-Things become far more complicated when we consider a larger data set with more uncertainty, as they do with any clustering problem. 
-
 - Choose a smaller subset of randomly selected $600$ customers with no implicit missing values for 2013.
 
 - Obtain $wpd$ for all cyclic granularities considered for these customers. It was found that `hod` (hour-of-day), `moy` (month-of-year) and `wkndwday` (weekend/weekday) are coming out to be significant for most customers. We use these three granularities while clustering.
 
 - Remove customers whose data for an entire category of `hod`, `moy` or `wnwd` is empty. For example, a customer who does not have data for an entire month is excluded because their monthly behavior cannot be analyzed.
 
-- Remove customers whose energy consumption is 0 in all deciles. These are the clients whose consumption is likely to remain essentially flat and with no intriguing repeated patterns that we are interested in studying.
+- Remove customers whose energy consumption is 0 in all deciles. These are the clients whose consumption is likely to remain essenatially flat and with no intriguing repeated patterns that we are interested in studying.
 
 
 ## Prototype selection {#sec:prototype}
@@ -618,7 +614,7 @@ While plotting the clusters, RS-based scaling is applied to each customer, so th
 
 ### JS-based distances
 
-The $sindex$ is plotted against the number of clusters for clustering based on JS-based (JS-NQT) distances in \ref{fig:opt-cluster-tsne-jsd}. The $sindex$ falls from around $0.56$ when $k=3$ to $0.54$ when $k$ increases. In our study, we use $k=4, 5$. Figure \ref{fig:groups-4and5} depicts the summarised distributions across $4$ and  $5$ clusters in (a) and (b) respectively, and assists in characterizing each cluster. A-2, A-3, and A-4 have profiles that correspond to groups B-2, B-3, and B-5, respectively. B-2 (id: 4-9 in Figure \ref{fig:hod-ind-group-png}) and B-5 (id: 21-24) have a 'hod' pattern with a typical morning and evening peak, whereas the other groups have no distinct pattern or high variability throughout the day. A-1 is subdivided into B-1 and B-4, each of which has a distinct shape across 'moy' and 'wnwd'. B-4 (id: 16-20) is distinguished by higher energy consumption in the first few months of the year and greater variability in weekend usage. B-1 (id: 1-3) has higher consumption in the middle of the year (winter months) and a similar weekday-weekend inter-quartile range. When $k = 4$ is used, these two groups merge to form A-1, which has a moy profile of higher usage in both the beginning and middle of the year, which is not representative of the individuals. It may be worthwhile to compare Figures \ref{fig:opt-cluster-tsne-jsd} and \ref{fig:hod-ind-group-png} to see if the summarized distributions across groups accurately characterized the groupings. If it has, then the majority of the members of the group should have a similar profile.
+The $sindex$ is plotted against the number of clusters for clustering based on JS-based (JS-NQT) distances in Figure \ref{fig:opt-cluster-tsne-jsd}. The $sindex$ falls from around $0.56$ when $k=3$ to $0.54$ when $k$ increases. In our study, we use $k=4, 5$. Figure \ref{fig:groups-4and5} depicts the summarised distributions across $4$ and  $5$ clusters in (a) and (b) respectively, and assists in characterizing each cluster. A-2, A-3, and A-4 have profiles that correspond to groups B-2, B-3, and B-5, respectively. B-2 (id: 4-9 in Figure \ref{fig:hod-ind-group-png}) and B-5 (id: 21-24) have a `hod` pattern with a typical morning and evening peak, whereas the other groups have no distinct pattern or high variability throughout the day. A-1 is subdivided into B-1 and B-4, each of which has a distinct shape across 'moy' and 'wnwd'. B-4 (id: 16-20) is distinguished by higher energy consumption in the first few months of the year and greater variability in weekend usage. B-1 (id: 1-3) has higher consumption in the middle of the year (winter months) and a similar weekday-weekend inter-quartile range. When $k = 4$ is used, these two groups merge to form A-1, which has a moy profile of higher usage in both the beginning and middle of the year, which is not representative of the individuals. It may be worthwhile to compare Figures \ref{fig:opt-cluster-tsne-jsd} and \ref{fig:hod-ind-group-png} to see if the summarized distributions across groups accurately characterized the groupings. If it has, then the majority of the members of the group should have a similar profile.
 
 
 <!-- Our methodology is useful for grouping similar distributions over `hod` and `moy` and they are placed closely for easy comparison. Few groups have mixed patterns across `hod` and `moy`, but few have all customers in the group having a similar profile.  -->
@@ -715,14 +711,15 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 
 ### wpd-based distances
 
-The $sindex$ is plotted against the number of clusters for clustering based on wpd-based distances in \ref{fig:opt-cluster-tsne-jsd}. The scales are very different from JS-based clustering and also there is more gradual decrease in the separation index. The $sindex$ falls from around $20$ when $k=3$ to $19$ when $k=4$ and further decreases to $17.5$ with $k>7$. Thus, there are few choices available for number of clusters. The groupings with $k=4$ is shown through a parallel coordinate plot with the three significant cyclic granularities. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the groups followed by $hod$ and $wnwd$. The two customers (id: 16 and 18) which has significant differences between $wnwd$ catgeories (in Figure \ref{fig:hod-ind-group-png}) stand out from the rest of the customers. Group-4 has a higher $wpd$ for `hod` than `moy` or `wkndwday`. Group-2 and Group-3 have the most distinct pattern across `moy`. Group-1 is a mixed group that has strong patterns on at least one of the three variables. When $k=3$ is used, Group-2 and Group-3 are merged together because their patterns relative to `moy`, '`hod` and `wnwd` are same. The findings vary from JS-based clustering, yet it is a helpful grouping.
+In Figure \ref{fig:opt-cluster-tsne-jsd}, the $sindex$ is plotted against the number of clusters for clustering based on wpd-based distances. The scales are very different from those used in JS-based clustering. The $sindex$ falls from around $20$ when $k=3$ to $19$ when $k=4$ and further decreases to $17.5$ with $k>7$. Thus, there are few choices available for the number of clusters. The groupings with $k=4$ is shown through a parallel coordinate plot with the three significant cyclic granularities. The variables are sorted according to their separation across classes (rather than their overall variation between classes). This means that $moy$ is the most important variable in distinguishing the groups, followed by $hod$ and $wnwd$. The two customers (id: 16 and 18) that have significant differences between $wnwd$ categories (in Figure \ref{fig:hod-ind-group-png}) stand out from the rest of the customers. Group-4 has a higher $wpd$ for `hod` than `moy` or `wkndwday`. Group-2 and Group-3 have the most distinct patterns across `moy`. Group-1 is a mixed group that has strong patterns on at least one of the three variables. When $k=3$ is used, Group-2 and Group-3 are merged because their patterns relative to `moy`, `hod` and `wnwd` are the same. The findings vary from JS-based clustering, yet it is a helpful grouping.
+
 
 ```{r wpd-clustering}
 
 ```
 
 
-```{r parcoord-application, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with four wpd-based groupings. Plot (b) which shows median $wpd$ values for each group. The plot shows that `moy` is the most important variable in identifying clusters, whereas `wnwd` is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high $wpd$ across wnwd stand out in this display. Group-4 has a higher $wpd$ for `hod` than `moy` or `wnwd`. Group-2 and Group-3 has most discernible pattern across `moy`. Group-1 is a mixed group with strong patterns across atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE, fig.height=6}
+```{r parcoord-application, fig.cap="Each of the $24$ customers is represented by a parallel coordinate plot (a) with four wpd-based groupings. Plot (b) which shows median $wpd$ values for each group. The plot shows that moy is the most important variable in identifying clusters, whereas wnwd is the least significant and has the least fluctuation. Two customers (id: 16 and 18) with high $wpd$ across wnwd stand out in this display. Group-4 has a higher $wpd$ for hod than moy or wnwd. Group-2 and Group-3 has most discernible pattern across moy. Group-1 is a mixed group with strong patterns across atleast one of the three variables. All of these could be observed from the plot or the table (b).", message=FALSE, warning=FALSE, fig.height=6}
 #include_graphics("figs/parcoord-application.png")
 ```
 
