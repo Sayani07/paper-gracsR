@@ -861,7 +861,7 @@ wkndwday_group_entire2 <- wkndwday_data%>%
 ```
 
 
-```{r combined-groups-js-entire, fig.cap = "The distribution of electricity demand for the clusters across hod, moy and wkndwday for the $17$ groups from $353$ customers. Wknd-wday variations across groups are not distinguishable, but ideally each group should have an unique combination of hod and moy.", fig.height=6}
+```{r combined-groups-js-entire, fig.cap = "The distribution of electricity demand for the clusters across hod, moy and wkndwday for the $17$ groups from $353$ customers. Wknd-wday variations across groups are not distinguishable, but ideally each group should have an unique combination of hod and moy.", fig.height=8}
 
 
 group_entire1 <- (hod_group_entire1 + moy_group_entire1 + wkndwday_group_entire1)&theme_characterisation()& theme(legend.position = 'none')
@@ -881,12 +881,12 @@ ggpubr::ggarrange(group_entire1, group_entire2)
 ```
 
 
-```{r sindex-data-validation}
+```{r sindex-data-valid-supplement}
 
 ```
 
 
-```{r sindex-plot-validation-wpd}
+```{r sindex-plot-valid-supplement, fig.cap="The cluster separation index (sindex) is plotted as a function of the number of clusters for the range of mean differences (rows) under the different scenarios (columns) for JS-RS based distance clustering. S1 has a sharp decrease in sindex from 5 to 6, whereas S2 and S3 have a decrease from 4 to 5. As a result, the number of clusters considered for S1, S2, and S3 is 5, 4, 4, respectively. This corresponds to the number of designs taken into account in each scenario"}
 
 ```
 
