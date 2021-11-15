@@ -5,7 +5,8 @@ cluster_result_kopt4 <- suppressMessages(f %>%
   mutate(group = as.factor(group))
 
 cluster_result_id4and5 <- cluster_result_id %>% left_join(cluster_result_kopt4, by="customer_id") %>% rename("group4" = "group.y") %>% rename("group5" = "group.x")
-##----data-heatmap-hod-group-new-4and5
+
+#data-heatmap-hod-group-new-4
 
 data_group <- data_pick_robust  %>% 
   left_join(cluster_result_id4and5, by = c("customer_id"))
@@ -19,7 +20,7 @@ data_heatmap_hod_group <- quantile_gran(data_group,
 
 data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
 
-data_heatmap_hod_group$group4 <- paste("groupA", data_heatmap_hod_group$group4, sep = "-")
+data_heatmap_hod_group$group4 <- paste("A", data_heatmap_hod_group$group4, sep = "-")
 
 hod_group <- data_heatmap_hod_group %>% 
   ggplot(aes(x = category)) + 
@@ -55,7 +56,7 @@ data_heatmap_moy_group <- quantile_gran(data_group,
 data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
 
-data_heatmap_moy_group$group4 <- paste("groupA", data_heatmap_moy_group$group4, sep = "-")
+data_heatmap_moy_group$group4 <- paste("A", data_heatmap_moy_group$group4, sep = "-")
 
 
 moy_group <- data_heatmap_moy_group %>% 
@@ -74,13 +75,13 @@ moy_group <- data_heatmap_moy_group %>%
   scale_color_manual(values=as.vector(tableau20(20)))+
   theme(legend.position = "bottom") 
 
-##----data-heatmap-wkndwday-group-4and5
+#data-heatmap-wkndwday-group-4and5
 wkndwday_data <- data_group %>% create_gran("wknd_wday") %>% 
   create_gran("hour_day")
 
 ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
 
-wkndwday_data$group4 <- paste("groupA", wkndwday_data$group4, sep = "-")
+wkndwday_data$group4 <- paste("A", wkndwday_data$group4, sep = "-")
 
 
 wkndwday_group <- wkndwday_data%>% 
@@ -99,12 +100,12 @@ wkndwday_group <- wkndwday_data%>%
   theme(legend.position = "none") +
   theme_application3()
 
-##----combined-groups-js-4and5
+#combined-groups-js-4and5
 combined_groups_js4nd5 <- (hod_group + moy_group + wkndwday_group) +
   plot_layout(guides = "collect")& theme(legend.position = 'none')
 
 
-##----data-heatmap-hod-group-new-4and5
+#data-heatmap-hod-group-new-4and5
 
 data_group <- data_pick_robust  %>% 
   left_join(cluster_result_id4and5, by = c("customer_id"))
@@ -118,7 +119,7 @@ data_heatmap_hod_group <- quantile_gran(data_group,
 
 data_heatmap_hod_group$category <- factor(data_heatmap_hod_group$category, levels = 0:23)
 
-data_heatmap_hod_group$group5 <- paste("groupB", data_heatmap_hod_group$group5, sep = "-")
+data_heatmap_hod_group$group5 <- paste("B", data_heatmap_hod_group$group5, sep = "-")
 
 hod_group <- data_heatmap_hod_group %>% 
   ggplot(aes(x = category)) + 
@@ -144,7 +145,7 @@ hod_group <- data_heatmap_hod_group %>%
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
   theme(legend.position = "bottom") 
 
-##----data-heatmap-moy-group-new-4and5
+#data-heatmap-moy-group-new-4and5
 data_heatmap_moy_group <- quantile_gran(data_group,
                                         gran1="month_year",
                                         quantile_prob_val = c(0.25, 0.5, 0.75),
@@ -154,7 +155,7 @@ data_heatmap_moy_group <- quantile_gran(data_group,
 data_heatmap_moy_group$category <- factor(data_heatmap_moy_group$category, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 
 
-data_heatmap_moy_group$group5 <- paste("groupB", data_heatmap_moy_group$group5, sep = "-")
+data_heatmap_moy_group$group5 <- paste("B", data_heatmap_moy_group$group5, sep = "-")
 
 
 moy_group <- data_heatmap_moy_group %>% 
@@ -173,13 +174,13 @@ moy_group <- data_heatmap_moy_group %>%
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
   theme(legend.position = "bottom") 
 
-##----data-heatmap-wkndwday-group-4and5
+#data-heatmap-wkndwday-group-4and5
 wkndwday_data <- data_group %>% create_gran("wknd_wday") %>% 
   create_gran("hour_day")
 
 ylim1 = boxplot.stats(wkndwday_data$general_supply_kwh)$stats[c(1, 5)]
 
-wkndwday_data$group5 <- paste("groupB", wkndwday_data$group5, sep = "-")
+wkndwday_data$group5 <- paste("B", wkndwday_data$group5, sep = "-")
 
 
 wkndwday_group <- wkndwday_data%>% 
@@ -193,17 +194,18 @@ wkndwday_group <- wkndwday_data%>%
              scales = "free_y", 
              labeller = "label_value") + 
   theme_bw()   +
-  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
+  scale_fill_manual(values = c("#E69F00", "#009E73","#999999", "#D55E00","#CC79A7"))+
   scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
   theme(legend.position = "none") +
   theme_application3()
 
-##----combined-groups-js-4and5
+#combined-groups-js-4and5
 combined_groups_js5 <- (hod_group + moy_group + wkndwday_group) +
   plot_layout(guides = "collect")& theme(legend.position = 'none')
 
 
-ggpubr::ggarrange(combined_groups_js4nd5, combined_groups_js5, labels = c("(a)", "(b)"))
+ggpubr::ggarrange(combined_groups_js4nd5, combined_groups_js5, labels = c("a", "b"), hjust=-1)
 
-ggsave("figs/combined4and5.png")
+
+#ggsave("figs/combined4and5.png")
 
