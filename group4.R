@@ -1,5 +1,5 @@
 ##----groups-4and5
-cluster_result_kopt4 <- suppressMessages(f %>% 
+cluster_result_kopt4 <- suppressMessages(distance_jsd %>% 
                                            clust_gran(kopt = 4)) %>% 
   rename("customer_id" = "id") %>% 
   mutate(group = as.factor(group))
@@ -141,8 +141,8 @@ hod_group <- data_heatmap_hod_group %>%
   scale_x_discrete(breaks = seq(1, 24, 3))+ 
   #theme(strip.text = element_text(size = 8, margin = margin(b = 0, t = 0)))+
   theme_application3()  +
-  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#999999", "#D55E00","#CC79A7"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#999999", "#D55E00", "#CC79A7")) +
   theme(legend.position = "bottom") 
 
 #data-heatmap-moy-group-new-4and5
@@ -170,8 +170,8 @@ moy_group <- data_heatmap_moy_group %>%
   theme(strip.text = element_text(size = 10, margin = margin(b = 0, t = 0))) + xlab("moy") + 
   ylab("demand (in Kwh)") +
   theme_bw() + theme_application3()  +
-  scale_fill_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00","#CC79A7"))+
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
+  scale_fill_manual(values = c("#E69F00", "#009E73","#999999", "#D55E00","#CC79A7"))+
+  scale_color_manual(values = c("#E69F00", "#009E73","#999999", "#D55E00", "#CC79A7")) +
   theme(legend.position = "bottom") 
 
 #data-heatmap-wkndwday-group-4and5
@@ -195,7 +195,7 @@ wkndwday_group <- wkndwday_data%>%
              labeller = "label_value") + 
   theme_bw()   +
   scale_fill_manual(values = c("#E69F00", "#009E73","#999999", "#D55E00","#CC79A7"))+
-  scale_color_manual(values = c("#E69F00", "#009E73","#0072B2", "#D55E00", "#CC79A7")) +
+  scale_color_manual(values = c("#E69F00", "#009E73","#999999", "#D55E00", "#CC79A7")) +
   theme(legend.position = "none") +
   theme_application3()
 
