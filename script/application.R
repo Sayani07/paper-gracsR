@@ -35,7 +35,7 @@ data_pick_cust <- bind_rows(
   mutate(customer_id = as.character(customer_id))
 
 ## ----all-data-----------------------------------------------------------------
-data_pick <- read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+data_pick <- readr::read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
   mutate(customer_id = as.character(customer_id)) %>%
   dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>%
   gracsr::scale_gran(

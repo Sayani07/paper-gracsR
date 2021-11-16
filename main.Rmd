@@ -65,7 +65,6 @@ knitr::opts_knit$set(root.dir = here::here())
 knitr::read_chunk('script/mylibrary.R')
 knitr::read_chunk('script/mytheme.R')
 knitr::read_chunk('script/application.R')
-knitr::read_chunk('script/application.R')
 knitr::read_chunk('script/validation.R')
 ```
 
