@@ -26,8 +26,16 @@ main.blg
 data/*.rds
 !data/elec_nogap_2013_clean_356cust.rds
 !data/algo2-cust600-wpd-rawdata.rds
+!quantile_data_356cust_hod_robust.rds
+!quantile_data_356cust_moy_robust.rds
+!quantile_data_356cust_wkndwday_robust.rds
+!dist_gran_hod_356cust_nqt.rds
+!dist_gran_moy_356cust_nqt.rds
+!dist_gran_wkndwday_356cust_nqt.rds
 validation/*.rds
-!validation/js-wpd/*.rds
+!validation/wpd/*.rds
 !validation/js-nqt/*.rds
 !validation/js-robust/*.rds
+!interact-4D/*.rds
+
 
