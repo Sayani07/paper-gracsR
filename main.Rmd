@@ -404,20 +404,15 @@ To validate our clustering methods, we spiked many attributes in the data to cre
 
 
 ```{r range-parameter}
-Scenario = c("S1", "S2","S3")
+scenario = c("S1", "S2","S3")
 designs = c(5, 4, 4)
 niter = list (c(25, 20, 500), c(25, 20, 500), c(25, 20, 500))
 mu = list (c(1, 2, 5), c(1, 2, 5), c(1, 2, 5))
 nT = list (c(300, 1000, 5000), c(300, 1000, 5000), c(300, 1000, 5000))
 
-df = tibble::tibble(Scenario, designs, niter, mu, nT) %>%  
-  set_names("Scenario", 
-            " \\# designs", 
-            "niter", 
-            "$\\mu$", 
-            "nT") %>%
+df = tibble::tibble(scenario, " \\# designs" = designs, niter,  "$\\mu$" = mu, nT) %>%
   knitr::kable(format = "latex",
-             escape = FALSE,  booktabs = TRUE,
+             escape = FALSE,
              caption = "The range of parameters used for the validation study, for the three different scenarios, number of simulations ($niter$) for each design, differences between means ($\\mu$) across granularities and series lengths ($nT$).")%>%
   kableExtra::collapse_rows(columns = 3:5) 
 
