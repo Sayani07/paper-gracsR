@@ -62,8 +62,8 @@ knitr::opts_knit$set(root.dir = here::here())
 
 ```{r external, include = FALSE, cache = FALSE}
 #knitr::read_chunk('script/main.R')
-knitr::read_chunk('script/mylibrary.R')
-knitr::read_chunk('script/mytheme.R')
+knitr::read_chunk('script/library.R')
+knitr::read_chunk('script/theme.R')
 knitr::read_chunk('script/application.R')
 knitr::read_chunk('script/validation.R')
 ```
