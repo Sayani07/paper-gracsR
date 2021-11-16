@@ -382,15 +382,22 @@ cluster_result_kopt4 <- suppressMessages(distance_jsd %>%
   rename("customer_id" = "id") %>%
   mutate(group = as.factor(group))
 
+
 cluster_result_id4and5 <- cluster_result_id %>%
   left_join(cluster_result_kopt4, by = "customer_id") %>%
   rename("group4" = "group.y") %>%
   rename("group5" = "group.x")
 
+cluster_result_id4and5$group4 <- fct_recode(cluster_result_id4and5$group4, "1" = "4", "4"="1")
+
+cluster_result_id4and5$group5 <- fct_recode(cluster_result_id4and5$group5, "1" = "5", "5" = "1")
+
+
 # data-heatmap-hod-group-new-4
 
 data_group <- data_pick_robust %>%
   left_join(cluster_result_id4and5, by = c("customer_id"))
+
 
 data_heatmap_hod_group <- quantile_gran(data_group,
   gran1 = "hour_day",
