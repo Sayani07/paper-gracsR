@@ -545,7 +545,7 @@ All of the approaches were fitted to each data design and to each combination of
 ```
 
 
-```{r parcoord-sim, fig.cap = "The parallel coordinate figure depicts total inter-cluster distances for the granularities $g1$, $g2$, and $g3$. The inter-cluster distances for a single simulation scenario are represented by one line in the figure. While panel S1 shows that no variable stands out during clustering, panels S2 and S3 show that g1 and (g1, g2) had smaller inter-cluster distances, indicating that they did not contribute to clustering. These facts are consistent with our initial assumptions when building the scenarios, and S1, S2, S3 correspond to scenarios with three, two, and one significant granularity, respectively."}
+```{r parcoord-sim, fig.cap = "Exploring the contribution of granularities in the clustering for scenarios S1, S2, S3, using parallel coordinate plots. Inter-cluster distances are displayed vertically. All three granularities $g1$, $g2$, and $g3$ have high inter-cluster distances for S1, suggesting all are important. In S2 g1 and in S3 both g1 and g2 have smaller inter-cluster distances, indicating that they did not contribute to clustering."}
 
 ```
 
