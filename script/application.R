@@ -190,12 +190,12 @@ hod_ind_group1 <- data_hod %>%
   ) +
   theme_application2() +
   scale_fill_manual(values = c(
-    "#E69F00", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   scale_color_manual(values = c(
-    "#E69F00", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   xlab("hod") +
   scale_x_discrete(breaks = seq(0, 23, 3)) +
@@ -232,12 +232,12 @@ hod_ind_group2 <- data_hod %>%
   ) +
   theme_application2() +
   scale_fill_manual(values = c(
-    "#E69F00", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   scale_color_manual(values = c(
-    "#E69F00", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   xlab("hod") +
   scale_x_discrete(breaks = seq(0, 23, 3)) +
@@ -267,12 +267,12 @@ moy_ind_group1 <- data_moy %>%
   xlab("moy") +
   theme_application2() +
   scale_fill_manual(values = c(
-    "#E69F00", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   scale_color_manual(values = c(
-    "#E69F00", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   theme(legend.position = "bottom") +
   theme(plot.margin = unit(c(0, -1, 0, -1), "cm"))
@@ -296,12 +296,12 @@ moy_ind_group2 <- data_moy %>%
   xlab("moy") +
   theme_application2() +
   scale_fill_manual(values = c(
-    "#E69F00", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   scale_color_manual(values = c(
-    "#E69F00", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   theme(legend.position = "bottom") +
   theme(plot.margin = unit(c(0, -1, 0, -1), "cm"))
@@ -325,8 +325,8 @@ wkndwday_ind_group1 <- data_wkndwday %>%
   ) +
   theme_application2() +
   scale_fill_manual(values = c(
-    "black", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "black", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   theme(legend.position = "none") +
   xlab("wnwd") +
@@ -349,8 +349,8 @@ wkndwday_ind_group2 <- data_wkndwday %>%
   ) +
   theme_application2() +
   scale_fill_manual(values = c(
-    "black", "#009E73", "#0072B2",
-    "#D55E00", "#CC79A7"
+    "black", "#5D7050", "#0072B2",
+    "#125070", "#50A6C2"
   )) +
   theme(legend.position = "none") +
   xlab("wnwd") +
@@ -440,8 +440,14 @@ hod_group <- data_heatmap_hod_group %>%
   theme_bw() +
   scale_x_discrete(breaks = seq(1, 24, 3)) +
   theme_application3() +
-  scale_fill_manual(values = as.vector(tableau20(20))) +
-  scale_color_manual(values = as.vector(tableau20(20))) +
+  scale_fill_manual(values = c(
+    "#A89030", "#5D7050",
+    "#481800",  "#125070"
+  )) +
+  scale_color_manual(values = c(
+    "#A89030", "#5D7050",
+    "#481800",  "#125070"
+  ))+
   theme(legend.position = "bottom")
 
 # data-heatmap-moy-group-new-4
@@ -485,8 +491,14 @@ moy_group <- data_heatmap_moy_group %>%
   ylab("demand (in Kwh)") +
   theme_bw() +
   theme_application3() +
-  scale_fill_manual(values = as.vector(tableau20(20))) +
-  scale_color_manual(values = as.vector(tableau20(20))) +
+  scale_fill_manual(values = c(
+    "#A89030", "#5D7050",
+    "#481800",  "#125070"
+  )) +
+  scale_color_manual(values = c(
+    "#A89030", "#5D7050",
+    "#481800",  "#125070"
+  ))+
   theme(legend.position = "bottom")
 
 # data-heatmap-wkndwday-group-4
@@ -514,8 +526,14 @@ wkndwday_group <- wkndwday_data %>%
     labeller = "label_value"
   ) +
   theme_bw() +
-  scale_fill_manual(values = as.vector(tableau20(10))) +
-  scale_color_manual(values = as.vector(tableau20(10))) +
+  scale_fill_manual(values = c(
+    "#A89030", "#5D7050",
+    "#481800",  "#125070"
+  )) +
+  scale_color_manual(values = c(
+    "#A89030", "#5D7050",
+    "#481800",  "#125070"
+  ))+
   theme(legend.position = "none") +
   theme_application3()
 
@@ -570,12 +588,12 @@ hod_group <- data_heatmap_hod_group %>%
   scale_x_discrete(breaks = seq(1, 24, 3)) +
   theme_application3() +
   scale_fill_manual(values = c(
-    "#E69F00", "#009E73", "#999999",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#481800",
+    "#50A6C2", "#84C0D4"
   )) +
   scale_color_manual(values = c(
-    "#E69F00", "#009E73", "#999999",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#481800",
+    "#50A6C2", "#84C0D4"
   )) +
   theme(legend.position = "bottom")
 
@@ -619,12 +637,12 @@ moy_group <- data_heatmap_moy_group %>%
   theme_bw() +
   theme_application3() +
   scale_fill_manual(values = c(
-    "#E69F00", "#009E73", "#999999",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#481800",
+    "#50A6C2", "#84C0D4"
   )) +
   scale_color_manual(values = c(
-    "#E69F00", "#009E73", "#999999",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#481800",
+    "#50A6C2", "#84C0D4"
   )) +
   theme(legend.position = "bottom")
 
@@ -654,12 +672,12 @@ wkndwday_group <- wkndwday_data %>%
   ) +
   theme_bw() +
   scale_fill_manual(values = c(
-    "#E69F00", "#009E73", "#999999",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#481800",
+    "#50A6C2", "#84C0D4"
   )) +
   scale_color_manual(values = c(
-    "#E69F00", "#009E73", "#999999",
-    "#D55E00", "#CC79A7"
+    "#A89030", "#5D7050", "#481800",
+     "#50A6C2", "#84C0D4"
   )) +
   theme(legend.position = "none") +
   theme_application3()
