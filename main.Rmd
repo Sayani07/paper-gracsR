@@ -620,12 +620,12 @@ The steps for customer filtering and variable selection were:
 4. Remove customers whose energy consumption is 0 in all deciles. These are the clients whose consumption is likely to remain essentially flat and with no intriguing repeated patterns that we are interested in studying.
 
 
-## Choosing customers {#sec:prototype}
+## Selecting prototypes {#sec:prototype}
 
 <!-- Why instance selection -->
 Figure \ref{fig:hod-ind-group-png} shows the distribution across $hod$, $moy$ and $wnwd$ for the set of $24$ customers is the sample to illustrate clustering. The customers are displayed in two columns of $12$ for space reasons. Each row of each column represents the profile of a single customer across different variables. 
 
-It is common to pre-process data prior to fitting a supervised learning model using instance selection [@olvera2010review; @Cutler1994-hm] which removes observations that might impede the model building. For clustering, there has been little attention given, but it would be analogous to identifying and removing nuisance observations. Instance selection in unsupervised learning has received little attention in the literature. However, it could be a useful tool for evaluating model or method performance. There are several ways to approach prototype selection. Following the idea of @Fan2021-bq of picking related examples (neighbors) for each instance (anchor), we can first use any dimensionality reduction techniques like MDS or PCA to project the data into a 2D space. Then pick a few "anchor" customers far apart in 2D space and pick a few neighbors for each. Unfortunately, this does not ensure that consumers with significant patterns across all variables are chosen. Tours can reveal variable separation that gets hidden in a single variable display better than static projections. Hence, we perform a linked tour with a t-SNE layout using the R package `liminal` [@R-liminal] to identify customers who are more likely to have distinct patterns across the variables studied. (Refer to the supplementary article for further details). <!--Few of these customers have similar distribution across $moy$ and some are similar in their $hod$ distribution. -->
+It is common to pre-process data prior to fitting a supervised learning model using instance selection [@olvera2010review] which removes observations that might impede the model building. For clustering, this is analogous to identifying and removing nuisance observations. Prototype selection is more severe than instance selection, because a handful of cases is selected. @Cutler1994-hm proposed a method called archetypal analysis which has inspired this approach but the procedure we have used follows @Fan2021-bq. First  dimension reduction such as t-SNE, MDS or PCA is used to project the data into a 2D space. Second a few  "anchor" customers far apart in 2D space are selected. Additional close neighbors to the anchors are selected. To check the selections relative to the full set of variables, we used a tour linked to a t-SNE layout using the R package `liminal` [@R-liminal]. This ensured that the final sample of clustered customers were also far apart in the high-dimensional space. (See the supplementary materials for further details.)<!--Few of these customers have similar distribution across $moy$ and some are similar in their $hod$ distribution. -->
 
 
 ```{r prototype-data-pick}
@@ -650,7 +650,7 @@ It is common to pre-process data prior to fitting a supervised learning model us
 
 
 
-## Clustering {#sec:clustering}
+## Clustering results {#sec:clustering}
 
 The $24$ prototypes <!--and the data subset consisting of $353$ customers--> are clustered using the methodology described in Section \ref{sec:methodology} and results are reported below. In the following plots, the median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$ percentiles.<!--All customers with the same color represent the same clustered groups. --> Groups are colored differently whenever they represent different groupings. While plotting the clusters, RS-based scaling is applied to each customer, so that no customer dominates the shape of the summarized clusters because of magnitude. The plotting scales are not displayed since we want to emphasize comparable patterns rather than scales. The idea is that a customer in a cluster may have low total energy usage, but their behavior may be quite similar to a customer with high usage with respect to distributional pattern or significance across cyclic granularities.
 
