@@ -264,7 +264,7 @@ Once we have chosen $wpd$ as a relevant feature for characterizing the distribut
 
 ### Number of clusters 
 
-Determining the number of clusters is typically a difficult task. Many metrics have been defined for choosing clusters. Most metrics for choosing the optimal number of clusters, are based on comparing distances between observations within a class to those distances between observations between classes, which makes the assumption that there are some separated clusters. Some common procedures include the gap statistic [@tibshirani2001estimating], average silhouette width [@rousseeuw1987silhouettes], Dunn index [@dunn1973fuzzy] and the separation index ($sindex$) [@Hennig2019-eq; @Hennig2014-ah]. These are constructed by balancing within-cluster homogeneity and between-cluster separation. 
+Determining the number of clusters is typically a difficult task. Many metrics have been defined for choosing clusters. Most metrics for choosing the optimal number of clusters, are based on comparing distances between observations within a class to those distances between observations between classes, which makes the assumption that there are some separated clusters. Some common procedures include the gap statistic [@tibshirani2001estimating], average silhouette width [@rousseeuw1987silhouettes], Dunn index [@Dunn1973-gk] and the separation index ($sindex$) [@Hennig2019-eq; @Hennig2014-ah]. These are constructed by balancing within-cluster homogeneity and between-cluster separation. 
 
 All of the common approaches can give contradictory suggestions for the optimal number of clusters, particularly when the data does not naturally break into groups, or in the presence of nuisance variables (no contribution to clustering) or nuisance observations (inlying outlying observations falling between clusters). There is no one best metric, which is perhaps a reason why metrics so many exist. 
 
@@ -705,6 +705,25 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 ```
 
 
+```{r all-data-rs}
+
+```
+
+
+```{r clustering-rs}
+
+```
+
+
+```{r opt-clusters-jsd-rs}
+
+```
+
+
+```{r opt-clusters-all}
+
+```
+
 
 
 ```{r hod-ind-group}
@@ -716,7 +735,7 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 
 
 
-```{r opt-cluster-tsne-jsd, fig.cap = "Clustering summaries: t-SNE computed on the $24$ selected customers (a), and separation index ($sindex$) for 2-10 clusters using JS (b) and WPD (c). Various choices in number of clusters would be recommended. Four clusters are visible in t-SNE, although it might hide a fifth cluster because dimension reduction to 2D may be insufficient to see the difference. JS suggests 3 and wpd suggests 3 or 6."}
+```{r opt-cluster-tsne-jsd, fig.cap = "Clustering summaries: t-SNE computed on the $24$ selected customers (a), and separation index ($sindex$) for $2$-$10$ clusters using JS-NQT, JS-RS and WPD in (b). Various choices in number of clusters would be recommended. Four clusters are visible in t-SNE, although it might hide a fifth cluster because dimension reduction to 2D may be insufficient to see the difference. JS-NQT suggests $3$, JS-RS suggests $3$ or $5$ and WPD suggests $3$ or $6$."}
 #include_graphics("figs/opt_clust_parenthesis.png")
 ```
 
@@ -735,8 +754,6 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 ```{r data-heatmap-wkndwday-group}
 
 ```
-
-
 
 
 
