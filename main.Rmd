@@ -447,18 +447,14 @@ Each category or combination of categories from $g1$, $g2$ and $g3$ are assumed 
 
 ### Individual granularities
 
-_Scenario (S1): All granularities significant_
-
+**Scenario 1 (S1) - All granularities significant:**
 <!-- Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1). -->
-
 Consider the instance where $g1$, $g2$, and $g3$ all contribute to design distinction. This means that each granularity will have significantly different patterns at least across one of the designs to be clustered. In Table \ref{tab:tab-dist-design} various distributions across categories are considered (top) which lead to different designs (bottom). Figure \ref{fig:plot-3gran-new} shows the simulated variable's linear (left) and cyclic (right) representations for each of these five designs. The structural difference in the time series variable is impossible to discern from the linear view, with all of them looking very similar. The shift in structure may be seen clearly in the distribution of cyclic granularities. The following scenarios use solely graphical displays across cyclic granularities to highlight distributional differences in categories.
 
-\noindent _Scenario (S2): Few significant granularities_
-
+\noindent **Scenario 2 (S2) - Few significant granularities:**
 This is the case where one granularity will remain the same across all designs. We consider the case where the distribution of $v$ varies across $g2$ levels for all designs, across $g3$ levels for a few designs, and $g1$ does not vary across designs. The proposed design is shown in Figure \ref{fig:gran2and1-clubbed}(b).
 
-\noindent _Scenario (S3): Only one significant granularity_
-
+\noindent **Scenario 3 (S3) - Only one significant granularity:**
 Only one granularity is responsible for identifying the designs in this case. This is depicted in Figure \ref{fig:gran2and1-clubbed} (right) where only $g3$ affects the designs significantly.
 
 ```{r tab-distribution}
@@ -623,7 +619,7 @@ The steps for customer filtering and variable selection were:
 ## Selecting prototypes {#sec:prototype}
 
 <!-- Why instance selection -->
-Figure \ref{fig:hod-ind-group-png} shows the distribution across $hod$, $moy$ and $wnwd$ for the set of $24$ customers is the sample to illustrate clustering. The customers are displayed in two columns of $12$ for space reasons. Each row of each column represents the profile of a single customer across different variables. 
+Figure \ref{fig:hod-ind-group-png} shows the distribution across $hod$, $moy$ and $wnwd$ for the set of $24$ customers used to illustrate clustering. The customers are displayed in two columns of $12$ for space reasons. Each row, of each column, represents the profile of a single customer across different variables. 
 
 It is common to pre-process data prior to fitting a supervised learning model using instance selection [@olvera2010review] which removes observations that might impede the model building. For clustering, this is analogous to identifying and removing nuisance observations. Prototype selection is more severe than instance selection, because a handful of cases is selected. @Cutler1994-hm proposed a method called archetypal analysis which has inspired this approach but the procedure we have used follows @Fan2021-bq. First  dimension reduction such as t-SNE, MDS or PCA is used to project the data into a 2D space. Second a few  "anchor" customers far apart in 2D space are selected. Additional close neighbors to the anchors are selected. To check the selections relative to the full set of variables, we used a tour linked to a t-SNE layout using the R package `liminal` [@R-liminal]. This ensured that the final sample of clustered customers were also far apart in the high-dimensional space. (See the supplementary materials for further details.)<!--Few of these customers have similar distribution across $moy$ and some are similar in their $hod$ distribution. -->
 
@@ -652,7 +648,7 @@ It is common to pre-process data prior to fitting a supervised learning model us
 
 ## Clustering results {#sec:clustering}
 
-The $24$ prototypes <!--and the data subset consisting of $353$ customers--> are clustered using the methodology described in Section \ref{sec:methodology} and results are reported below. In the following plots, the median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$ percentiles.<!--All customers with the same color represent the same clustered groups. --> Groups are colored differently whenever they represent different groupings. While plotting the clusters, RS-based scaling is applied to each customer, so that no customer dominates the shape of the summarized clusters because of magnitude. The plotting scales are not displayed since we want to emphasize comparable patterns rather than scales. The idea is that a customer in a cluster may have low total energy usage, but their behavior may be quite similar to a customer with high usage with respect to distributional pattern or significance across cyclic granularities.
+Clustering of the $24$ prototypes <!--and the data subset consisting of $353$ customers--> was conducted with all three distances, JS-NQT, JS-RS and WPD, and is summarised in Figures \ref{fig:opt-cluster-tsne-jsd}, \ref{fig:combined-groups-js} and \ref{fig:parcoord-application}. (XXX move the next sentences down to where you talk about the clustering results for JS) In the following plots, the median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$ percentiles.<!--All customers with the same color represent the same clustered groups. --> Groups are colored differently whenever they represent different groupings. While plotting the clusters, RS-based scaling is applied to each customer, so that no customer dominates the shape of the summarized clusters because of magnitude. The plotting scales are not displayed since we want to emphasize comparable patterns rather than scales. The idea is that a customer in a cluster may have low total energy usage, but their behavior may be quite similar to a customer with high usage with respect to distributional pattern or significance across cyclic granularities.
 
 ### JS-based distances
 
@@ -711,18 +707,18 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 
 
 
-```{r opt-cluster-tsne-jsd, fig.cap = "(a) shows t-SNE summary of the $24$ selected customers chosen through prototype selection, (b) and (c) shows a plot of sindex for different cluster size for clustering based on JS-based distances and wpd-distances respectively. The plot suggests optimal number of clusters as $4$ and $7$ respectively."}
-#include_graphics("figs/opt_clust_parenthesis.png")
-```
-
 ```{r hod-ind-group}
 ```
 
 
-```{r hod-ind-group-png, fig.cap = "The distribution of electricity demand across individual customers over multiple granularities hod, moy, and wnwd are shown for the $24$ selected customers using quantile and box plots. They are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. Each customer is identified by their profile across all the granularities. A few of these customers have similar distributions across moy and some are similar in their hod distributions. Distributional differences across categories of wnwd are not discernable except for a couple of customers (id: 16 and 18).", fig.height=6}
+```{r hod-ind-group-png, fig.cap = "The distribution of electricity demand across individual customers over three granularities $hod$, $moy$, and $wnwd$ are shown for the $24$ selected customers using quantile and box plots. They are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. Each customer is identified by their profile across all the granularities. A few of these customers have similar distributions across $moy$ and some are similar in their $hod$ distributions. Distributional differences across categories of $wnwd$ are not discernable except for a couple of customers (id: 16 and 18)."}
 ```
 
 
+
+```{r opt-cluster-tsne-jsd, fig.cap = "Clustering summaries: t-SNE computed on the $24$ selected customers (a), and separation index ($sindex$) for 2-10 clusters using JS (b) and WPD (c). Various choices in number of clusters would be recommended. Four clusters are visible in t-SNE, although it might hide a fifth cluster because dimension reduction to 2D may be insufficient to see the difference. JS suggests 3 and wpd suggests 3 or 6."}
+#include_graphics("figs/opt_clust_parenthesis.png")
+```
 
 <!-- It appears that the aim of grouping comparable distributions over considered variables has been accomplished to some extent. -->
 
@@ -744,7 +740,7 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 
 
 
-```{r combined-groups-js, fig.cap = "The distribution of electricity demand across groups over hod (a), moy (b), and hod (conditional on wnwd) (c) are shown through quantile plots. Group 1 (1-3), Group 2 (4-9), Group 3 (10 - 15), Group 4 (16- 20), Group 5 (21 - 24). Groups 2 and 5 appear to have a hod pattern among its members (morning and evening peak), whereas groups 1, 3, and 5 appear to have a moy pattern (higher usage in mid-year). With their conditional dependencies on hod or moy categories, wnwd differences may not be discernible on their own. (c) demonstrates that the distribution of hod conditional on wnwd is also not different, except for the tails. This might be because most of these chosen customers do not have a wnwd pattern. It is useful to compare the raw distributions with the summarized distributions to establish that the majority of individuals in the group share the same characteristics. To facilitate this comparison, the individual distributions are sorted by their JS-based groupings.", eval = FALSE}
+```{r combined-groups-js, fig.cap = "The distribution of electricity demand across clusters over $hod$ (a), $moy$ (b), and $wnwd$ (c) are shown through quantile plots. Group 1 (customers 1-3), Group 2 (customers 4-9), Group 3 (customers 10-15), Group 4 (customers 16-20), Group 5 (customers 21-24). Groups 2 and 5 appear to have a hod pattern among its members (morning and evening peak), whereas groups 1, 3, and 5 appear to have a moy pattern (higher usage in mid-year). With their conditional dependencies on hod or moy categories, wnwd differences may not be discernible on their own. (c) demonstrates that the distribution of hod conditional on wnwd is also not different, except for the tails. This might be because most of these chosen customers do not have a wnwd pattern. It is useful to compare the raw distributions with the summarized distributions to establish that the majority of individuals in the group share the same characteristics. To facilitate this comparison, the individual distributions are sorted by their JS-based groupings.", eval = FALSE}
 
 ```
 
@@ -758,7 +754,7 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 
 <!-- GroupA and Group B may represent different set of customers as they are groupings based on different number of clusters. -->
 
-```{r groups-4and5, fig.cap = "For $k = 4$ (a) and $k=5$ (b), the distribution of electricity demand across groups over hod, moy, and wnwd is shown. Groups A-1, A-2, and A-3 profiles correspond to Groups B-1, B-2, and B-3, respectively. A-4 is split into B-4 and B-5, each of which has a distinct shape across moy and wnwd. B-4 (id: 16-20) is characterized by higher energy consumption in the first few months of the year and more variation in weekend usage. B-5 (id:1-3) is distinguished by higher consumption in the middle of the year (winter months) and similar weekday-weekend inter-quartile range. When $k = 4$ is used, these two groups merge to form A-4, which has a moy profile of higher usage in both the beginning and middle of the year, which is not representative of the individuals in the group.", fig.height=5}
+```{r groups-4and5, fig.cap = "Summary plots for four and five clusters. The distribution of electricity demand combined for all members over $hod$, $moy$, and $wnwd$ is shown. Groups A-1 (customers XXX), A-2 (customers XXX), and A-3 (customers XXX) profiles correspond to Groups B-1, B-2, and B-3, respectively. Cluster A-4 splits into B-4 (customers XXX) and B-5 (customers XXX)to produce the five clusters, whci h better resolves the $moy$ distribution. B-4 is characterized by higher energy consumption in the first few months of the year and more variation in weekend usage. B-5 (id:1-3) is distinguished by higher consumption in the middle of the year (winter months) and similar weekday-weekend inter-quartile range. When $k = 4$ is used, these two groups merge to form A-4, which has a moy profile of higher usage in both the beginning and middle of the year, which is not representative of the individuals in the group.", fig.height=5}
 
 ```
 
