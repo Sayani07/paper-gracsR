@@ -719,7 +719,7 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 ```
 
 
-```{r hod-ind-group-png, fig.cap = "The distribution of electricity demand across individual customers over multiple granularities hod, moy, and wnwd are shown for the $24$ selected customers using quantile and box plots. They are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. Each customer is identified by their profile across all the granularities. A few of these customers have similar distributions across moy and some are similar in their hod distributions. Distributional differences across categories of wnwd are not discernable except for a couple of customers (id: 16 and 18)."}
+```{r hod-ind-group-png, fig.cap = "The distribution of electricity demand across individual customers over multiple granularities hod, moy, and wnwd are shown for the $24$ selected customers using quantile and box plots. They are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. Each customer is identified by their profile across all the granularities. A few of these customers have similar distributions across moy and some are similar in their hod distributions. Distributional differences across categories of wnwd are not discernable except for a couple of customers (id: 16 and 18).", fig.height=6}
 ```
 
 
