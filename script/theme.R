@@ -30,8 +30,8 @@ theme_characterisation <- function() {
     # rotate the x-axis text
     theme(legend.position = "bottom")+
     theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
-    theme(axis.text.x = element_text(size=5)) +
-    theme(axis.text = element_text(size = 12))  
+    theme(axis.text.x = element_text(size=8)) +
+    theme(axis.text = element_text(size = 8))  
 }
 
 
