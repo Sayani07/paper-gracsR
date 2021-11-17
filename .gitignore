@@ -33,9 +33,10 @@ data/*.rds
 !dist_gran_moy_356cust_nqt.rds
 !dist_gran_wkndwday_356cust_nqt.rds
 validation/*.rds
-!validation/wpd/*.rds
 !validation/js-nqt/*.rds
 !validation/js-robust/*.rds
 !interact-4D/*.rds
+big_raw_files/*.rds
+
 
 
