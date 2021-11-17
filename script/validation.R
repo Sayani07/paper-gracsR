@@ -1022,6 +1022,7 @@ mds_plot_10 <- ggplot(
   scale_color_brewer(palette = "Dark2") +
   ylab("mds1") +
   xlab("mds2") +
+  theme(axis.text = element_text(size = 8))+
   theme(aspect.ratio = 1)
 
 mds_plot_10
