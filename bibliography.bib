@@ -806,7 +806,17 @@
    pages   = "1--25",
    year    =  2011
  }
-
+ 
+ @MANUAL{smart-meter,
+  title       = {Smart-Grid Smart-City Customer Trial Data},
+  author      = "{Department of the Environment and Energy}",
+  institution = "Department of the Environment and Energy, Australia",
+  year        =  2018,
+  url         = "https://data.gov.au/dataset/4e21dea3-9b87-4610-94c7-15a8a77907ef",
+  urldate     = {2018-11-19},
+  address     = "Australian Government, Department of the Environment and Energy"
+}
+ 
 @Book{knitr,
   title = {Dynamic Documents with {R} and knitr},
   author = {Yihui Xie},
@@ -1122,25 +1132,16 @@ Granularities},
  }
  
 
-@ARTICLE{Menendez1997-in,
-   title    = "The {Jensen-Shannon} divergence",
-   author   = "Men{\'e}ndez, M L and Pardo, J A and Pardo, L and Pardo, M C",
-   abstract = "In this paper we investigate the Jensen-Shannon parametric
-               divergence for testing goodness-of-fit for point estimation. Most
-               of the work presented is an analytical study of the asymptotic
-               differences between different members of the family proposed in
-               goodness of fit, together with an examination of closer
-               approximations to the exact distribution of these statistics than
-               the commonly used chi-squared distribution. Finally the minimum
-               Jensen-Shannon divergence estimates are introduced and compared
-               with other well-known estimators by computer simulation.",
-   journal  = "J. Franklin Inst.",
-   volume   =  334,
-   number   =  2,
-   pages    = "307--318",
-   month    =  mar,
-   year     =  1997
- }
+@article{Menendez1997-in,
+  title={The jensen-shannon divergence},
+  author={Men{\'e}ndez, ML and Pardo, JA and Pardo, L and Pardo, MC},
+  journal={Journal of the Franklin Institute},
+  volume={334},
+  number={2},
+  pages={307--318},
+  year={1997},
+  publisher={Elsevier}
+} 
 
 
 @ARTICLE{Lin1991-fj,
@@ -1364,14 +1365,9 @@ Granularities},
                factors"
  }
  
- 
-#### 
-
-
-
 @article{olvera2010review,
   title={A review of instance selection methods},
-  author={Olvera-L{\'o}pez, J Arturo and Carrasco-Ochoa, J Ariel and Mart{\'\i}nez-Trinidad, J Francisco and Kittler, Josef},
+  author={Olvera-L\'{o}pez, J Arturo and Carrasco-Ochoa, J Ariel and Martínez-Trinidad, J Francisco and Kittler, Josef},
   journal={Artificial Intelligence Review},
   volume={34},
   number={2},
@@ -1388,7 +1384,7 @@ Granularities},
   volume={},
   number={},
   pages={1-11},
-  doi={10.1109/TCYB.2021.3054978}} 
+  doi={10.1109/TCYB.2021.3054978}}
  
 @article{wang2020tsibble,
   author = {Earo Wang and Dianne Cook and Rob J Hyndman},
@@ -1452,15 +1448,16 @@ Granularities},
   year={2005},
   publisher={Springer Science \& Business Media}
 }
+ 
 
 @techreport{Gupta2021-hakear,
 	title={Detecting distributional differences between temporal granularities for exploratory time series analysis},
 	author={Gupta, Sayani and Hyndman, Rob J and Cook, Dianne},
 	year={2021},
 	type={Working paper}
-} 
+}
  
- @article{wegman1990hyperdimensional,
+@article{wegman1990hyperdimensional,
   title={Hyperdimensional data analysis using parallel coordinates},
   author={Wegman, Edward J},
   journal={Journal of the American Statistical Association},
@@ -1750,7 +1747,6 @@ Implementation},
   publisher={Elsevier}
 }
 
-
 @ARTICLE{Dunn1973-gk,
    title     = "A Fuzzy Relative of the {ISODATA} Process and Its Use in
                 Detecting Compact {Well-Separated} Clusters",
@@ -1791,9 +1787,8 @@ Implementation},
    pages     = "32--57",
    month     =  jan,
    year      =  1973
- }
-
-
+ } 
+ 
 @ARTICLE{Rhodes2014-it,
    title    = "Clustering analysis of residential electricity demand profiles",
    author   = "Rhodes, Joshua D and Cole, Wesley J and Upshaw, Charles R and
@@ -1829,112 +1824,3 @@ Implementation},
    year     =  2014,
    keywords = "Energy; Smart meter data; Residential"
  }
- 
-@article{asimov1985grand,
-  title={The grand tour: a tool for viewing multidimensional data},
-  author={Asimov, Daniel},
-  journal={SIAM journal on scientific and statistical computing},
-  volume={6},
-  number={1},
-  pages={128--143},
-  year={1985},
-  publisher={SIAM}
-} 
-
-@article{jolliffe2016principal,
-  title={Principal component analysis: a review and recent developments},
-  author={Jolliffe, Ian T and Cadima, Jorge},
-  journal={Philosophical Transactions of the Royal Society A: Mathematical, Physical and Engineering Sciences},
-  volume={374},
-  number={2065},
-  pages={20150202},
-  year={2016},
-  publisher={The Royal Society Publishing}
-}
-
-@article{van2008visualizing,
-  title={Visualizing data using t-SNE.},
-  author={Van der Maaten, Laurens and Hinton, Geoffrey},
-  journal={Journal of machine learning research},
-  volume={9},
-  number={11},
-  year={2008}
-}
-
-@article{fisher1936use,
-  title={The use of multiple measurements in taxonomic problems},
-  author={Fisher, Ronald A},
-  journal={Annals of eugenics},
-  volume={7},
-  number={2},
-  pages={179--188},
-  year={1936},
-  publisher={Wiley Online Library}
-}
-
-
-@ARTICLE{Cutler1994-hm,
-   title     = "Archetypal Analysis",
-   author    = "Cutler, Adele and Breiman, Leo",
-   abstract  = "Archetypal analysis represents each individual in a data set as
-                a mixture of individuals of pure type or archetypes. The
-                archetypes themselves are restricted to being mixtures of the
-                individuals in the data set. Archetypes are selected by
-                minimizing the squared error in representing each individual as
-                a mixture of archetypes. The usefulness of archetypal analysis
-                is illustrated on several data sets. Computing the archetypes is
-                a nonlinear least squares problem, which is solved using an
-                alternating minimizing algorithm.",
-   journal   = "Technometrics",
-   publisher = "Taylor \& Francis",
-   volume    =  36,
-   number    =  4,
-   pages     = "338--347",
-   month     =  nov,
-   year      =  1994
- }
- 
- 
-@INCOLLECTION{Hennig2019-eq,
-   title     = "Cluster validation by measurement of clustering characteristics
-                relevant to the user",
-   booktitle = "Data Analysis and Applications 1",
-   author    = "Hennig, Christian",
-   abstract  = "There are many cluster analysis methods that can produce quite
-                different clusterings on the same dataset. Cluster validation is
-                about the evaluation of the quality of a clustering; ``relative
-                cluster validation'' is about using such criteria to compare
-                clusterings. This can be used to select one of a set of
-                clusterings from different methods, or from the same method ran
-                with different parameters such as different numbers of clusters.
-                There are many cluster validation indexes in the literature.
-                Most of them attempt to measure the overall quality of a
-                clustering by a single number, but this can be inappropriate.
-                There are various different characteristics of a clustering that
-                can be relevant in practice, depending on the aim of clustering,
-                such as low within-cluster distances and high between-cluster
-                separation. In this paper, a number of validation criteria will
-                be introduced that refer to different desirable characteristics
-                of a clustering, and that characterise a clustering in a
-                multidimensional way. In specific applications the user may be
-                interested in some of these criteria rather than others. A focus
-                of the paper is on methodology to standardise the different
-                characteristics so that users can aggregate them in a suitable
-                way specifying weights for the various criteria that are
-                relevant in the clustering application at hand.",
-   publisher = "John Wiley \& Sons, Inc.",
-   pages     = "1--24",
-   month     =  mar,
-   year      =  2019,
-   address   = "Hoboken, NJ, USA"
- }
- 
-@MANUAL{smart-meter,
-  title       = {Smart-Grid Smart-City Customer Trial Data},
-  author      = "{Department of the Environment and Energy}",
-  institution = "Department of the Environment and Energy, Australia",
-  year        =  2018,
-  url         = "https://data.gov.au/dataset/4e21dea3-9b87-4610-94c7-15a8a77907ef",
-  urldate     = {2018-11-19},
-  address     = "Australian Government, Department of the Environment and Energy"
-}
