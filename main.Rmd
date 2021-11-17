@@ -30,7 +30,7 @@ abstract: |
 bibliography: [bibliography.bib]
 preamble: >
   \setlength {\marginparwidth }{2cm}
-  \usepackage{mathtools,amssymb,booktabs,longtable,todonotes,amsthm}
+    \usepackage{mathtools,amssymb,booktabs,longtable,todonotes,amsthm,multirow,array}
   \def\mod{~\text{mod}~}
 output:
   bookdown::pdf_book:
@@ -420,8 +420,7 @@ tibble::tibble(scenario, designs, niter, mu, nT) %>% rlang::set_names("scenario"
   #tibble::tibble(scenario, " designs" = designs, "R" =niter,  "$\\mu$" = mu, "T"=nT) %>% 
   knitr::kable(format = "latex",
              escape = FALSE,
-             caption = "The range of parameters used for the validation study, for the three different scenarios, number of simulations ($R$) for each design, differences between means ($\\mu$) across granularities and series lengths ($T$).")
-#%>%  kableExtra::collapse_rows(columns = 3:5)
+             caption = "The range of parameters used for the validation study, for the three different scenarios, number of simulations ($R$) for each design, differences between means ($\\mu$) across granularities and series lengths ($T$).")%>%  kableExtra::collapse_rows(columns = 3:5)
 ```
 
 
@@ -626,7 +625,7 @@ The steps for customer filtering and variable selection were:
 <!-- Why instance selection -->
 Figure \ref{fig:hod-ind-group-png} shows the distribution across $hod$, $moy$ and $wnwd$ for the set of $24$ customers is the sample to illustrate clustering. The customers are displayed in two columns of $12$ for space reasons. Each row of each column represents the profile of a single customer across different variables. 
 
-It is common to pre-process data prior to fitting a supervised learning model using instance selection [@olvera2010review] which removes observations that might impede the model building. For clustering, there has been little attention given, but it would be analogous to identifying and removing nuisance observations. Instance selection in unsupervised learning has received little attention in the literature. However, it could be a useful tool for evaluating model or method performance. There are several ways to approach prototype selection. Following the idea of @Fan2021-bq of picking related examples (neighbors) for each instance (anchor), we can first use any dimensionality reduction techniques like MDS or PCA to project the data into a 2D space. Then pick a few "anchor" customers far apart in 2D space and pick a few neighbors for each. Unfortunately, this does not ensure that consumers with significant patterns across all variables are chosen. Tours can reveal variable separation that gets hidden in a single variable display better than static projections. Hence, we perform a linked tour with a t-SNE layout using the R package `liminal` [@R-liminal] to identify customers who are more likely to have distinct patterns across the variables studied. (Refer to the supplementary article for further details). <!--Few of these customers have similar distribution across $moy$ and some are similar in their $hod$ distribution. -->
+It is common to pre-process data prior to fitting a supervised learning model using instance selection [@olvera2010review; @Cutler1994-hm] which removes observations that might impede the model building. For clustering, there has been little attention given, but it would be analogous to identifying and removing nuisance observations. Instance selection in unsupervised learning has received little attention in the literature. However, it could be a useful tool for evaluating model or method performance. There are several ways to approach prototype selection. Following the idea of @Fan2021-bq of picking related examples (neighbors) for each instance (anchor), we can first use any dimensionality reduction techniques like MDS or PCA to project the data into a 2D space. Then pick a few "anchor" customers far apart in 2D space and pick a few neighbors for each. Unfortunately, this does not ensure that consumers with significant patterns across all variables are chosen. Tours can reveal variable separation that gets hidden in a single variable display better than static projections. Hence, we perform a linked tour with a t-SNE layout using the R package `liminal` [@R-liminal] to identify customers who are more likely to have distinct patterns across the variables studied. (Refer to the supplementary article for further details). <!--Few of these customers have similar distribution across $moy$ and some are similar in their $hod$ distribution. -->
 
 
 ```{r prototype-data-pick}
