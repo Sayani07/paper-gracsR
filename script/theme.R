@@ -66,7 +66,7 @@ theme_application2 <- function() {
   theme_characterisation() +   
     theme(strip.background = element_blank(),
                                        strip.text.x = element_blank()) +
-    theme(axis.text.x = element_text(size=6)) +
+    theme(axis.text.x = element_text(size=10)) +
     theme(axis.text = element_text(size = 6))  
 
 }

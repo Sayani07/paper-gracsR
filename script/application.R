@@ -69,7 +69,7 @@ distance_jsd <- as.dist(distance)
 
 ## ----opt-clusters-jsd---------------------------------------------------------
 
-all_index <- map_dfr(2:10, function(x) {
+all_index_nqt <- map_dfr(2:10, function(x) {
   group <- distance_jsd %>%
     hclust(method = "ward.D") %>%
     cutree(k = x)
@@ -78,22 +78,23 @@ all_index <- map_dfr(2:10, function(x) {
     k = x,
     sindex = p$sindex
   )
-})
+})%>% mutate(method = "JS-NQT")
 
-opt_clusters <- all_index %>% ggplot(aes(
-  x = k,
-  y = sindex
-)) +
-  geom_line() +
-  scale_x_continuous(
-    breaks = seq(2, 10, 1),
-    minor_breaks = 1
-  ) +
-  theme_bw() +
-  ylab("sindex") +
-  xlab("number of clusters") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
-
+# 
+# opt_clusters <- all_index %>% ggplot(aes(
+#   x = k,
+#   y = sindex
+# )) +
+#   geom_line() +
+#   scale_x_continuous(
+#     breaks = seq(2, 10, 1),
+#     minor_breaks = 1
+#   ) +
+#   theme_bw() +
+#   ylab("sindex") +
+#   xlab("number of clusters") +
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
+# 
 
 
 ## ----groups-24----------------------------------------------------------------
@@ -374,7 +375,7 @@ plot <- ggpubr::ggarrange(cust_div1, cust_div2,
 
 
 ##----hod-ind-group-png----------------------------------------------------
-ggsave("figs/ind-groups-24-design.png")
+#ggsave("figs/ind-groups-24-design.png")
 knitr::include_graphics("figs/ind-groups-24-design.png")
 #plot
 
@@ -383,7 +384,7 @@ knitr::include_graphics("figs/ind-groups-24-design.png")
 ## ----groups-4and5-------------------------------------------------------------
 
 cluster_result_kopt4 <- suppressMessages(distance_jsd %>%
-  clust_gran(kopt = 3)) %>%
+  clust_gran(kopt = 4)) %>%
   rename("customer_id" = "id") %>%
   mutate(group = as.factor(group))
 
@@ -712,22 +713,23 @@ scaled_var <- elec_pick_wide
 distance_wpd <- elec_pick_wide[-1] %>% dist()
 
 
-all_index <- map_dfr(2:10, function(x) {
+all_index_wpd <- map_dfr(2:10, function(x) {
   group <- distance_wpd %>%
     hclust(method = "ward.D") %>%
     cutree(k = x)
   p <- cluster.stats(distance_wpd, clustering = group, silhouette = TRUE)
   index <- c(k = x, sindex = p$sindex)
-})
+})%>% mutate(method = "WPD")
 
-opt_clusters_wpd <- all_index %>% ggplot(aes(x = k, y = sindex)) +
-  geom_line() +
-  scale_x_continuous(breaks = seq(2, 10, 1), minor_breaks = 1) +
-  theme_bw() +
-  ylab("sindex") +
-  xlab("number of clusters") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
 
+# opt_clusters_wpd <- all_index %>% ggplot(aes(x = k, y = sindex)) +
+#   geom_line() +
+#   scale_x_continuous(breaks = seq(2, 10, 1), minor_breaks = 1) +
+#   theme_bw() +
+#   ylab("sindex") +
+#   xlab("number of clusters") +
+#   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
+# 
 
 
 ## ----wpd-clustering-----------------------------------------------------------
@@ -864,8 +866,80 @@ tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
   theme(aspect.ratio = 1)
 
 
+## ----all-data-rs-----------------------------------------------------------------
+data_pick_rs <- readr::read_rds(here::here("data/elec_nogap_2013_clean_356cust.rds")) %>%
+  mutate(customer_id = as.character(customer_id)) %>%
+  dplyr::filter(customer_id %in% data_pick_cust$customer_id) %>%
+  gracsr::scale_gran(
+    method = "robust",
+    response = "general_supply_kwh"
+  )
+
+
+
+## ----clustering-rs---------------------------------------------------------------
+hod_rs <- suppressMessages(data_pick_rs %>%
+                          dist_gran(
+                            gran1 = "hour_day",
+                            response = "general_supply_kwh"
+                          ))
+
+moy_rs <- suppressMessages(data_pick_rs %>%
+                          dist_gran(
+                            gran1 = "month_year",
+                            response = "general_supply_kwh"
+                          ))
+
+wkndwday_rs <- suppressMessages(data_pick_rs %>%
+                               dist_gran(gran1 = "wknd_wday", response = "general_supply_kwh"))
+
+distance_rs <- wkndwday_rs / 2 + moy_rs / 12 + hod_rs / 24
+
+distance_jsd_rs <- as.dist(distance_rs)
+
+
+
+## ----opt-clusters-jsd-rs---------------------------------------------------------
+
+all_index_rs <- map_dfr(2:10, function(x) {
+  group <- distance_jsd_rs %>%
+    hclust(method = "ward.D") %>%
+    cutree(k = x)
+  p <- cluster.stats(distance_jsd_rs, clustering = group, silhouette = TRUE, wgap = TRUE)
+  index <- c(
+    k = x,
+    sindex = p$sindex
+  )
+}) %>% mutate(method = "JS-RS")
+
+
+
+
+## ----opt-clusters-all---------------------------------------------------------
+
+all_index <- bind_rows(all_index_rs, all_index_nqt, all_index_wpd)
+
+
+opt_clusters <- all_index %>% ggplot(aes(
+  x = k,
+  y = sindex
+)) +
+  geom_line() +
+  scale_x_continuous(
+    breaks = seq(2, 10, 1),
+    minor_breaks = 1
+  ) +
+  facet_wrap(~method, scales = "free_y", ncol = 1)+
+  theme_bw() +
+  ylab("sindex") +
+  xlab("number of clusters") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
+
+
+
 
 ## ----opt-cluster-tsne-jsd-----------------------------------------------------
 
-tsne_xy + (opt_clusters / opt_clusters_wpd) +
-  plot_annotation(tag_levels = list(c("", "JS", "wpd")))
+tsne_xy + opt_clusters + plot_annotation(tag_levels = "a")
+  #(opt_clusters / opt_clusters_wpd) +
+  #plot_annotation(tag_levels = list(c("", "JS", "wpd")))
