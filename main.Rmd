@@ -619,7 +619,7 @@ The steps for customer filtering and variable selection were:
 ## Selecting prototypes {#sec:prototype}
 
 <!-- Why instance selection -->
-Figure \ref{fig:hod-ind-group-png} shows the distribution across $hod$, $moy$ and $wnwd$ for the set of $24$ customers is the sample to illustrate clustering. The customers are displayed in two columns of $12$ for space reasons. Each row of each column represents the profile of a single customer across different variables. 
+Figure \ref{fig:hod-ind-group-png} shows the distribution across $hod$, $moy$ and $wnwd$ for the set of $24$ customers used to illustrate clustering. The customers are displayed in two columns of $12$ for space reasons. Each row, of each column, represents the profile of a single customer across different variables. 
 
 It is common to pre-process data prior to fitting a supervised learning model using instance selection [@olvera2010review] which removes observations that might impede the model building. For clustering, this is analogous to identifying and removing nuisance observations. Prototype selection is more severe than instance selection, because a handful of cases is selected. @Cutler1994-hm proposed a method called archetypal analysis which has inspired this approach but the procedure we have used follows @Fan2021-bq. First  dimension reduction such as t-SNE, MDS or PCA is used to project the data into a 2D space. Second a few  "anchor" customers far apart in 2D space are selected. Additional close neighbors to the anchors are selected. To check the selections relative to the full set of variables, we used a tour linked to a t-SNE layout using the R package `liminal` [@R-liminal]. This ensured that the final sample of clustered customers were also far apart in the high-dimensional space. (See the supplementary materials for further details.)<!--Few of these customers have similar distribution across $moy$ and some are similar in their $hod$ distribution. -->
 
@@ -648,7 +648,7 @@ It is common to pre-process data prior to fitting a supervised learning model us
 
 ## Clustering results {#sec:clustering}
 
-The $24$ prototypes <!--and the data subset consisting of $353$ customers--> are clustered using the methodology described in Section \ref{sec:methodology} and results are reported below. In the following plots, the median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$ percentiles.<!--All customers with the same color represent the same clustered groups. --> Groups are colored differently whenever they represent different groupings. While plotting the clusters, RS-based scaling is applied to each customer, so that no customer dominates the shape of the summarized clusters because of magnitude. The plotting scales are not displayed since we want to emphasize comparable patterns rather than scales. The idea is that a customer in a cluster may have low total energy usage, but their behavior may be quite similar to a customer with high usage with respect to distributional pattern or significance across cyclic granularities.
+Clustering of the $24$ prototypes <!--and the data subset consisting of $353$ customers--> was conducted with all three distances, JS-NQT, JS-RS and WPD, and is summarised in Figures \ref{fig:opt-cluster-tsne-jsd}, \ref{fig:hod-ind-group-png} and \ref{fig:parcoord-application}. In the following plots, the median is shown by a line, and the shaded region shows the area between the  $25^{th}$ and $75^{th}$ percentiles.<!--All customers with the same color represent the same clustered groups. --> Groups are colored differently whenever they represent different groupings. While plotting the clusters, RS-based scaling is applied to each customer, so that no customer dominates the shape of the summarized clusters because of magnitude. The plotting scales are not displayed since we want to emphasize comparable patterns rather than scales. The idea is that a customer in a cluster may have low total energy usage, but their behavior may be quite similar to a customer with high usage with respect to distributional pattern or significance across cyclic granularities.
 
 ### JS-based distances
 
@@ -707,18 +707,18 @@ The $sindex$ is plotted against the number of clusters for clustering based on J
 
 
 
-```{r opt-cluster-tsne-jsd, fig.cap = "(a) shows t-SNE summary of the $24$ selected customers chosen through prototype selection, (b) and (c) shows a plot of sindex for different cluster size for clustering based on JS-based distances and wpd-distances respectively. The plot suggests optimal number of clusters as $4$ and $7$ respectively."}
-#include_graphics("figs/opt_clust_parenthesis.png")
-```
-
 ```{r hod-ind-group}
 ```
 
 
-```{r hod-ind-group-png, fig.cap = "The distribution of electricity demand across individual customers over multiple granularities hod, moy, and wnwd are shown for the $24$ selected customers using quantile and box plots. They are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. Each customer is identified by their profile across all the granularities. A few of these customers have similar distributions across moy and some are similar in their hod distributions. Distributional differences across categories of wnwd are not discernable except for a couple of customers (id: 16 and 18)."}
+```{r hod-ind-group-png, fig.cap = "The distribution of electricity demand across individual customers over three granularities $hod$, $moy$, and $wnwd$ are shown for the $24$ selected customers using quantile and box plots. They are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. Each customer is identified by their profile across all the granularities. A few of these customers have similar distributions across moy and some are similar in their hod distributions. Distributional differences across categories of wnwd are not discernable except for a couple of customers (id: 16 and 18)."}
 ```
 
 
+
+```{r opt-cluster-tsne-jsd, fig.cap = "(a) shows t-SNE summary of the $24$ selected customers chosen through prototype selection, (b) and (c) shows a plot of sindex for different cluster size for clustering based on JS-based distances and wpd-distances respectively. The plot suggests optimal number of clusters as $4$ and $7$ respectively."}
+#include_graphics("figs/opt_clust_parenthesis.png")
+```
 
 <!-- It appears that the aim of grouping comparable distributions over considered variables has been accomplished to some extent. -->
 
