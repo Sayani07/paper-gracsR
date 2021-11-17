@@ -1380,51 +1380,15 @@ Granularities},
   publisher={Springer}
 }
 
- @ARTICLE{Fan2021-bq,
-   title    = "Unsupervised Visual Representation Learning via {Dual-Level}
-               Progressive Similar Instance Selection",
-   author   = "Fan, Hehe and Liu, Ping and Xu, Mingliang and Yang, Yi",
-   abstract = "The superiority of deeply learned representations relies on
-               large-scale labeled datasets. However, annotating data are
-               usually expensive or even infeasible in some scenarios. To
-               address this problem, we propose an unsupervised method to
-               leverage instance discrimination and similarity for deep visual
-               representation learning. The method is based on an observation
-               that convolutional neural networks (CNNs) can learn a meaningful
-               visual representation with instancewise classification, in which
-               each instance is treated as an individual class. By this
-               instancewise discriminative learning, instances can reasonably
-               distribute in the representation space, which reveals their
-               similarities. In order to further improve visual representations,
-               we propose a dual-level progressive similar instance selection
-               (DPSIS) method to build a bridge from instance to class by
-               selecting similar instances (neighbors) for each instance
-               (anchor) and treating the anchor and its neighbors as the same
-               class. To be specific, DPSIS adaptively selects two levels of
-               neighbors, that is: 1) an ``absolutely similar level'' and 2) a
-               ``relatively similar level.'' Instances in the absolutely similar
-               level are used as hard labels, while instances in the relatively
-               similar level are used as soft labels. Moreover, during training,
-               DPSIS is able to progressively select more neighbors without
-               human supervision. At the beginning of training, because CNNs are
-               weak, most instances are distributed relatively randomly in the
-               representation space and only a few easy-to-recognize instances
-               are selected as neighbors. As CNN models become stronger, the
-               semantic meaning of each instance grows clearer. Those instances
-               originally distributed in a relatively random manner gradually
-               move to meaningful positions. This consequently facilitates CNN
-               training since the number of reliable samples increases.
-               Experiments on seven benchmarks, including three small-scale and
-               two large-scale coarse-grained image classification datasets, and
-               two fine-grained categorization datasets, demonstrate the
-               effectiveness of our DPSIS. Our codes have been released at
-               https://github.com/hehefan/DPSIS.",
-   journal  = "IEEE Trans Cybern",
-   volume   = "PP",
-   month    =  mar,
-   year     =  2021,
-   language = "en"
- }
+@ARTICLE{Fan2021-bq,
+  author={Fan, Hehe and Liu, Ping and Xu, Mingliang and Yang, Yi},
+  journal={IEEE Transactions on Cybernetics}, 
+  title={Unsupervised Visual Representation Learning via Dual-Level Progressive Similar Instance Selection}, 
+  year={2021},
+  volume={},
+  number={},
+  pages={1-11},
+  doi={10.1109/TCYB.2021.3054978}} 
  
 @article{wang2020tsibble,
   author = {Earo Wang and Dianne Cook and Rob J Hyndman},
@@ -1488,14 +1452,13 @@ Granularities},
   year={2005},
   publisher={Springer Science \& Business Media}
 }
- 
 
-@ARTICLE{Gupta2021-hakear,
-   title     = "Detecting distributional differences between temporal granularities for     exploratory time series analysis ",
-   author    = "Gupta, Sayani and Hyndman, Rob J and Cook, Dianne",
-   journal   = "unpublished",
-   year      =  2021
- }
+@techreport{Gupta2021-hakear,
+	title={Detecting distributional differences between temporal granularities for exploratory time series analysis},
+	author={Gupta, Sayani and Hyndman, Rob J and Cook, Dianne},
+	year={2021},
+	type={Working paper}
+} 
  
  @article{wegman1990hyperdimensional,
   title={Hyperdimensional data analysis using parallel coordinates},
@@ -1787,12 +1750,49 @@ Implementation},
   publisher={Elsevier}
 }
 
-@article{dunn1973fuzzy,
-  title={A fuzzy relative of the ISODATA process and its use in detecting compact well-separated clusters},
-  author={Dunn, Joseph C},
-  year={1973},
-  publisher={Taylor \& Francis}
-}
+
+@ARTICLE{Dunn1973-gk,
+   title     = "A Fuzzy Relative of the {ISODATA} Process and Its Use in
+                Detecting Compact {Well-Separated} Clusters",
+   author    = "Dunn, J C",
+   abstract  = "Abstract Two fuzzy versions of the k-means optimal, least
+                squared error partitioning problem are formulated for finite
+                subsets X of a general inner product space. In both cases, the
+                extremizing solutions are shown to be fixed points of a certain
+                operator T on the class of fuzzy, k-partitions of X, and simple
+                iteration of T provides an algorithm which has the descent
+                property relative to the least squared error criterion function.
+                In the first case, the range of T consists largely of ordinary
+                (i.e. non-fuzzy) partitions of X and the associated iteration
+                scheme is essentially the well known ISODATA process of Ball and
+                Hall. However, in the second case, the range of T consists
+                mainly of fuzzy partitions and the associated algorithm is new;
+                when X consists of k compact well separated (CWS) clusters, Xi ,
+                this algorithm generates a limiting partition with membership
+                functions which closely approximate the characteristic functions
+                of the clusters Xi . However, when X is not the union of k CWS
+                clusters, the limiting partition is truly fuzzy in the sense
+                that the values of its component membership functions differ
+                substantially from 0 or 1 over certain regions of X. Thus,
+                unlike ISODATA, the ?fuzzy? algorithm signals the presence or
+                absence of CWS clusters in X. Furthermore, the fuzzy algorithm
+                seems significantly less prone to the ?cluster-splitting?
+                tendency of ISODATA and may also be less easily diverted to
+                uninteresting locally optimal partitions. Finally, for data sets
+                X consisting of dense CWS clusters embedded in a diffuse
+                background of strays, the structure of X is accurately reflected
+                in the limiting partition generated by the fuzzy algorithm.
+                Mathematical arguments and numerical results are offered in
+                support of the foregoing assertions.",
+   journal   = "Journal of Cybernetics",
+   publisher = "Taylor \& Francis",
+   volume    =  3,
+   number    =  3,
+   pages     = "32--57",
+   month     =  jan,
+   year      =  1973
+ }
+
 
 @ARTICLE{Rhodes2014-it,
    title    = "Clustering analysis of residential electricity demand profiles",
