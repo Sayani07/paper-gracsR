@@ -410,7 +410,7 @@ niter = list (c(25, 20, 500), c(25, 20, 500), c(25, 20, 500))
 mu = list (c(1, 2, 5), c(1, 2, 5), c(1, 2, 5))
 nT = list (c(300, 1000, 5000), c(300, 1000, 5000), c(300, 1000, 5000))
 
-df = tibble::tibble(scenario, designs, niter, mu, nT) %>% rlang::set_names("scenario", "designs", "R", "$\\mu$", "T") %>% 
+df = tibble::tibble(scenario, designs, niter, mu, nT) %>% #rlang::set_names("scenario", "designs", "R", "$\\mu$", "T") %>% 
   #tibble::tibble(scenario, " designs" = designs, "R" =niter,  "$\\mu$" = mu, "T"=nT) %>% 
   knitr::kable(format = "latex",
              escape = FALSE,
