@@ -106,8 +106,14 @@ cluster_result <- suppressMessages(distance_jsd %>%
 cluster_result_id <- cluster_result %>%
   arrange(group) %>%
   mutate(divide_cust = rep(c(1, 2), each = 12)) %>%
-  mutate(id = row_number())
+  mutate(sort_group_id = row_number()) %>% 
+  left_join(data_pick_cust, by = c("customer_id")) %>% 
+  mutate(id = paste(sort_group_id, design, sep = "-"))
 
+
+label_factor <- cluster_result_id$id %>% unique()
+
+cluster_result_id$id = factor(cluster_result_id$id, levels = label_factor)
 
 
 
@@ -362,15 +368,14 @@ cust_div2 <- hod_ind_group2 + moy_ind_group2 + wkndwday_ind_group2
 
 
 plot <- ggpubr::ggarrange(cust_div1, cust_div2,
-  ncol = 2,
-  labels = c("a", "b"), hjust = -1
+  ncol = 2, hjust = -1
 )
 
 
 
 ##----hod-ind-group-png----------------------------------------------------
-#ggsave("figs/ind-groups-24.png")
-knitr::include_graphics("figs/ind-groups-24.png")
+ggsave("figs/ind-groups-24-design.png")
+knitr::include_graphics("figs/ind-groups-24-design.png")
 #plot
 
 
@@ -378,7 +383,7 @@ knitr::include_graphics("figs/ind-groups-24.png")
 ## ----groups-4and5-------------------------------------------------------------
 
 cluster_result_kopt4 <- suppressMessages(distance_jsd %>%
-  clust_gran(kopt = 4)) %>%
+  clust_gran(kopt = 3)) %>%
   rename("customer_id" = "id") %>%
   mutate(group = as.factor(group))
 
@@ -849,8 +854,8 @@ tsne_df <- data.frame(
 
 ## ----tsne-xy------------------------------------------------------------------
 tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
-  geom_point(size = 2, shape = ".") +
-  ggrepel::geom_text_repel(aes(label = id), size = 2, seed = 2935, max.overlaps = 10) +
+  #geom_point(size = 2, shape = ".") +
+  ggrepel::geom_text_repel(aes(label = sort_group_id), size = 2, seed = 2935, max.overlaps = 10) +
   # scale_color_manual(values = limn_pal_tableau10()) +
   scale_colour_viridis_d(direction = -1) +
   # guides(color = FALSE) +
