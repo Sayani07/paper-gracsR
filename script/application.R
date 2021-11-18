@@ -787,9 +787,9 @@ data_table3 <- data_pcp %>%
   group_by(group3) %>%
   summarise(
     nobs = n(),
-    moy = round(median(moy), 2),
-    hod = round(median(hod), 2),
-    wnwd = round(median(wnwd), 2)
+    moy = round(median(moy), 1),
+    hod = round(median(hod), 1),
+    wnwd = round(median(wnwd), 1)
   ) %>% mutate(k = 3) %>% 
   rename("group" = "group3")
 
@@ -797,9 +797,9 @@ data_table5 <- data_pcp %>%
   group_by(group5) %>%
   summarise(
     nobs = n(),
-    moy = round(median(moy), 2),
-    hod = round(median(hod), 2),
-    wnwd = round(median(wnwd), 2)
+    moy = round(median(moy), 1),
+    hod = round(median(hod), 1),
+    wnwd = round(median(wnwd), 1)
   ) %>% mutate(k = 5)%>% 
   rename("group" = "group5")
 
@@ -830,7 +830,7 @@ data_table <- bind_rows(data_table3,
 data_table %>% 
 knitr::kable(format = "latex",
              escape = FALSE,
-             caption = "The summary table for WPD")%>% 
+             caption = "Summary table from WPD clusters showing median $wpd$ values ($moy$, $hod$, $wnwd$), cluster size ($nobs$) and the list of the customer-prototype id for each cluster with $3$ and $5$ number of clusters ($k$).")%>% 
   kableExtra::collapse_rows(columns = 1)
 
 ## ----summary-plot-wpd------------------------------------------------------------
