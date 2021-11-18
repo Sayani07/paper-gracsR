@@ -862,7 +862,7 @@ parcoord3 <- parcoord3 +geom_text_repel(aes(label = sort_group_id), size = 2) &t
 
 parcoord5 <- parcoord5 +geom_text_repel(aes(label = sort_group_id), size = 2) &theme_light()&theme(legend.position = "bottom") 
 
-(parcoord3 + ylab("") + parcoord5 + ylab("")) + plot_annotation(tag_levels = "a")+ plot_layout(guides = "collect")&theme(legend.position = "bottom")
+(parcoord3 + ylab("") + parcoord5 + ylab("")) + plot_annotation(tag_levels = "a")+ plot_layout(guides = "collect")&theme(legend.position = "bottom")&theme(legend.title=element_blank())
   
 
 #&theme_application2() + plot_annotation(tag_levels = "a")
