@@ -785,7 +785,7 @@ Clustering of the $24$ prototypes <!--and the data subset consisting of $353$ cu
 
 
 
-```{r summary-plot-wpd, fig.cap = "Summary plots for three (a) and five (b) clusters from WPD showing the $wpd$ values of each customers across $hod$, $moy$, and $wnwd$ through a parallel coordinate plot. Group P-1 and P-2 correspond to Q-1 and Q-2 respectively. Cluster P-3 splits into Q-3, Q-4 and Q-5. ", fig.height=6}
+```{r summary-plot-wpd, fig.cap = "Summary plots for three (a) and five (b) clusters from WPD showing the $wpd$ values of each customers across $hod$, $moy$, and $wnwd$ through a parallel coordinate plot. Group P-1 and P-2 correspond to Q-1 and Q-2 respectively. Cluster P-3 splits into Q-3, Q-4 and Q-5. P-1 (customers 16, 18) is characterized by high values of $wpd$ on $wnwd$.  P-2 has lower $wpd$ for $hod$ than $moy$ and $wnwd$. P-3 behaves exactly opposite to P-2 with higher $wpd$ for $hod$ compared to $moy$ and $wnwd$. For $5$ cluster solution, this groups gets split into Q3-Q5 characterizing different relative significance over $moy$ and $wnwd$.", fig.height=6}
 ```
 
 ```{r summary-table-wpd}
