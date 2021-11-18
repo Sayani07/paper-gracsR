@@ -806,7 +806,12 @@ data_table5 <- data_pcp %>%
 data_table <- bind_rows(data_table3,
                         data_table5) %>%
   select(k, group, everything())
-#%>%   kableExtra::collapse_rows(columns = 6)
+
+data_table %>% 
+knitr::kable(format = "latex",
+             escape = FALSE,
+             caption = "The summary table for WPD")%>% 
+  kableExtra::collapse_rows(columns = 6)
 
 ## ----summary-plot-wpd------------------------------------------------------------
 
