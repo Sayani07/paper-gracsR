@@ -823,7 +823,7 @@ q5 <- data_pcp_id %>% filter(group5 =="Q-5") %>% pull(sort_group_id) %>% paste(c
 
 data_table <- bind_rows(data_table3,
                         data_table5) %>%
-  bind_cols(id = c(p1, p2, p3, q1, q2, q3, q4, q5)) %>% 
+  bind_cols(`customer-prototype id` = c(p1, p2, p3, q1, q2, q3, q4, q5)) %>% 
   select(k, group, everything()) %>% 
   bind_cols()
 
@@ -950,8 +950,9 @@ tsne_df <- data.frame(
 
 ## ----tsne-xy------------------------------------------------------------------
 tsne_xy <- ggplot(tsne_df, aes(x = tsneX, y = tsneY)) +
-  #geom_point(size = 2, shape = ".") +
-  ggrepel::geom_text_repel(aes(label = sort_group_id), size = 2, seed = 2935, max.overlaps = 10) +
+  geom_point(size = 2, shape = ".") +
+geom_text(aes(label = sort_group_id), size = 2)+
+#, seed = 2935, max.overlaps = 10) +
   # scale_color_manual(values = limn_pal_tableau10()) +
   scale_colour_viridis_d(direction = -1) +
   # guides(color = FALSE) +
