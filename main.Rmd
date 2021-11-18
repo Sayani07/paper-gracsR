@@ -692,6 +692,21 @@ Clustering of the $24$ prototypes <!--and the data subset consisting of $353$ cu
 ```{r data-pick-wpd}
 ```
 
+```{r opt_clusters-wpd}
+```
+
+
+```{r summary-group-wpd}
+```
+
+
+```{r summary-table-wpd}
+
+```
+
+
+```{r summary-plot-wpd, fig.cap = "fill this up", fig.height=6}
+```
 
 
 ```{r tsne-fit}

@@ -710,9 +710,10 @@ elec_pick_wide <- elec_pick %>% pivot_wider(-c(1, 2), names_from = "x_variable",
 
 scaled_var <- elec_pick_wide
 
-distance_wpd <- elec_pick_wide[-1] %>% dist()
+distance_wpd <- elec_pick_wide[-1] %>% scale() %>%  dist()
 
 
+## ----opt_clusters-wpd------------------------------------------------------------
 all_index_wpd <- map_dfr(2:10, function(x) {
   group <- distance_wpd %>%
     hclust(method = "ward.D") %>%
@@ -722,58 +723,100 @@ all_index_wpd <- map_dfr(2:10, function(x) {
 })%>% mutate(method = "WPD")
 
 
-# opt_clusters_wpd <- all_index %>% ggplot(aes(x = k, y = sindex)) +
-#   geom_line() +
-#   scale_x_continuous(breaks = seq(2, 10, 1), minor_breaks = 1) +
-#   theme_bw() +
-#   ylab("sindex") +
-#   xlab("number of clusters") +
-#   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
-# 
+opt_clusters_wpd <- all_index_wpd %>% ggplot(aes(x = k, y = sindex)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(2, 10, 1), minor_breaks = 1) +
+  theme_bw() +
+  ylab("sindex") +
+  xlab("number of clusters") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
 
+## ----summary-group-wpd------------------------------------------------------------
 
-## ----wpd-clustering-----------------------------------------------------------
-group <- distance_wpd %>%
+group3 <- distance_wpd %>%
   hclust(method = "ward.D") %>%
-  cutree(k = 4)
+  cutree(k = 3)
 
 
-cluster_result_wpd <- bind_cols(id = elec_pick_wide$customer_id, group = group)
+cluster_result_wpd3 <- bind_cols(id = elec_pick_wide$customer_id, 
+                                 group3 = group3) %>%
+  mutate(group3 = as.factor(group3))
+
+
+group5 <- distance_wpd %>%
+  hclust(method = "ward.D") %>%
+  cutree(k = 5)
+
+
+cluster_result_wpd5 <- bind_cols(id = elec_pick_wide$customer_id,
+                                 group5 = group5)%>%
+  mutate(group5 = as.factor(group5))
+
+
+cluster_result_wpd <- cluster_result_wpd3 %>% left_join(cluster_result_wpd5, by = "id")
+
+cluster_result_wpd$group5 <- fct_recode(cluster_result_wpd$group5, "1" = "5", "5"="1")
+
+cluster_result_wpd$group3 <- fct_recode(cluster_result_wpd$group3, "3" = "1", "1"="3")
 
 data_pcp <- scaled_var %>%
   # bind_cols(customer_id =  elec_pick_wide$customer_id) %>%
   left_join(cluster_result_wpd, by = c("customer_id" = "id")) %>%
-  select(customer_id, group, everything()) %>%
-  mutate(group = as.factor(group)) %>%
+  select(customer_id, group3, everything()) %>%
   mutate(customer_id = as.character(customer_id)) %>%
   rename(
     "moy" = "month_year",
     "hod" = "hour_day",
     "wnwd" = "wknd_wday"
-  )
+  ) %>% 
+  select(customer_id, group3, group5, everything())
 
-data_table <- data_pcp %>%
-  group_by(group) %>%
+data_pcp_plot <- data_pcp
+
+
+## ----summary-table-wpd------------------------------------------------------------
+
+data_pcp$group5 <- paste("Q", data_pcp$group5 ,
+                         sep = "-"
+)
+data_pcp$group3 <- paste("P", data_pcp$group3 ,
+                         sep = "-"
+)
+
+data_table3 <- data_pcp %>%
+  group_by(group3) %>%
   summarise(
     nobs = n(),
     moy = round(median(moy), 2),
     hod = round(median(hod), 2),
     wnwd = round(median(wnwd), 2)
-  ) %>%
-  select(-group)
+  ) %>% mutate(k = 3) %>% 
+  rename("group" = "group3")
 
-rownames(data_table) <- c("group-1", "group-2", "group-3", "group-4")
+data_table5 <- data_pcp %>%
+  group_by(group5) %>%
+  summarise(
+    nobs = n(),
+    moy = round(median(moy), 2),
+    hod = round(median(hod), 2),
+    wnwd = round(median(wnwd), 2)
+  ) %>% mutate(k = 5)%>% 
+  rename("group" = "group5")
 
+data_table <- bind_rows(data_table3,
+                        data_table5) %>%
+  select(k, group, everything())
+#%>%   kableExtra::collapse_rows(columns = 6)
 
+## ----summary-plot-wpd------------------------------------------------------------
 
-## ----parcoord-application-----------------------------------------------------
-parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "customer_id"),
-  columns = 3:5,
-  groupColumn = "group.x",
-  showPoints = FALSE,
-  alphaLines = 0.8,
-  order = "anyClass",
-  scale = "globalminmax"
+parcoord5 <- GGally::ggparcoord(data_pcp_plot %>% select(-group3)%>% left_join(cluster_result_id, by = "customer_id"),
+                                columns = 3:5,
+                                groupColumn = "group5",
+                                showPoints = FALSE,
+                                alphaLines = 0.8,
+                                order = "anyClass",
+                                scale = "std"
 ) +
   ggplot2::theme(
     plot.title = ggplot2::element_text(size = 10)
@@ -781,17 +824,42 @@ parcoord <- GGally::ggparcoord(data_pcp %>% left_join(cluster_result_id, by = "c
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
   theme(legend.position = "bottom") +
   xlab("") +
-  ylab("wpd") + scale_fill_viridis_d(direction = 1) +
-  scale_color_viridis_d(direction = 1) + theme_light() +
+  ylab("wpd") +
   labs(colour = "group") +
-  theme(panel.border = element_blank())
+  theme(panel.border = element_blank()) +
+  scale_color_discrete(labels = c(c("Q-1","Q-2", "Q-3", "Q-4", "Q-5")))+
+  scale_color_manual(values = c("#3300FF", "#1B9E77", "#3B3178", "#1D7CF2", "#AE6D1C"), labels = c("Q-5","Q-2", "Q-3", "Q-4", "Q-1"))
 
 
-parcoord + geom_text(aes(label = id)) +
-  inset_element(gridExtra::tableGrob(data_table),
-    left = 0.4, bottom = 0.6,
-    right = 1, top = 1
-  ) & theme(legend.position = "bottom")
+
+parcoord3 <- GGally::ggparcoord(data_pcp_plot %>% select(-group5)%>% left_join(cluster_result_id, by = "customer_id"),
+                                columns = 3:5,
+                                groupColumn = "group3",
+                                showPoints = FALSE,
+                                alphaLines = 1,
+                                order = "anyClass",
+                                scale = "std"
+) +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size = 10)
+  ) +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 10)) +
+  theme(legend.position = "bottom") +
+  xlab("") +
+  ylab("wpd") +
+  labs(colour = "group") +
+  theme(panel.border = element_blank()) +
+  scale_color_manual(values = c("#D8367D", "#1B9E77","#AE6D1C"), labels = c("P-3","P-2", "P-1"))
+
+
+parcoord3 <- parcoord3 +geom_text_repel(aes(label = sort_group_id, size = 2)) &theme_light()&theme(legend.position = "bottom") 
+
+
+parcoord5 <- parcoord5 +geom_text_repel(aes(label = sort_group_id, size = 2)) &theme_light()&theme(legend.position = "bottom") 
+
+(parcoord3 + ylab("") + parcoord5 + ylab(""))
+
+#&theme_application2() + plot_annotation(tag_levels = "a")
 
 
 
