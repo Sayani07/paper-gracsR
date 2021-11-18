@@ -705,9 +705,6 @@ Clustering of the $24$ prototypes <!--and the data subset consisting of $353$ cu
 ```
 
 
-```{r summary-plot-wpd, fig.cap = "fill this up", fig.height=6}
-```
-
 
 ```{r tsne-fit}
 ```
@@ -779,7 +776,6 @@ Clustering of the $24$ prototypes <!--and the data subset consisting of $353$ cu
 ```
 
 
-
 <!-- The widest within-cluster gap (widest_gap) is high till $k=5$ and then have a gradual decrease. Number of -->
 
 ```{r opt-clusters, fig.cap=" Different cluster statistics plotted as a function of number of clusters for JS-based (a) and wpd-based (b) approaches. avg within is not too useful for revealing any sharp change in average distance between clusters with increasing number of clusters. For (a), sindex sees a sharp fall at $k = 4$ and then do not decrease until $k=16$ and the widest gap is high till $k=5$. For (b), sindex sees a fall at $k=3$ and then at $k=7$ and widest gap has a sharp fall at $k=6$.", eval = FALSE}
@@ -790,6 +786,11 @@ Clustering of the $24$ prototypes <!--and the data subset consisting of $353$ cu
 
 ```{r groups-4and5, fig.cap = "Summary plots for four and five clusters from JS-NQT showing the distribution of electricity demand combined for all members over $hod$, $moy$, and $wnwd$. Groups A-1 (customers 21-24), A-2 (customers 4-9), and A-3 (customers 10-15) profiles correspond to Groups B-1, B-2, and B-3, respectively. Cluster A-4 splits into B-4 (customers 16-20) and B-5 (customers 1-3) to produce the five clusters, which better resolves the $moy$ distribution.", fig.height=5}
 
+```
+
+
+
+```{r summary-plot-wpd, fig.cap = "Summary plots for three (a) and five (b) clusters from WPD showing the $wpd$ values of each customers across $hod$, $moy$, and $wnwd$ through a parallel coordinate plot. Group P-1 and P-2 correspond to Q-1 and Q-2 respectively. Cluster P-3 splits into Q-3, Q-4 and Q-5. ", fig.height=6}
 ```
 
 
