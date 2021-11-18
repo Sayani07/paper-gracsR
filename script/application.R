@@ -803,15 +803,35 @@ data_table5 <- data_pcp %>%
   ) %>% mutate(k = 5)%>% 
   rename("group" = "group5")
 
+data_pcp_id <- data_pcp %>% left_join(cluster_result_id, by = "customer_id")
+
+p1 <- data_pcp_id %>% filter(group3 =="P-1") %>% pull(sort_group_id) %>% paste(collapse = ", ")
+
+p2 <- data_pcp_id %>% filter(group3 =="P-2") %>% pull(sort_group_id) %>% paste(collapse = ", ")
+
+p3 <- data_pcp_id %>% filter(group3 =="P-3") %>% pull(sort_group_id) %>% paste(collapse = ", ")
+
+q1 <- data_pcp_id %>% filter(group5 =="Q-1") %>% pull(sort_group_id) %>% paste(collapse = ", ")
+
+q2 <- data_pcp_id %>% filter(group5 =="Q-2") %>% pull(sort_group_id) %>% paste(collapse = ", ")
+
+q3 <- data_pcp_id %>% filter(group5 == "Q-3") %>% pull(sort_group_id) %>% paste(collapse = ", ")
+
+q4 <- data_pcp_id %>% filter(group5 == "Q-4") %>% pull(sort_group_id) %>% paste(collapse = ", ")
+
+q5 <- data_pcp_id %>% filter(group5 =="Q-5") %>% pull(sort_group_id) %>% paste(collapse = ", ")
+
 data_table <- bind_rows(data_table3,
                         data_table5) %>%
-  select(k, group, everything())
+  bind_cols(id = c(p1, p2, p3, q1, q2, q3, q4, q5)) %>% 
+  select(k, group, everything()) %>% 
+  bind_cols()
 
 data_table %>% 
 knitr::kable(format = "latex",
              escape = FALSE,
              caption = "The summary table for WPD")%>% 
-  kableExtra::collapse_rows(columns = 6)
+  kableExtra::collapse_rows(columns = 1)
 
 ## ----summary-plot-wpd------------------------------------------------------------
 
