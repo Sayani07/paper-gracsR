@@ -31,7 +31,8 @@ knitr::kable(
   list(tab_dist, tibble(design, g1, g2, g3)),
   caption = "For S1, distributions of different categories when they vary (displayed on top). If distributions are fixed, they are set to N(0, 1). The various distributions across categories result in five designs (displayed below).",
   booktabs = TRUE, valign = "t"
-)
+) %>%
+  kable_styling(latex_options = "hold_position")
 
 
 

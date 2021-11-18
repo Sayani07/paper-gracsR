@@ -53,8 +53,11 @@ options("knitr.graphics.auto_pdf" = TRUE,
 library(knitr)
 opts_chunk$set(
  echo = FALSE, warning = FALSE, message = FALSE, comment = "#>",
- fig.path = "figure/", fig.align = "center", fig.show = "hold",
- cache = TRUE, cache.path = "cache/",
+ fig.path = "figure/",
+ fig.align = "center",
+ fig.show = "hold",
+ cache = TRUE,
+ cache.path = "cache/",
  out.width = ifelse(is_html_output(), "100%", "\\textwidth")
 )
 knitr::opts_knit$set(root.dir = here::here())
@@ -522,7 +525,7 @@ Only one granularity is responsible for identifying the designs in this case. Th
 
 ### Interaction of granularities
 
-The proposed methods could be extended when two granularities of interest interact and we want to group subjects based on the interaction of the two granularities. Consider a group that has a different weekday and weekend behavior in the summer but not in the winter. This type of combined behavior across granularities can be discovered by evaluating the distribution across combinations of categories for different interacting granularities (weekend/weekday and month-of-year in this example). As a result, in this scenario, we analyze a combination of categories generated from different distributions. Display of design and related results can be found in supplementary.
+The proposed methods could be extended when two granularities of interest interact and we want to group subjects based on the interaction of the two granularities. Consider a group that has a different weekday and weekend behavior in the summer but not in the winter. This type of combined behavior across granularities can be discovered by evaluating the distribution across combinations of categories for different interacting granularities (weekend/weekday and month-of-year in this example). As a result, in this scenario, we analyze a combination of categories generated from different distributions. Display of design and related results can be found in supplementary material.
 
 
 
@@ -539,7 +542,7 @@ The proposed methods could be extended when two granularities of interest intera
 
 All of the approaches were fitted to each data design and to each combination of the considered parameters. The formed clusters have to match the design, be well separated, and have minimal intra-cluster variation. <!--It is possible to study these desired clustering traits visually in a more comprehensive way than just looking at index values.--> MDS and parallel coordinate graphs are used to demonstrate the findings, as well as an index value plot to provide direction on the number of clusters. JS-based approaches corresponding to NQT and RS are referred to as JS-NQT and JS-RS respectively. In the following plots, results for JS-NQT are reported, and results with JS-RS or wpd-based distances, which are similar are in the  supplementary material.
 
-Figure \ref{fig:sindex-plot-validation} shows $sindex$ plotted against the number of clusters ($k$) for the range of mean differences (rows) under the different scenarios (columns). This can be used to determine the number of clusters for each scenario. When $sindex$ for each scenario are examined, it appears that $k = 5, 4, 4$ is justified for scenarios S1, S2, and S3, respectively, given the sharp decrease in $sindex$ from that value of $k$. Thus, the number of clusters corresponds to the number of designs that were originally considered in each scenario.
+Figure \ref{fig:sindex-plot-validation} shows $sindex$ plotted against the number of clusters ($k$) for the range of mean differences (rows) under the different scenarios (columns). This can be used to determine the number of clusters for each scenario. When $sindex$ for each scenario are examined, it appears that $k = \{5, 4, 4\}$ is justified for scenarios S1, S2, and S3, respectively, given the sharp decrease in $sindex$ from that value of $k$. Thus, the number of clusters corresponds to the number of designs that were originally considered in each scenario.
 
 Figure \ref{fig:mds-plot-validation} shows separation of our clusters. It can be observed that in all scenarios and for different mean differences, clusters are separated. However, the separation increases with an increase in mean differences across scenarios. This is intuitive because, as the difference between categories increases, it gets easier for the methods to correctly distinguish the designs.
 
@@ -604,7 +607,7 @@ table %>% kable()
 
 # Application {#sec:application}
 
-Clustering with the new distances is illustrated on the smart meter energy usage for a sample of customers from @smart-meter. The full data contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total.<!--In most cases, electricity data is expected to have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view because too many measurements all squeezed in that representation. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior.--> The raw data for these consumers is of unequal length, with varying starting and end dates.  Additionally, there were missing values in many series. (The supplementary material contains details from checking for systematic missingness.) Because our proposed methods evaluate probability distributions rather than raw data, these data issues are not problematic, unless there is any systematic structure is related to granularities.
+Clustering with the new distances is illustrated on the smart meter energy usage for a sample of customers from @smart-meter. The full data contains half-hourly general supply in KwH for 13,735 customers, resulting in 344,518,791 observations in total.<!--In most cases, electricity data is expected to have multiple seasonal patterns like daily, weekly or annual. We do not learn about these repetitive behaviors from the linear view because too many measurements all squeezed in that representation. Hence we transition into looking at cyclic granularities, that can potentially provide more insight on their repetitive behavior.--> The raw data for these consumers is of unequal length, with varying starting and end dates.  Additionally, there were missing values in many series. (The supplementary material contains details from checking for systematic missingness.) Because our proposed methods evaluate probability distributions rather than raw data, these data issues are not problematic, unless there is any systematic structure related to granularities.
 
 Huge data sets present more complications for clustering. Clustering algorithms work well when there are well-separated clusters, with no nuisance variables or nuisance observations. When converting a series to granularities, many variables (each level of a granularity) are generated, possibly creating a slew of nuisance variables. Some customers may have a mix of energy use patterns, which could be considered nuisance observations located between major clusters. For this reason, we have chosen to select a small group of customers with relatively distinct and different patterns in order to illustrate the clustering more simply. Figure \ref{fig:hod-ind-group-png} shows the distribution across $hod$, $moy$ and $wnwd$ for the set of $24$ customers used to illustrate clustering. The customers are displayed in two columns of $12$ for space reasons. Each row, of each column, represents the profile of a single customer across different variables.  This is often a good approach to tackling a big analysis task, to start with a simpler task. The approach, however, is applicable to all customers.
 
