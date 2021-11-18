@@ -747,7 +747,7 @@ Clustering of the $24$ prototypes <!--and the data subset consisting of $353$ cu
 ```
 
 
-```{r hod-ind-group-png, fig.cap = "The distribution of electricity demand across individual customers over three granularities $hod$, $moy$, and $wnwd$ are shown for the $24$ selected customers using quantile and box plots. They are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. The number indicates a unique customer id and a prototype id. <!--Each customer is identified by their profile across all the granularities. A few of these customers have similar distributions across $moy$ and some are similar in their $hod$ distributions. Distributional differences across categories of $wnwd$ are not discernable except for a couple of customers (id: 16 and 18).-->"}
+```{r hod-ind-group-png, fig.cap = "The distribution of electricity demand across individual customers over three granularities $hod$, $moy$, and $wnwd$ are shown for the $24$ selected customers using quantile and box plots. They are split into batches of $12$ in (a) and (b), with each row in (a) or (b) representing a customer. The number indicates a unique customer id and a prototype id."}
 ```
 
 
