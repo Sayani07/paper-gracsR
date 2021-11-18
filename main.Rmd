@@ -451,10 +451,10 @@ Each category or combination of categories from $g1$, $g2$ and $g3$ are assumed 
 <!-- Consider a case where all the three granularities $g1$, $g2$ and $g3$ would be responsible for making the designs distinct. That would mean, the pattern for each of $g1$, $g2$ and $g3$ will change for at least one design. We consider a situation with all the null cases corresponding to no difference in distribution across categories, that is, all categories follow the same distribution N(0,1). -->
 Consider the instance where $g1$, $g2$, and $g3$ all contribute to design distinction. This means that each granularity will have significantly different patterns at least across one of the designs to be clustered. In Table \ref{tab:tab-dist-design} various distributions across categories are considered (top) which lead to different designs (bottom). Figure \ref{fig:plot-3gran-new} shows the simulated variable's linear (left) and cyclic (right) representations for each of these five designs. The structural difference in the time series variable is impossible to discern from the linear view, with all of them looking very similar. The shift in structure may be seen clearly in the distribution of cyclic granularities. The following scenarios use solely graphical displays across cyclic granularities to highlight distributional differences in categories.
 
-\noindent **Scenario 2 (S2) - Few significant granularities:**
+**Scenario 2 (S2) - Few significant granularities:**
 This is the case where one granularity will remain the same across all designs. We consider the case where the distribution of $v$ varies across $g2$ levels for all designs, across $g3$ levels for a few designs, and $g1$ does not vary across designs. The proposed design is shown in Figure \ref{fig:gran2and1-clubbed}(b).
 
-\noindent **Scenario 3 (S3) - Only one significant granularity:**
+**Scenario 3 (S3) - Only one significant granularity:**
 Only one granularity is responsible for identifying the designs in this case. This is depicted in Figure \ref{fig:gran2and1-clubbed} (right) where only $g3$ affects the designs significantly.
 
 ```{r tab-distribution}
